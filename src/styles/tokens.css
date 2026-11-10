@@ -41,7 +41,9 @@
   --color-control-bg-active: var(--grey-700);
   --color-control-bg-disabled: var(--grey-300);
   --color-control-text-disabled: var(--grey-600);
-  --color-focus: var(--grey-1000); /* paired with --color-focus-halo so it shows on dark and light */
+  --color-focus: var(
+    --grey-1000
+  ); /* paired with --color-focus-halo so it shows on dark and light */
   --color-focus-halo: var(--grey-0);
   --color-scrim: rgba(0, 0, 0, 0.72);
 
@@ -62,7 +64,12 @@
   --screen-header-bg: var(--tt-2);
   --screen-header-text: var(--tt-7);
   --screen-rule: var(--tt-3);
-  --screen-glow: rgba(255, 255, 255, 0.18); /* CSS 2D mode text-shadow; the 3D shader owns its own glow */
+  --screen-glow: rgba(
+    255,
+    255,
+    255,
+    0.18
+  ); /* CSS 2D mode text-shadow; the 3D shader owns its own glow */
 
   /* TV body (reference values for the technical artist; see design-spec section 10) */
   --tv-wood-dark: #262626;
@@ -76,8 +83,10 @@
   --tv-glass-tint: #0c0c0c;
 
   /* Typography */
-  --font-teletext: 'Bedstead', 'Courier New', ui-monospace, monospace; /* screen body and mosaic blocks */
-  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
+  --font-teletext:
+    'Bedstead', 'Courier New', ui-monospace, monospace; /* screen body and mosaic blocks */
+  --font-display:
+    'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
   --font-ui: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
   --font-weight-regular: 400;
   --font-weight-strong: 600;

@@ -1,0 +1,35 @@
+/**
+ * Playback timing constants (design-spec 6.1 and 6.3). QA computes the FR-8
+ * duration from `intro.characterCount` with these; re-exported by
+ * `src/hooks/useIntroClock.ts`.
+ */
+export const REVEAL_CPS = 90;
+export const LINE_GAP_MS = 250;
+export const PAGE_HOLD_BASE_MS = 800;
+export const PAGE_HOLD_PER_CHAR_MS = 8;
+export const END_HOLD_MS = 1000;
+
+/** Warm-up (full motion) and the hold on the card before page 1. */
+export const WARMUP_MS = 2200;
+export const CARD_HOLD_MS = 300;
+/** Calm / reduced motion: the static card shows this long before page 1. */
+export const CALM_CARD_MS = 1500;
+/** CRT collapse on power-off (the scene and 2D screen play it; the rasteriser holds the last picture). */
+export const COLLAPSE_MS = 450;
+/** Black frame on Replay (full motion only). */
+export const REPLAY_BLANK_MS = 200;
+/** Calm auto-advance (opt-in): a page stays for max(8 s, 25 ms per character). */
+export const AUTO_ADVANCE_MIN_MS = 8000;
+export const AUTO_ADVANCE_PER_CHAR_MS = 25;
+export const NO_SUCH_PAGE_MS = 2000;
+
+/** Intro duration in ms excluding warm-up, from design-spec 6.3. */
+export function estimateIntroDurationMs(characters: number, lines: number, pages: number): number {
+  return (
+    (characters / REVEAL_CPS) * 1000 +
+    lines * LINE_GAP_MS +
+    pages * PAGE_HOLD_BASE_MS +
+    characters * PAGE_HOLD_PER_CHAR_MS +
+    END_HOLD_MS
+  );
+}
