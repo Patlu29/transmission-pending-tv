@@ -1,16 +1,45 @@
-# PLACEHOLDER intro template. Owner: ux-ui-designer (copy), see docs/architecture.md §5.
-# Format: "== page-id" starts a page; each other line is one logical screen line.
-# Facts go in {{ placeholders }}. Hand-written digits fail the build unless allow-listed.
-# Remove !draft once the real intro covers every fact FR-12 requires.
-!draft
-!allow-digits 1970s
+# Transmission Pending: intro copy. Owner: ux-ui-designer.
+# Format: docs/architecture.md section 5.5. One line is one logical screen line (the renderer wraps it).
+# Rules of the house:
+#   - Every fact is a {{ placeholder }}. No digit is typed by hand, so nothing needs !allow-digits.
+#   - Jokes assert nothing checkable. If a joke needs a number, a name or a date, it uses a placeholder.
+#   - Facts are shown to the visitor as white blocks; copy is plain. The honesty page says so.
+#   - Do not use {{ phases.current }}: it is null once every phase is Done, and that would stop the build.
+#   - Timing: about 40 s at the reveal rates in docs/design-spec.md section 6.3.
 
 == test-card
 TRANSMISSION PENDING
-PLEASE DO NOT ADJUST YOUR SET. IT IS NOT YOUR SET THAT IS THE PROBLEM.
+THIS IS A TELEVISION. IT IS ALSO A WEBSITE. NEITHER IS GOING WELL.
 
-== placeholder-facts
-AS OF COMMIT {{ source.revision }} THIS SITE HAS {{ git.commitCount }} COMMITS AND NO DIGNITY.
-IT BEGAN ON {{ git.firstCommit.dateDisplay }}, A DAY THAT WILL LIVE IN MILD EMBARRASSMENT.
-IT WAS PUT TOGETHER BY: {{ agents.roles }}.
-HELD UP BY {{ stack.list }}.
+== hello
+GOOD EVENING. YOU TOUCHED A BUTTON AND NOW I HAVE TO TALK.
+I WAS BUILT BY {{ provenance.tool }}, A ROBOT THAT TYPES, USING THE {{ provenance.plugin }} PLUGIN, WHICH IS A CLIPBOARD FOR ROBOTS.
+MY BRAIN IS {{ provenance.model }}. NOBODY ASKED. I SAID IT ANYWAY.
+
+== honesty
+EVERY FACT I TELL YOU IS LOOKED UP FROM THE REPOSITORY. ONLY THE JOKES ARE MADE UP.
+FACTS WEAR WHITE BLOCKS. THE JOKES WEAR NOTHING, AND YOU CAN TELL BY HOW BAD THEY ARE.
+
+== crew
+THE STAFF WERE ROBOTS WITH JOB TITLES: {{ agents.roles }}.
+THE TECH LEAD ATTENDED EVERY MEETING. IT WAS ALSO EVERY MEETING.
+
+== phases
+THE PHASES, IN ORDER: {{ phases.all }}.
+FINISHED AS OF COMMIT {{ source.revision }}: {{ phases.done }}.
+WE DO NOT SKIP PHASES. WE JUST DO THEM BADLY, IN ORDER.
+
+== stack
+I STAND UPRIGHT ON {{ stack.list }}.
+THE VERSIONS WERE READ OFF THE LOCKFILE BY A MACHINE THAT DOES NOT LIE. UNLIKE ME.
+
+== diary
+{{ git.commitCount }} COMMITS, AS OF COMMIT {{ source.revision }}. IT IS A DIARY, AND IT HAS NO DIGNITY.
+THE FIRST ENTRY, ON {{ git.firstCommit.dateDisplay }}, READS: "{{ git.firstCommit.subject }}".
+THE ROBOT SIGNED {{ provenance.modelCoAuthoredCommitCount }} OF THEM AS CO-AUTHOR. IT IS LIKE SIGNING A BIRTHDAY CARD.
+COMMITS AFTER THAT ONE ARE NONE OF MY BUSINESS. I CANNOT SEE THE FUTURE. I CAN BARELY SEE THIS.
+
+== sign-off
+THAT IS THE LOT. IT IS NOT MUCH, BUT IT IS ALL TRUE.
+PRESS REPLAY IF YOU ENJOY BEING TALKED AT.
+TRANSMISSION REMAINS PENDING.
