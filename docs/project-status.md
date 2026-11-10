@@ -1,11 +1,12 @@
 # Project status
 
-- **Current phase:** 3. Design
+- **Current phase:** 4. Build
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
   - Defaults accepted: facts read "as of commit <hash>"; generic static host (to be chosen by devops).
   - Phase 2 architecture approved (2026-11-10).
+  - Phase 3 design approved (2026-11-10). Added: Power toggles on/off (power-off shrinks to a dot); manual Calm mode switch on the start screen; Bedstead font if licence checks out, else VT323.
   - Repository on GitHub account Patlu29, public, name decided with product manager and architect.
 - **Open questions:** none
 - **Bug count:** n/a (not built yet)
@@ -15,8 +16,8 @@
 |---|---|---|
 | 1 | Requirements | Done |
 | 2 | Architecture | Done |
-| 3 | Design | In progress |
-| 4 | Build | Not started |
+| 3 | Design | Done |
+| 4 | Build | In progress |
 | 5 | Performance | Not started |
 | 6 | QA | Not started |
 | 7 | Delivery | Not started |
