@@ -67,10 +67,24 @@ body {
 }
 
 .stage:focus-visible {
-  outline: var(--focus-ring-width) solid var(--color-focus);
-  outline-offset: calc(-1 * var(--focus-ring-width));
-  box-shadow: inset 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset))
-    var(--color-focus-halo);
+  outline: none;
+}
+
+/* The ring is its own layer so the canvas cannot paint over it (3d-set). */
+.stage__ring {
+  position: absolute;
+  inset: var(--space-2);
+  z-index: var(--z-dock);
+  pointer-events: none;
+  display: none;
+  border: var(--focus-ring-width) solid var(--color-focus);
+  box-shadow:
+    0 0 0 var(--focus-ring-offset) var(--color-focus-halo),
+    inset 0 0 0 var(--focus-ring-offset) var(--color-focus-halo);
+}
+
+.stage:focus-visible > .stage__ring {
+  display: block;
 }
 
 .scene-host {
@@ -172,8 +186,7 @@ body {
 }
 
 .key:focus-visible,
-.linkkey:focus-visible,
-.stage:focus-visible {
+.linkkey:focus-visible {
   outline: var(--focus-ring-width) solid var(--color-focus);
   box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--color-focus-halo);
 }
@@ -343,17 +356,24 @@ body {
 }
 
 .app[data-layout='set'] .start {
-  left: 50%;
-  bottom: calc(var(--space-6) + 56px + var(--space-6));
-  transform: translateX(-50%);
-  width: calc(100vw - var(--space-8));
+  /* Left column: the set sits right of centre, so the centre and the screen stay clear. */
+  left: var(--space-6);
+  top: 50%;
+  transform: translateY(-50%);
+  align-items: flex-start;
+  width: min(20rem, 24vw);
+  max-width: none;
+  padding: 0;
+  text-align: left;
 }
 
 .app[data-mode='2d'][data-layout='set'] .start {
+  left: 50%;
   top: calc(50% - var(--dock-size) / 2);
-  bottom: auto;
   transform: translate(-50%, -50%);
-  max-width: 30rem;
+  align-items: center;
+  width: min(30rem, 60vw);
+  text-align: center;
 }
 
 .app[data-mode='2d'] .start__tagline,
@@ -524,38 +544,13 @@ body {
   color: var(--tt-0);
 }
 
-.screen2d__scan {
+/* Content layers (the crt2d overlay from the technical-artist sits above them). */
+.screen2d__content {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  background: repeating-linear-gradient(
-    to bottom,
-    transparent 0,
-    transparent calc(var(--crt-scanline-pitch) - 1px),
-    color-mix(in srgb, var(--grey-0) calc(var(--crt-scanline-opacity) * 100%), transparent)
-      calc(var(--crt-scanline-pitch) - 1px),
-    color-mix(in srgb, var(--grey-0) calc(var(--crt-scanline-opacity) * 100%), transparent)
-      var(--crt-scanline-pitch)
-  );
 }
 
-.screen2d__noise {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: var(--crt-noise-opacity);
-  background-image: var(--noise-tile, none);
-  background-size: 128px 128px;
-  image-rendering: pixelated;
-  animation: noise-shift 0.34s steps(4) infinite;
-}
-
-:root[data-calm='true'] .screen2d__noise,
-.screen2d.is-off .screen2d__noise {
-  animation: none;
-}
-
-.screen2d.is-off .screen2d__noise {
+.screen2d.is-off::after {
   opacity: 0;
 }
 
@@ -572,10 +567,46 @@ body {
   animation: none;
 }
 
-@keyframes noise-shift {
-  to {
-    background-position: 128px 64px;
-  }
+.tt__glyph {
+  display: inline-block;
+}
+
+.screen2d__streak {
+  position: absolute;
+  background: var(--screen-rule);
+}
+
+/* Ghost layer: under the glass overlay, above the picture. Greyscale sprite with alpha. */
+.screen2d__ghost {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* Edge dim: only outside the safe area, never over text (--haunt-dim is 0..1, set by the layer). */
+.screen2d__vignette {
+  --haunt-dim: 0;
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent calc(var(--tt-safe-area) * 100% - 6%),
+    color-mix(in srgb, var(--grey-0) calc(var(--haunt-dim) * 25%), transparent) 100%
+  );
+}
+
+/* Roll sync band: at most 0.04 luminance reduction, travels with the seam. */
+.screen2d__rollbar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 6%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  background: color-mix(in srgb, var(--grey-0) 6%, transparent);
 }
 
 /* Line grows, shrinks to a dot, holds, then opens to the picture. No brightness pulse. */

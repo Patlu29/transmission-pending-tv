@@ -7,6 +7,7 @@ export interface Palette {
   factText: string;
   headerBg: string;
   headerText: string;
+  rule: string;
   tt: string[];
   fontTeletext: string;
   fontDisplay: string;
@@ -26,6 +27,7 @@ export function readPalette(force = false): Palette {
     factText: v('--screen-fact-text'),
     headerBg: v('--screen-header-bg'),
     headerText: v('--screen-header-text'),
+    rule: v('--screen-rule'),
     tt: Array.from({ length: 8 }, (_, i) => v(`--tt-${i}`)),
     fontTeletext: v('--font-teletext'),
     fontDisplay: v('--font-display'),
@@ -35,4 +37,5 @@ export function readPalette(force = false): Palette {
   return palette;
 }
 
-export const FONT_LOAD_SPECS = ['16px Bedstead', '600 16px "Barlow Condensed"'];
+/** Faces to await before the first canvas draw. */
+export const FONT_LOAD_SPECS = ['16px VT323', '600 16px "Barlow Condensed"'];

@@ -1,4 +1,4 @@
-import type { IntroLine } from '@/facts/schema';
+import type { IntroLine } from '../../facts/schema.ts';
 
 /** Word wrap on a plain string. Returns [start, end) ranges; hard-breaks words longer than `width`. */
 export function wrapRanges(text: string, width: number): Array<[number, number]> {

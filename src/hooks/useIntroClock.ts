@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { intro } from '@/facts';
 import { useDisplayStore } from '@/state/displayStore';
+import { useHauntStore } from '@/state/hauntStore';
 import { ALL_CHARS, currentPlaylist, useIntroStore } from '@/state/introStore';
 import {
   AUTO_ADVANCE_MIN_MS,
@@ -8,6 +9,7 @@ import {
   CALM_CARD_MS,
   CARD_HOLD_MS,
   END_HOLD_MS,
+  HAUNT_HOLD_EXTENSION_MAX_MS,
   LINE_GAP_MS,
   PAGE_HOLD_BASE_MS,
   PAGE_HOLD_PER_CHAR_MS,
@@ -121,7 +123,11 @@ export function startIntroClock(): () => void {
         break;
       case 'hold': {
         elapsed += dt;
-        if (elapsed >= PAGE_HOLD_BASE_MS + PAGE_HOLD_PER_CHAR_MS * frame.chars) {
+        const hold = PAGE_HOLD_BASE_MS + PAGE_HOLD_PER_CHAR_MS * frame.chars;
+        // An event cue (text effect, roll) on this page extends the hold until it ends, by at most 6 s.
+        const waiting =
+          useHauntStore.getState().busy && elapsed < hold + HAUNT_HOLD_EXTENSION_MAX_MS;
+        if (elapsed >= hold && !waiting) {
           const next = list[fi + 1];
           if (next) {
             s.setProgress(next.pageIndex, next.start, 0);

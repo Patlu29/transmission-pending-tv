@@ -33,8 +33,13 @@ let cachedTokens: GridTokens | null = null;
 /** Reads the grid tokens from tokens.css once (falls back to the documented defaults). */
 export function readGridTokens(): GridTokens {
   if (cachedTokens) return cachedTokens;
-  if (typeof document === 'undefined') return DEFAULT_GRID_TOKENS;
-  const cs = getComputedStyle(document.documentElement);
+  // Structural typing keeps this module free of DOM types so unit tests can import it under Node.
+  const g = globalThis as unknown as {
+    document?: { documentElement: unknown };
+    getComputedStyle?: (el: unknown) => { getPropertyValue(name: string): string };
+  };
+  if (!g.document || !g.getComputedStyle) return DEFAULT_GRID_TOKENS;
+  const cs = g.getComputedStyle(g.document.documentElement);
   const num = (name: string, fallback: number) => {
     const v = parseFloat(cs.getPropertyValue(name));
     return Number.isFinite(v) ? v : fallback;

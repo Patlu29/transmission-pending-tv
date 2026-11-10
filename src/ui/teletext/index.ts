@@ -16,5 +16,4 @@ export {
   type TapAction,
 } from './frame';
 export { drawFrame } from './draw';
-export { drawTestCard } from './testCard';
 export { readPalette, type Palette } from './palette';

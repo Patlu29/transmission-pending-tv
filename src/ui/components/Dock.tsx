@@ -31,6 +31,8 @@ export function Dock() {
   const paused = useIntroStore((s) => s.paused);
   const autoAdvance = useIntroStore((s) => s.autoAdvance);
   const audio = useDisplayStore((s) => s.audio);
+  const calmSwitch = useDisplayStore((s) => s.calmSwitch);
+  const osCalm = useDisplayStore((s) => s.osReducedMotion);
   const calm = useDisplayStore((s) => s.reducedMotion);
   const mode = useDisplayStore((s) => s.renderMode);
   const loadProgress = useDisplayStore((s) => s.loadProgress);
@@ -54,7 +56,21 @@ export function Dock() {
       disabled: loading,
       busy: loading,
       large: !powered,
-      pri: 3,
+      pri: 0,
+    },
+    // FR-31: the Calm key is always on the dock, directly after Power.
+    {
+      id: 'calm',
+      label: osCalm ? 'Calm: on (system)' : calmSwitch ? 'Calm: on' : 'Calm: off',
+      onPress: () => {
+        useDisplayStore.getState().toggleCalm();
+        useUiStore
+          .getState()
+          .announce(useDisplayStore.getState().calmSwitch ? 'Calm mode on' : 'Calm mode off');
+      },
+      disabled: osCalm,
+      pressed: calmSwitch || osCalm,
+      pri: 0,
     },
   ];
   if (status === 'warming' || status === 'playing') {
@@ -117,13 +133,13 @@ export function Dock() {
     });
   }
 
-  const compact = (mode === '3d-screen' || (mode === '2d' && !wide)) && keys.length > 4;
+  const compact = (mode === '3d-screen' || (mode === '2d' && !wide)) && keys.length > 5;
   const inline = compact
     ? new Set(
         keys
           .map((k, i) => ({ k, i }))
           .sort((a, b) => a.k.pri - b.k.pri || a.i - b.i)
-          .slice(0, 3)
+          .slice(0, 4)
           .map((x) => x.k.id),
       )
     : null;
@@ -190,7 +206,13 @@ export function Dock() {
             pressed={k.pressed}
             busy={k.busy}
             large={k.large}
-            describedBy={k.id === 'power' && loading ? reasonId : undefined}
+            describedBy={
+              k.id === 'power'
+                ? [loading ? reasonId : '', !powered ? 'start-note' : '']
+                    .filter(Boolean)
+                    .join(' ') || undefined
+                : undefined
+            }
           />
         ))}
         {more.length > 0 && (

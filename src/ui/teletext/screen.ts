@@ -1,8 +1,11 @@
 import { facts, intro } from '@/facts';
+import { useHauntStore } from '@/state/hauntStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { COLLAPSE_MS } from '@/state/timing';
 import { drawFrame } from './draw';
+import { toFxInput, fxTick } from './fxFromStore';
+import { resetFontMetrics } from './font';
 import { buildFrame, type FrameInput } from './frame';
 import { computeGrid } from './grid';
 import { FONT_LOAD_SPECS, readPalette } from './palette';
@@ -32,6 +35,7 @@ let raf = 0;
 let lastKey = '';
 let held: { input: FrameInput; until: number } | null = null;
 let lastPowered: FrameInput | null = null;
+let fontsReady = false;
 let holdTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Snapshot of the store state the frame model needs (also used for tap hit-testing). */
@@ -52,6 +56,7 @@ export function currentFrameInput(): FrameInput {
     loadProgress: d.loadProgress,
     assetFailed: d.assetFailed,
     reducedMotion: d.reducedMotion,
+    fx: d.reducedMotion ? null : toFxInput(useHauntStore.getState().textEffects),
   };
 }
 
@@ -72,13 +77,14 @@ function inputKey(i: FrameInput, cols: number, rows: number): string {
     i.reducedMotion,
     cols,
     rows,
+    i.fx ? `${i.fx.lineId}:${i.fx.kind}:${fxTick(i.fx)}` : '',
   ].join('|');
 }
 
 function draw(force = false) {
   raf = 0;
   const display = useDisplayStore.getState();
-  if (!canvas || !size || display.renderMode === '2d') return;
+  if (!canvas || !size || !fontsReady || display.renderMode === '2d') return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
 
@@ -118,18 +124,32 @@ export function startTeletextScreen(): () => void {
     prevPowered = powered;
     schedule();
   };
-  const unsubs = [useIntroStore.subscribe(onIntro), useDisplayStore.subscribe(() => schedule())];
+  const unsubs = [
+    useIntroStore.subscribe(onIntro),
+    useDisplayStore.subscribe(() => schedule()),
+    useHauntStore.subscribe(() => schedule()),
+  ];
   const onFonts = () => {
+    resetFontMetrics();
     readPalette(true);
     schedule(true);
   };
   document.fonts?.addEventListener('loadingdone', onFonts);
-  FONT_LOAD_SPECS.forEach((spec) => void document.fonts?.load(spec).catch(() => undefined));
+  // Wait for the faces before the first draw (a timeout keeps the screen working if a font never arrives).
+  const timeout = new Promise<void>((resolve) => setTimeout(resolve, 3000));
+  const loads = Promise.all(
+    FONT_LOAD_SPECS.map((spec) => document.fonts?.load(spec).catch(() => undefined)),
+  );
+  void Promise.race([loads, timeout]).then(() => {
+    fontsReady = true;
+    onFonts();
+  });
   schedule(true);
   return () => {
     unsubs.forEach((u) => u());
     document.fonts?.removeEventListener('loadingdone', onFonts);
     clearTimeout(holdTimer);
+    fontsReady = false;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
   };

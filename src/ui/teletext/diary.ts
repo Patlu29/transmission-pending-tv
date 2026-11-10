@@ -1,5 +1,5 @@
-import type { CommitRef } from '@/facts/schema';
-import { wrapRanges } from './wrap';
+import type { CommitRef } from '../../facts/schema.ts';
+import { wrapRanges } from './wrap.ts';
 
 /** Diary pages (design-spec 5.4): P100 is the index, P101 onward are commit pages, capped at 899. */
 export const INDEX_PAGE = 100;

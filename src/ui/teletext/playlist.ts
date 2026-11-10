@@ -1,5 +1,5 @@
-import type { IntroPage, ResolvedIntro } from '@/facts/schema';
-import { wrappedHeight } from './wrap';
+import type { IntroPage, ResolvedIntro } from '../../facts/schema.ts';
+import { wrappedHeight } from './wrap.ts';
 
 /** One screenful of the intro: logical lines [start, end) of a page (sub-pages, design-spec 5.3). */
 export interface PlaylistFrame {

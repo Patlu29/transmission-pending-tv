@@ -1,5 +1,4 @@
-import type { Facts, ResolvedIntro } from '@/facts/schema';
-import type { IntroStatus } from '@/state/introStore';
+import type { Facts, ResolvedIntro } from '../../facts/schema.ts';
 import {
   ENTRY_INDENT,
   FIRST_COMMIT_PAGE,
@@ -7,10 +6,11 @@ import {
   layoutDiary,
   pageNumberOf,
   type DiaryView,
-} from './diary';
-import { contentRows, type GridSpec } from './grid';
-import { buildPlaylist, frameIndexAt } from './playlist';
-import { flattenLine, wrapRanges } from './wrap';
+} from './diary.ts';
+import { contentRows, type GridSpec } from './grid.ts';
+import { buildPlaylist, frameIndexAt } from './playlist.ts';
+import { bleedsAt, hashSeed, isActive, rewriteText, type FxInput } from './effects.ts';
+import { flattenLine, wrapRanges } from './wrap.ts';
 
 /**
  * The frame model: what the screen shows, as rows of styled text runs on the
@@ -47,18 +47,33 @@ export interface Hit {
   action: TapAction;
 }
 
+/** Motion data for tremble and bleed (rewrite is already applied to the run text). */
+export type FrameFx =
+  | { kind: 'tremble'; rows: number[]; seed: number; elapsedMs: number; durMs: number; amp: number }
+  | {
+      kind: 'bleed';
+      streaks: Array<{ row: number; col: number }>;
+      elapsedMs: number;
+      durMs: number;
+    };
+
 export interface Frame {
   mode: 'dark' | 'card' | 'page';
   cols: number;
   rows: number;
   runs: Run[][];
   hits: Hit[];
-  /** Test card state (mode 'card'). */
-  card: { sub: string; dim: boolean } | null;
+  /** Test card state (mode 'card'): sub-caption, loading percent (or null) and whether it is dimmed. */
+  card: { sub: string; loadingPercent: number | null; dim: boolean } | null;
+  /** Running tremble or bleed, or null. */
+  fx: FrameFx | null;
 }
 
+/** Same union as introStore's IntroStatus (kept local so the frame model has no store dependency). */
+export type FrameStatus = 'off' | 'loading' | 'ready' | 'warming' | 'playing' | 'ended';
+
 export interface FrameInput {
-  status: IntroStatus;
+  status: FrameStatus;
   blank: boolean;
   paused: boolean;
   pageIndex: number;
@@ -71,6 +86,8 @@ export interface FrameInput {
   loadProgress: number;
   assetFailed: boolean;
   reducedMotion: boolean;
+  /** The running haunted-text effect, if any. Ignored under reduced motion. */
+  fx?: FxInput | null;
 }
 
 export interface FrameData {
@@ -118,7 +135,15 @@ function fastext(frame: Frame, labels: Array<[string, DockKey | null]>) {
 }
 
 function blank(grid: GridSpec, mode: Frame['mode'], card: Frame['card'] = null): Frame {
-  return { mode, cols: grid.cols, rows: grid.rows, runs: emptyRows(grid), hits: [], card };
+  return {
+    mode,
+    cols: grid.cols,
+    rows: grid.rows,
+    runs: emptyRows(grid),
+    hits: [],
+    card,
+    fx: null,
+  };
 }
 
 function titleRow(frame: Frame, input: FrameInput, title: string, right?: string) {
@@ -145,15 +170,26 @@ function introFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
 
   const lastRow = grid.rows - 2;
   let row = 2;
+  const fx = isActive(input.fx) && !input.reducedMotion ? input.fx : null;
+  let fxRows: Array<{ row: number; a: number; b: number }> | null = null;
   const cur: { at: { row: number; col: number } | null } = { at: null };
   for (let li = pf.start; li < pf.end && li <= input.lineIndex; li++) {
     const line = page.lines[li];
     if (!line) break;
     if (li > pf.start) row += 1;
     const flat = flattenLine(line);
+    const fxHere = fx && fx.lineId === line.id ? fx : null;
+    const rewritten =
+      fxHere &&
+      fxHere.kind === 'rewrite' &&
+      (li !== input.lineIndex || input.revealedChars >= flat.text.length)
+        ? rewriteText(flat.text, flat.fact, fxHere)
+        : null;
+    const text = rewritten ? rewritten.text : flat.text;
     const shown =
       li === input.lineIndex ? Math.min(input.revealedChars, flat.text.length) : flat.text.length;
     const ranges = wrapRanges(flat.text, grid.cols);
+    if (fxHere) fxRows = ranges.map(([a, b], ri) => ({ row: row + ri, a, b }));
     ranges.forEach(([a, b], ri) => {
       const r = row + ri;
       if (r > lastRow) return;
@@ -161,10 +197,12 @@ function introFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
       // Group the revealed characters into copy and fact runs.
       let i = a;
       while (i < end) {
-        const isFact = flat.fact[i] === true;
+        const kindAt = (n: number): RunKind =>
+          flat.fact[n] === true ? 'fact' : rewritten?.replaced[n] ? 'strong' : 'copy';
+        const kind = kindAt(i);
         let j = i;
-        while (j < end && (flat.fact[j] === true) === isFact) j++;
-        put(frame, r, i - a, flat.text.slice(i, j), isFact ? 'fact' : 'copy');
+        while (j < end && kindAt(j) === kind) j++;
+        put(frame, r, i - a, text.slice(i, j), kind);
         i = j;
       }
       const isCursorRow = shown >= a && (shown < b || ri === ranges.length - 1);
@@ -173,6 +211,32 @@ function introFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
       }
     });
     row += ranges.length;
+  }
+  if (fx && fxRows) {
+    const lineRows = fxRows;
+    if (fx.kind === 'tremble') {
+      frame.fx = {
+        kind: 'tremble',
+        rows: lineRows.map((r) => r.row),
+        seed: hashSeed(fx.lineId),
+        elapsedMs: fx.elapsedMs,
+        durMs: fx.durMs,
+        amp: fx.params.amp ?? 0.04,
+      };
+    } else if (fx.kind === 'bleed') {
+      const last = lineRows[lineRows.length - 1];
+      const below = last ? last.row + 1 : lastRow + 1;
+      const line = page.lines.find((l) => l.id === fx.lineId);
+      if (last && line && below <= lastRow && (frame.runs[below]?.length ?? 1) === 0) {
+        const streaks: Array<{ row: number; col: number }> = [];
+        const text = flattenLine(line).text;
+        for (let i = last.a; i < last.b; i++) {
+          if (text[i] !== ' ' && bleedsAt(fx.lineId, i))
+            streaks.push({ row: below, col: i - last.a });
+        }
+        frame.fx = { kind: 'bleed', streaks, elapsedMs: fx.elapsedMs, durMs: fx.durMs };
+      }
+    }
   }
   if (cur.at && input.status === 'playing' && !input.reducedMotion) {
     put(frame, cur.at.row, cur.at.col, ' ', 'cursor');
@@ -292,13 +356,14 @@ function diaryFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
 export function buildFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
   switch (input.status) {
     case 'loading': {
-      const sub = input.assetFailed
-        ? 'NO SIGNAL'
-        : `TUNING... ${Math.round(input.loadProgress * 100)}%`;
-      return blank(grid, 'card', { sub, dim: true });
+      return blank(grid, 'card', {
+        sub: input.assetFailed ? 'NO SIGNAL' : 'TUNING...',
+        loadingPercent: input.assetFailed ? null : Math.round(input.loadProgress * 100),
+        dim: true,
+      });
     }
     case 'warming':
-      return blank(grid, 'card', { sub: 'STAND BY', dim: false });
+      return blank(grid, 'card', { sub: 'STAND BY', loadingPercent: null, dim: false });
     case 'playing':
       return input.blank ? blank(grid, 'dark') : introFrame(input, grid, data);
     case 'ended':

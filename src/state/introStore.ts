@@ -43,6 +43,8 @@ interface IntroState {
   epoch: number;
   /** performance.now() at the last status change. */
   statusSince: number;
+  /** How the intro ended: Skip eases the haunting out in 1.2 s, a natural end in 3 s. */
+  endReason: 'natural' | 'skip' | null;
   /** Calm auto-advance (opt-in, default off). */
   autoAdvance: boolean;
 
@@ -104,6 +106,7 @@ const fresh = {
   diaryCursor: 0,
   pageEntry: '',
   noSuchPageAt: null as number | null,
+  endReason: null as 'natural' | 'skip' | null,
 };
 
 export const useIntroStore = create<IntroState>()((set, get) => {
@@ -141,6 +144,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
     epoch: 0,
     statusSince: 0,
     autoAdvance: false,
+    endReason: null,
 
     markReady: () => {
       if (get().status === 'loading') set({ status: 'ready', statusSince: now() });
@@ -161,7 +165,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
 
     skip() {
       if (get().status !== 'playing') return;
-      transition('ended', { ...fresh });
+      transition('ended', { ...fresh, endReason: 'skip' });
       announce('Intro skipped. Build diary showing.');
       useUiStore.getState().requestFocus('replay');
     },
@@ -260,7 +264,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
 
     endIntro() {
       if (get().status !== 'playing') return;
-      transition('ended', { ...fresh });
+      transition('ended', { ...fresh, endReason: 'natural' });
       announce('Intro finished. Build diary showing.');
     },
 

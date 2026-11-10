@@ -1,4 +1,5 @@
 import { useDisplayStore } from '@/state/displayStore';
+import { useHauntStore } from '@/state/hauntStore';
 import { isPoweredStatus, useIntroStore, type IntroStatus } from '@/state/introStore';
 
 /**
@@ -118,7 +119,18 @@ export function startAudioEngine(): () => void {
     if (useDisplayStore.getState().audio === 'on') applyStatus(status, was);
   };
   prevStatus = useIntroStore.getState().status;
-  const unsubs = [useDisplayStore.subscribe(onDisplay), useIntroStore.subscribe(onIntro)];
+  let lastHum = 0;
+  const onHaunt = () => {
+    const { hum } = useHauntStore.getState();
+    if (Math.abs(hum - lastHum) < 0.01 || useDisplayStore.getState().audio !== 'on') return;
+    lastHum = hum;
+    applyStatus(useIntroStore.getState().status, useIntroStore.getState().status);
+  };
+  const unsubs = [
+    useDisplayStore.subscribe(onDisplay),
+    useIntroStore.subscribe(onIntro),
+    useHauntStore.subscribe(onHaunt),
+  ];
   return () => {
     unsubs.forEach((u) => u());
     clearTimeout(suspendTimer);

@@ -100,3 +100,62 @@ Test hook: in dev and `--mode test` builds, `window.__APP_TEST__ = { useIntroSto
 - qa-engineer: use `?mode=2d|3d-screen|3d-set`; `[data-fact]` lives only in `#transcript` (hidden). Run the app with `vite build --mode test` or `npm run dev` to get `window.__APP_TEST__`. Time the intro with the exported constants; measured 2.5 s warm-up (2.2 s plus 0.3 s hold) and about 44.6 s of intro.
 - performance-optimiser: the intro redraws the canvas on every revealed character (about 90 per second) with one `fillText` per cell; if frame time matters, draw per run or throttle to 30 Hz. The initial chunk is 276 kB (88 kB gzip), the scene chunk 955 kB (256 kB gzip).
 - architect: `index.html` now has the `<noscript>` message; `src/styles/fonts.css` is imported in `main.tsx`.
+
+---
+
+## Round 2: ghost story (the Occupant)
+
+`npm run lint`, `typecheck`, `test` (25 tests) and `build` pass. Checked in headless Chrome with `?mode=2d` (full story, Calm mid-story, Skip, Replay, Power-off) and 3d-set (start screen, focus ring).
+
+### Measured duration (FR-8: 45 to 90 s)
+Full motion, 2D, 17 commits and 7 agents: **89.3 s** from the first line to the diary index (warm-up of 2.5 s excluded; includes the 3 s end hold). That is inside the limit but only just. Page starts: 0, 4.8, 13.5, 22.0, 31.8, 44.3, 52.8, 70.3, 81.0 s. It grows with the facts (each new agent role, stack entry or commit-count digit adds characters) and with effect-hold extensions (up to 6 s per page). The diary page alone is 17.5 s. If the copy or the role list grows, FR-8 will be exceeded; the cheapest fix is to raise `REVEAL_CPS` or shorten `PAGE_HOLD_*` (ux-ui-designer and tech lead to decide). `estimateIntroDurationMs` in `src/state/timing.ts` gives the baseline without holds.
+
+### What changed
+- `src/state/timing.ts`: REVEAL_CPS 60, LINE_GAP_MS 450, PAGE_HOLD_BASE_MS 1200, PAGE_HOLD_PER_CHAR_MS 10, END_HOLD_MS 3000, plus haunt constants.
+- `src/state/cues.ts`: parser for `src/content/intro.cues`. Unknown anchors, cues or keys, missing keys, event cues without a line `@end` anchor, `roll` away from a page end, `rewrite` over a fact segment or with digits or too many letters, and more than two `roll` cues are errors. Out-of-range values are clamped with a warning. Pure, imports with relative paths so unit tests can load it under Node.
+- `src/state/hauntStore.ts`: written only by the scheduler. Field names as in design-spec 16.3.
+- `src/state/hauntScheduler.ts`: fires cues as `(pageIndex, lineIndex, revealedChars)` crosses anchors (`@end` is line end plus 300 ms), once per epoch, frozen by Pause. State ramps are smoothstep, at least 2 s, and rate limited (ghost 0.08/s, creep 0.04/s, dim 0.15/s). One text effect at a time. Natural end eases to zero over 3 s, Skip over 1.2 s (event cues cancelled), Replay zeroes at once with creep over 700 ms, power-off at once. Calm (`reducedMotion`) zeroes everything and clears effects within one frame; turning Calm off does not resume until the next line anchor. Started from `App.tsx`.
+- `useIntroClock`: a page hold is extended (at most 6 s) while `hauntStore.busy` is true (a queued or running text effect or a roll; a pending knob turn does not extend it).
+- `introStore.endReason` (`'natural' | 'skip' | null`) tells the scheduler which ease-out to use.
+- `src/ui/teletext/effects.ts`, `frame.ts`, `draw.ts`: `tremble`, `rewrite` and `bleed`. `rewrite` is applied to the displayed characters and never to a fact segment; `tremble` and `bleed` are drawn as offsets and rectangles. Effects only run after the line is fully revealed, redraw at 30 Hz while running, and an expired or absent effect gives exactly the resolved text. The DOM transcript and `data-fact` spans are untouched.
+- `src/ui/components/Screen2D.tsx`, `Ghost2D.tsx`: 2D screen uses `crt2d.css`, the same effect layer (per-glyph tremble, bleed streaks, rewrite), the picture roll (translate by one wrap, sine in-out, with a 6 per cent sync band at 0.06 alpha), the edge dim (radial inset outside the safe area, `dim x 25 per cent`) and a ghost canvas. The ghost caps its luminance at 0.30 and, using the frame's text cells with one cell of dilation, reduces it to 0.07 over text.
+- Start screen: content note with the exact spec wording, Calm switch (`aria-pressed`), and Power `aria-describedby` the note (`#start-note`). In 3d-set the block sits in the left column so the set and its screen stay clear.
+- Dock: Calm key always present, directly after Power (`Calm: on/off`, disabled and "on (system)" when the OS asks for reduced motion). On compact layouts Power and Calm are always inline.
+- Fonts: palette and `FONT_LOAD_SPECS` now wait for VT323 and Barlow Condensed before the first canvas draw (3 s timeout). Mosaics, fastext blocks, header bars, the cursor and bleed streaks are rectangles. Glyph size comes from `src/ui/teletext/font.ts`.
+- Audio: the `hum` cue raises hum gain (0.04 to 0.12) and static (0.008 to 0.038) slowly along smoothstep 0.15 to 0.8 with a 0.8 s time constant; nothing sudden. Zero under Calm because the haunt store is zero.
+- Round-1 requests: `crt2d.css` imported in `main.tsx`; the idle, loading and 2D card use `drawTestCard` from `@/scene/materials/testcard/drawTestCard` (dimmed with a 60 per cent black veil while loading; my own test card and noise-tile code are deleted). Stage focus ring is now its own layer (`.stage__ring`) so the canvas cannot cover it; it sits 8 px in from the viewport edge in the focus token colour with a black halo, and was checked on 3d-set.
+- Tests: `tests/unit/cues.test.ts` (shipped file parses with no errors, every anchor resolves to a real page or line id of the generated intro, bad anchors, cues, keys, fact rewrites, digits and misplaced rolls all fail) and `tests/unit/textEffects.test.ts` (for every effect cue in the shipped file, at every 30 ms step and at three grid sizes: facts never change, settled frame equals the plain frame, rewrite changes exactly one row, nothing under reduced motion).
+
+### Font measurement (VT323, 2D check in Chrome)
+Measured advance of `M` is **0.400 em** (Courier New fallback: 0.600). At 960 x 720 in 2D (grid 40 x 16, cell 17.5 px, row 32.1 px) the derived size is 17.5 / 0.4 = 43.8 px, capped at row pitch / 0.9 = **35.7 px**, with 3.2 px of extra letter spacing in the DOM so columns line up with the cell grid. The canvas centres each glyph in its cell.
+
+### hauntStore shape (for scene and technical-artist)
+Units: values 0..1; `dur` and `over` in seconds; `startedAt` is `performance.now()` ms; `elapsed` is ms of unpaused time.
+
+| Field | Type | Written by cue | Read by |
+|---|---|---|---|
+| `ghost`, `ghostNear` | number | `ghost`, `ghost-near` | CRT material (`uGhost`, `uGhostNear`), 2D layer |
+| `creep` | number | `creep` | camera rig (3d-set only) |
+| `dim` | number | `dim` | lights (3d-set), `uHauntVignette` (3d-screen, 2D) |
+| `shadow` | number | `shadow` | wall decal |
+| `hum` | number | `hum` | audio engine |
+| `roll` | `{ active, startedAt, dur }` | `roll` | `uRoll` (phase = elapsed / dur), 2D screen |
+| `knobCue` | `{ nonce, which: 'channel' \| 'volume', deg, dur } \| null` | `knob` | knob layer; new cue when `nonce` changes |
+| `textEffects` | `Record<lineId, { kind, startedAt, dur, elapsed, params }>` | `tremble`, `rewrite`, `bleed` | rasteriser (canvas and 2D) |
+| `busy` | boolean | derived | the clock (hold extension) |
+
+All zero (and `textEffects` empty, `knobCue` null) whenever `displayStore.reducedMotion` is true. Read with `useHauntStore.getState()` in `useFrame`; never write.
+
+### Decisions and assumptions
+- The scheduler has its own rAF loop (idle when nothing is happening) rather than living inside the intro clock; it still keys off the clock's position and `epoch`. Decoupling lets the ease-out run after the clock has stopped.
+- Parse errors are logged with `console.error` and the cue is skipped (production behaviour); the unit test is the hard check in development.
+- Bleed streaks are 0.25 cell wide (spec: "1 cell wide"), centred under the glyph, so they read as streaks rather than blocks.
+- The ghost layer in 2D is not rolled with the picture (only text and card are).
+- 2D ghost needs `drawOccupant`; it is looked up with a lazy glob over `src/scene/materials/**/*ccupant*.ts` (export name `drawOccupant`). A figure did render in 2D during testing, so the technical-artist's file is already found. No sprite shimmer or tracking tear is added in 2D.
+
+### Requests for other agents
+- scene-developer: read `useHauntStore` as in the table; your seam to `introStore` is already working. `introStore.status` goes `ended` to `playing` on Replay (creep eases 700 ms in the store, so you need no extra smoothing beyond the 0.04/s limit).
+- technical-artist: `drawOccupant` is consumed by `Ghost2D.tsx` (2D); tell me if it moves or is renamed. `crt2d.css` and `drawTestCard` are in use. The test card caption still names Bedstead in `TELETEXT_FONT`; point it at VT323 (it renders in the fallback until then).
+- ux-ui-designer / tech lead: the story measures 89.3 s against a 90 s limit (see above); decide whether to retune constants or trim copy before the facts grow.
+- qa-engineer: `window.__APP_TEST__` now also exposes `useHauntStore`. Frame-analyse with the ghost at maximum (diary and glass pages); the 2D ghost is capped at 0.30 and 0.07 over text by construction, the 3D one by the shader.
+- architect: optional `scripts/facts/cues.ts` validator is not needed for correctness: `tests/unit/cues.test.ts` covers anchors, grammar and ranges.

@@ -6,6 +6,7 @@ import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
 import { useRenderMode } from '@/hooks/useRenderMode';
 import { handleStageKey } from '@/hooks/useStageShortcuts';
+import { startHauntScheduler } from '@/state/hauntScheduler';
 import { useDisplayStore } from '@/state/displayStore';
 import { useIntroStore } from '@/state/introStore';
 import { Dock } from '@/ui/components/Dock';
@@ -36,6 +37,7 @@ export default function App() {
 
   useEffect(() => startTeletextScreen(), []);
   useEffect(() => startAudioEngine(), []);
+  useEffect(() => startHauntScheduler(), []);
 
   // CSS reads this to collapse transitions under reduced motion or Calm (tokens.css only covers the media query).
   useEffect(() => {
@@ -59,6 +61,7 @@ export default function App() {
         tabIndex={0}
         onKeyDown={handleStageKey}
       >
+        <div className="stage__ring" aria-hidden="true" />
         {mode === '2d' ? <Screen2D /> : <SceneHost onLoaded={onSceneLoaded} />}
         {mode === '3d-screen' && <HitLayer />}
         <Hud />
