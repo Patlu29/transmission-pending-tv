@@ -1,0 +1,11 @@
+dist/
+node_modules/
+src/generated/
+public/
+assets/source/
+playwright-report/
+test-results/
+package-lock.json
+*.tmpl
+docs/
+*.md

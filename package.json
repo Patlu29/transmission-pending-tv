@@ -1,0 +1,53 @@
+{
+  "name": "transmission-pending-tv",
+  "private": true,
+  "version": "0.0.0",
+  "description": "A black-and-white 1970s television that introduces itself badly but truthfully.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "scripts": {
+    "facts": "node scripts/facts/collect.ts",
+    "facts:strict": "node scripts/facts/collect.ts --strict",
+    "facts:check": "node scripts/facts/collect.ts --check",
+    "dev": "npm run facts && vite",
+    "build": "npm run facts && tsc -b && vite build",
+    "preview": "vite preview",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "npm run facts && tsc -b",
+    "test": "npm run facts && vitest run",
+    "test:e2e": "playwright test"
+  },
+  "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "three": "0.187.0",
+    "zustand": "5.1.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.65.0",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@types/three": "0.187.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "eslint": "10.14.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.14.0",
+    "leva": "0.10.1",
+    "prettier": "3.9.10",
+    "r3f-perf": "7.2.3",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.72.2",
+    "vite": "8.3.7",
+    "vitest": "5.1.0"
+  }
+}
