@@ -1,5 +1,13 @@
 # Handoff: product-manager
 
+## Change 2026-11-10: ghost story
+- Scope: the intro is now a horror ghost story, "Haunted TV tells its build". The ghost narrates its own making; the real-facts pipeline (FR-9 to FR-14) and "as of commit" wording are unchanged.
+- Changed: FR-1 (power off with CRT collapse), FR-4 (Bedstead, VT323 fallback), FR-7 (now Must: 3D set desktop, screen-filling mobile), FR-8, FR-12 (adds tool, plugin, model), FR-17 (Calm mode), FR-19, NFR-1, US-1, US-4, US-9.
+- New: FR-24 to FR-35 (content note, haunted text, ghost figure, haunted set, camera creep, no jump scares, Calm switch, DOM transcript with `data-fact` spans, story structure, mobile scaling, audio); US-18 to US-23 in epic E6; FR-X7, FR-X8 out of scope.
+- Resolved: Q1, Q3, Q4, Q5. Remaining open: Q2 (kept as "as of commit"), Q6 host or URL, Q7 ghost name (default nameless).
+- Requests: architect, define an effects budget and a Calm-mode render path; technical-artist, design an original ghost and slow, flash-safe effects; scene-developer, knobs, light dim, camera creep; frontend-developer, DOM transcript with `data-fact` spans and a Calm switch that persists for the visit; qa-engineer, check that settled text equals resolved facts, flash limits, and no-jump-scare timing (300 ms).
+- Risk: ten-plus Musts including four animation types. FR-28 and FR-29 are the first to drop to Should if performance (NFR-1) is at risk.
+
 ## Summary
 Wrote requirements (FR-1 to FR-23, NFR-1 to NFR-14) and 17 user stories in 5 epics for the 1970s TV self-intro site. The central requirement is that intro facts are generated from real repo data at build time and checked by an independent test.
 

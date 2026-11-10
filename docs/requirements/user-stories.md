@@ -1,11 +1,18 @@
 # User stories
 
+## Changelog
+| Date | Change |
+|---|---|
+| 2026-11-10 | Ghost-story scope change. US-4 changed (horror ghost story). US-1 changed (power off, content note). US-9 changed (Calm mode). New epic E6 with US-18 to US-23. Story map updated. Items marked **[CHANGED]** or **[NEW]**. |
+
 ## Epic E1: Power on and first view
 
-### US-1: Switch the TV on (FR-1, FR-5, Must)
-As a visitor, I want to switch the TV on myself, so that the show starts when I am ready.
+### US-1: Switch the TV on and off (FR-1, FR-5, FR-24, Must) **[CHANGED]**
+As a visitor, I want to switch the TV on and off myself, so that the show starts and stops when I choose.
 
 **Acceptance criteria**
+- Given the page has loaded, when I look at it, then I see a powered-off TV with a labelled power control, a content note about the mild horror theme, and a Calm mode control, and the intro has not started
+- Given the TV is on, when I activate the power control, then the picture collapses to a line, then a dot, then fades, and the story stops
 - Given the page has loaded, when I look at it, then I see a powered-off TV with a labelled power control and the intro has not started
 - Given the power control is visible, when I click it, tap it, or press Enter or Space while it has focus, then the warm-up sequence plays for 1 to 3 s and the intro begins
 - Given assets are still loading, when I view the page, then the screen shows a greyscale loading message with progress text and the power control is disabled until ready
@@ -30,13 +37,14 @@ As a visitor, I want to see a test card while waiting, so that the wait feels in
 
 ## Epic E2: The terrible, truthful intro
 
-### US-4: Hear the terrible intro (FR-8, Must)
-As a visitor, I want a deliberately bad self-introduction, so that I am amused.
+### US-4: Hear the ghost's story (FR-8, FR-33, FR-30, Must) **[CHANGED]**
+As a visitor, I want a ghost trapped in the TV to tell the story of its own making, so that I get a creepy, memorable introduction.
 
 **Acceptance criteria**
-- Given I switched the TV on, when the warm-up ends, then the intro text appears line by line in teletext style
-- Given the intro is playing at default speed, when it finishes, then it has run 30 to 60 s
-- Given I read it, when I review its tone, then it is self-deprecating and contains no offensive content
+- Given I switched the TV on, when the warm-up ends, then the story text appears line by line in teletext style, in the ghost's voice
+- Given the intro is playing at default speed, when it finishes, then it has run 45 to 90 s and had a beginning, middle and end
+- Given I read it, when I review its tone, then it is mainly creepy, with dark humour at most, and contains no gore or offensive content
+- Given the story plays, when I watch it, then no jump scare occurs: nothing appears, sounds or changes suddenly within 300 ms
 - Given the intro finishes, when the last line shows, then the Replay control and the page index appear
 
 ### US-5: Trust the facts (FR-9, FR-10, FR-12, FR-13, Must)
@@ -77,10 +85,13 @@ As a visitor, I want to skip and replay, so that I stay in control.
 - Given I use only a keyboard, when I tab through the page, then Skip and Replay are reachable, in logical order, with visible focus and text labels
 - Given I use a touch device, when I tap Skip, then it works as with a mouse
 
-### US-9: Reduced motion (FR-17, Must)
-As a person who prefers reduced motion, I want calm presentation, so that I am not made unwell.
+### US-9: Reduced motion and Calm mode (FR-17, FR-31, Must) **[CHANGED]**
+As a person who prefers reduced motion or finds horror effects uncomfortable, I want a calm presentation, so that I can still read the whole story.
 
 **Acceptance criteria**
+- Given I switch Calm mode on at any time, when it takes effect, then haunted text, ghost movement, set misbehaviour and camera creep stop, and the story text and facts stay readable
+- Given I set Calm mode, when I replay or reload within the visit, then it stays on
+- Given my system sets prefers-reduced-motion: reduce, when I enter, then Calm mode is on by default
 - Given my system sets prefers-reduced-motion: reduce, when I enter, then there is no warm-up animation, camera movement, rolling bars or jitter
 - Given reduced motion is on, when the intro plays, then pages advance by my control or on a slow timer, with static noise instead of animated noise
 - Given reduced motion is on, when I change the OS setting during the visit, then the site updates without reload
@@ -153,9 +164,64 @@ As a visitor, I want a brief static burst between pages, so that it feels like s
 - Given I change page, when the transition plays, then it lasts under 400 ms and obeys the flash limits
 - Given reduced motion is on, when I change page, then the pages switch without the burst
 
+## Epic E6: Ghost-story animations **[NEW]**
+
+### US-18: Haunted text (FR-25, FR-26, FR-32, Must)
+As a visitor, I want the screen text to behave unnaturally, so that the story feels haunted.
+
+**Acceptance criteria**
+- Given the story is playing and Calm mode is off, when a line is shown, then it trembles, rewrites a word, or bleeds down the screen at least once in the story
+- Given any haunted-text effect has finished, when I read the line, then its text equals the resolved story text exactly
+- Given the DOM transcript, when I inspect it during an effect, then the DOM text is unchanged and every fact sits in a `data-fact` span
+- Given Calm mode or reduced motion is on, when lines are shown, then none of the effects run
+
+### US-19: Ghost forms in the static (FR-27, FR-19, Must)
+As a visitor, I want a pale figure to emerge from the static, so that I feel watched.
+
+**Acceptance criteria**
+- Given the story is playing and Calm mode is off, when the story reaches its middle, then a pale greyscale figure forms from the noise over at least 3 s
+- Given the figure is visible, when time passes, then it drifts slowly closer to the glass, with no sudden jump in size or position
+- Given a reviewer checks the design, when compared with known horror characters, then it is clearly original
+- Given the figure forms, when frame-by-frame analysis is run, then flash limits in FR-19 are met
+- Given Calm mode is on, when the story plays, then the figure is a still image or absent
+
+### US-20: The set misbehaves (FR-28, Must)
+As a desktop visitor, I want the TV itself to act haunted, so that the room feels uneasy.
+
+**Acceptance criteria**
+- Given the 3D set is shown and Calm mode is off, when the story plays, then at least three of these occur: a knob turns on its own, the picture rolls, the room light dims
+- Given the picture rolls, when it happens, then it takes at least 1 s and passes the flash limits
+- Given I am on mobile, when the story plays, then the picture still rolls and the screen dims or vignettes, with no 3D knobs required
+- Given Calm mode is on, when the story plays, then none of these occur
+
+### US-21: Camera creep (FR-29, FR-34, Must)
+As a desktop visitor, I want the camera to push slowly towards the screen, so that I feel drawn in.
+
+**Acceptance criteria**
+- Given the story is playing on desktop and Calm mode is off, when time passes, then the camera moves slowly closer to the screen
+- Given the camera has moved, when it reaches its limit, then it stops with all screen text still fully visible
+- Given I am on mobile, when the story plays, then the camera does not move
+- Given reduced motion or Calm mode is on, when the story plays, then the camera does not move
+
+### US-22: Know what I am in for (FR-24, FR-30, Must)
+As a visitor, I want a content note before I start, so that I can choose whether to continue.
+
+**Acceptance criteria**
+- Given the start screen, when I read it, then a short note says the theme is mild horror, with no jump scares
+- Given the start screen, when I look for Calm mode, then I can turn it on before powering on
+- Given I use a screen reader, when I reach the start screen, then the note and Calm control are announced
+
+### US-23: Slow-building audio (FR-35, FR-22, Could)
+As a visitor who opted in to sound, I want low, slowly building ambience, so that the dread has a soundtrack.
+
+**Acceptance criteria**
+- Given I arrive, when the page loads, then no audio plays
+- Given I unmute, when the story plays, then hum and distant static swell gradually, with no sudden loud sound
+- Given Calm mode is on, when I unmute, then ambient audio is muted or reduced to a steady low hum
+
 ## Story map
 | Release | Stories |
 |---|---|
-| MVP | US-1, US-2, US-4, US-5, US-6 (Must parts), US-8, US-9, US-10, US-11, US-12, US-13, US-14, US-15 |
+| MVP | US-1, US-2, US-4, US-5, US-6 (Must parts), US-8, US-9, US-10, US-11, US-12, US-13, US-14, US-15, US-18, US-19, US-20, US-21, US-22 |
 | Release 2 | US-3, US-7, the lint part of US-6, hidden-tab handling in US-13 |
-| Release 3 | US-16, US-17 |
+| Release 3 | US-16 and US-23 (audio), US-17 |

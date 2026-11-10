@@ -7,8 +7,10 @@
   - Defaults accepted: facts read "as of commit <hash>"; generic static host (to be chosen by devops).
   - Phase 2 architecture approved (2026-11-10).
   - Phase 3 design approved (2026-11-10). Added: Power toggles on/off (power-off shrinks to a dot); manual Calm mode switch on the start screen; Bedstead font if licence checks out, else VT323.
+  - Scope change (2026-11-10): the intro becomes a horror ghost story, "Haunted TV tells its build". All four animation types (haunted text, ghost forming from static, haunted set, camera creep). Creepy, no jump scares. Facts stay real.
+  - Font decision (2026-11-10): VT323 replaces Bedstead (licence caveat). Ghost stays nameless ("the Occupant").
   - Repository on GitHub account Patlu29, public, name decided with product manager and architect.
-- **Open questions:** none
+- **Open questions:** hosting target (devops will propose; GitHub Pages fits the public repo)
 - **Bug count:** n/a (not built yet)
 
 ## Phases
