@@ -7,3 +7,5 @@ playwright-report/
 .env
 .env.*
 !.env.example
+# Generated at build time by scripts/facts/collect.ts
+src/generated/
