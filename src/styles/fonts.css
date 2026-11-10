@@ -1,0 +1,29 @@
+/*
+ * Font faces. Owner: ux-ui-designer.
+ * DO NOT IMPORT until the WOFF2 files exist in public/fonts/ (see public/fonts/LICENCES.md).
+ * Importing it earlier makes the browser request files that return 404.
+ * URLs are relative to the document through Vite, which rewrites public assets with the base path (ADR 0007).
+ */
+@font-face {
+  font-family: 'Bedstead';
+  src: url('/fonts/bedstead-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('/fonts/barlow-condensed-400.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Barlow Condensed';
+  src: url('/fonts/barlow-condensed-600.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
