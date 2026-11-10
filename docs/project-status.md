@@ -1,6 +1,6 @@
 # Project status
 
-- **Current phase:** 4. Build
+- **Current phase:** 5. Performance
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
@@ -11,7 +11,8 @@
   - Font decision (2026-11-10): VT323 replaces Bedstead (licence caveat). Ghost stays nameless ("the Occupant").
   - Repository on GitHub account Patlu29, public, name decided with product manager and architect.
 - **Open questions:** hosting target (devops will propose; GitHub Pages fits the public repo)
-- **Bug count:** n/a (not built yet)
+- **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
+- **Bug count:** not yet tested (QA is Phase 6)
 
 ## Phases
 | # | Phase | Status |
@@ -19,8 +20,8 @@
 | 1 | Requirements | Done |
 | 2 | Architecture | Done |
 | 3 | Design | Done |
-| 4 | Build | In progress |
-| 5 | Performance | Not started |
+| 4 | Build | Done |
+| 5 | Performance | In progress |
 | 6 | QA | Not started |
 | 7 | Delivery | Not started |
 
