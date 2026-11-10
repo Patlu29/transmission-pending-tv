@@ -1,0 +1,93 @@
+/*
+ * 2D-mode CRT overlay: the CSS equivalent of the 3D screen shader's scanlines, vignette, glow and noise.
+ * Owner: technical-artist. Import once (frontend-developer): import '@/scene/materials/crt2d/crt2d.css';
+ *
+ * Markup (scanlines and noise are pseudo-elements, so no extra node is needed):
+ *   <div class="crt2d crt2d--text" data-calm="false"> ...transcript screen... </div>
+ *   add class crt2d--idle behind the test card (noise 24 Hz instead of 12 Hz)
+ *   set data-calm="true" on the element (or rely on prefers-reduced-motion) to freeze the noise
+ *   put class crt2d__glow on the text element for the phosphor glow
+ *
+ * Uses tokens from src/styles/tokens.css. Greyscale only. No fake curvature warp (design-spec 3.4).
+ * Vignette is the token's inset shadow on the element itself. Noise grain is 2 CSS px (a 64 px tile
+ * shown at 128 px, pixelated), steps at 12 or 24 Hz, and its spatial mean is the same every frame,
+ * so it cannot cause a flash. On black it lifts the ground by a constant amount (about 0.04 sRGB).
+ * The pseudo-elements sit above the text. Each step moves the tile by 38 px by 19 px, so no two
+ * steps in a loop show the same alignment.
+ */
+.crt2d {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-screen);
+  background: var(--screen-bg);
+  box-shadow: var(--shadow-screen-inset);
+}
+
+/* Scanlines: up to --crt-scanline-opacity darkening on the darkest row of each pitch. */
+.crt2d::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) calc(var(--crt-scanline-pitch) / 2),
+    rgba(0, 0, 0, var(--crt-scanline-opacity)) calc(var(--crt-scanline-pitch) / 2),
+    rgba(0, 0, 0, var(--crt-scanline-opacity)) var(--crt-scanline-pitch)
+  );
+}
+
+/* Static: greyscale tile at --crt-noise-opacity, stepped at 12 Hz (text) or 24 Hz (idle). */
+.crt2d::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: url('/textures/noise-tile-64.png') 0 0 / 128px 128px repeat;
+  opacity: var(--crt-noise-opacity);
+  image-rendering: pixelated;
+  animation: crt2d-noise-12 1s steps(12) infinite;
+}
+
+.crt2d--idle::after {
+  animation-name: crt2d-noise-24;
+  animation-timing-function: steps(24);
+}
+
+@keyframes crt2d-noise-12 {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -456px -228px;
+  }
+}
+
+@keyframes crt2d-noise-24 {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: -912px -456px;
+  }
+}
+
+/* Phosphor glow for text on the 2D screen. */
+.crt2d__glow {
+  text-shadow: 0 0 6px var(--screen-glow);
+}
+
+/* Calm mode and reduced motion: one frozen noise frame. */
+.crt2d[data-calm='true']::after {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .crt2d::after {
+    animation: none;
+  }
+}
