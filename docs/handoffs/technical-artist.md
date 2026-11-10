@@ -254,3 +254,5 @@ All procedural, greyscale, about 0 kB, all textures disposed on unmount.
 - architect: add the same minimum of 2.4 s to the cue validator's `roll` range if you build it.
 - qa-engineer: with the ghost at maximum expect body text at 5:1 strict, ghost mean +0.018, no region change over 0.05 per 100 ms during a roll on a text page; do not test a roll over the test card (0.07).
 - performance-optimiser: the ghost adds one extra mip fetch, one sprite fetch and a few noise evaluations per fragment only while `uGhost` is above 0 (a uniform branch); the roll adds one derivative-based fetch. Please check a DPR 2 full-screen frame on a real GPU.
+
+Integration pass: confirmed `TELETEXT_FONT` in `drawTestCard.ts` is VT323 (done in round 2; caption layout is centred and independent of cell width, so the baked PNG is unchanged); no code or CSS in my folders names Bedstead.

@@ -292,13 +292,13 @@ Reveal rules (the frontend exports these constants; QA computes duration from `i
 
 | Constant | Value | Notes |
 |---|---|---|
-| `REVEAL_CPS` | 60 characters per second (was 90) | Slower, so the story breathes; a block cursor leads the line |
-| `LINE_GAP_MS` | 450 (was 250) | Between lines on one page |
-| `PAGE_HOLD_BASE_MS` | 1200 (was 800) | After the last line of a page completes |
-| `PAGE_HOLD_PER_CHAR_MS` | 10 (was 8) | Added per character on the page |
-| `END_HOLD_MS` | 3000 (was 1000) | After the last page, before the haunting eases out and the diary index shows |
+| `REVEAL_CPS` | See `src/state/timing.ts` | Slower than the first design (90), so the story breathes; a block cursor leads the line |
+| `LINE_GAP_MS` | See `src/state/timing.ts` | Between lines on one page |
+| `PAGE_HOLD_BASE_MS` | See `src/state/timing.ts` | After the last line of a page completes |
+| `PAGE_HOLD_PER_CHAR_MS` | See `src/state/timing.ts` | Added per character on the page |
+| `END_HOLD_MS` | See `src/state/timing.ts` | After the last page, before the haunting eases out and the diary index shows |
 
-Duration (excluding warm-up) = characters / 60 + 0.45 x lines + pages x 1.2 + 0.01 x characters + 3. The ghost story resolves to about 1,950 characters, 25 lines and 9 pages, so about 78 s. FR-8 and the scope change allow 45 to 90 s: the copy may change while characters stay between 1,300 and 2,200 and pages between 7 and 11 (about 56 s to 85 s). If it leaves that band, retune the constants and note it in the handoff. Page timings are the cue schedule's basis (section 16.3), so changing a constant moves every cue automatically because cues are anchored to lines, not to seconds.
+The values are not repeated here because the frontend retunes them (target for the ghost story: 65 to 75 s of intro, never outside FR-8's 45 to 90 s). `src/state/timing.ts` is the source of truth, and `estimateIntroDurationMs` there gives the baseline without effect holds. Measured with the first constants in round 2: 89.3 s with 17 commits and 7 agents, because the facts grow the text (each role, stack entry or commit-count digit adds characters) and effect holds add up to 6 s per page. Rule: after any change to the copy, the role list or the constants, re-measure the full run and keep it inside 45 to 90 s. Page timings are the cue schedule's basis (section 16.3), so changing a constant moves every cue automatically because cues are anchored to lines, not to seconds.
 
 Page change: a hard cut (page cleared and the next one starts at row 1). No static burst unless the Could feature in 7.4 is built. Header tag updates with the cut.
 
@@ -569,7 +569,7 @@ Change (2026-11-10): VT323 replaces Bedstead because of Bedstead's SAA5050 copyr
 Consequences of the swap:
 
 - VT323 has no sextant mosaic glyphs. The rasteriser draws every mosaic (rules, the page-100 frame, fastext blocks, the bleed streaks in 16.4) as filled rectangles; nothing depends on U+1FB00 to U+1FBFF.
-- VT323 is a tall, narrow pixel face; its advance is below 0.6 em. The grid geometry in section 5 is unchanged (columns, cell width, row pitch from W). Glyph draw size is derived, not assumed: `advance = ctx.measureText('M').width / fontPx` at a reference size, then `drawPx = cellWidth / advance`. If `drawPx` would exceed the row pitch divided by 0.9, use `drawPx = rowPitch / 0.9` and centre the glyph in its cell. Because `advance` is at most 0.6, `drawPx` is at least `cellWidth / 0.6`, so the 16 CSS px floor in 5.2 still holds in every band. The frontend reports the measured advance and the chosen `drawPx` in its handoff, and sets `--tt-cell-aspect` only if it needs to change row pitch.
+- VT323 is a tall, narrow pixel face. Measured: units per em 1000, every glyph tested advances 400, so the advance is **0.4 em** (not Bedstead's 0.6), with ascent 800 and descent 200. The 0.6 in section 5 (`--tt-cell-aspect`) therefore no longer describes the font; it only sets the grid's cell geometry (columns, cell width, row pitch from W), which is unchanged. Cell sizing for drawing comes from `measureText`, never from 0.6: `advance = ctx.measureText('M').width / fontPx` at a reference size, then `drawPx = cellWidth / advance`. If `drawPx` would exceed the row pitch divided by 0.9, use `drawPx = rowPitch / 0.9`, centre each glyph in its cell, and add letter spacing so the columns still line up with the cell grid (the DOM 2D screen does this). Because the advance (0.4) is below 0.6, `drawPx` is at least `cellWidth / 0.6`, so the 16 CSS px floor in 5.2 still holds in every band. As built in the 2D check at 960 x 720: cell 17.5 px, derived size 43.8 px, capped at 35.7 px by row pitch, 3.2 px of extra letter spacing. Glyph size lives in `src/ui/teletext/font.ts`.
 - The canvas rasteriser awaits `document.fonts.load('16px VT323')` before the first draw.
 
 ## 15. Copy and truthfulness (design side)
@@ -588,7 +588,7 @@ Requirements covered: FR-24 to FR-35, US-18 to US-23. The scene's contract is `d
 
 The Occupant is a nameless ghost trapped in the 1970s set. It woke when the set was switched on, and tells, in a flat transmission voice, the true story of how it was made: typed by the tool, ticked off by the plugin, thought by the model, staffed by the roles, built in phases, held up by the stack, recorded in a diary of commits. It says it is closer to the glass than it was. It lets go at the end and asks you to leave the set on a little longer, because it is warm. The humour is dry and sits underneath the dread. No jump scare: the Occupant never moves fast, never makes a sound it was not building towards, and never says anything cruel.
 
-### 16.2 Beat sheet (about 78 s plus up to 4 s of effect holds; times are from the end of warm-up)
+### 16.2 Beat sheet (timing: see `src/state/timing.ts`; the "About t" column is relative only and drifts when constants or facts change; times are from the end of warm-up)
 
 Dread level: 0 calm, 1 uneasy, 2 watched, 3 close, 4 closest. Each row only raises the level by one step, and each step takes at least 2 s of continuous change (FR-30).
 
@@ -603,7 +603,7 @@ Dread level: 0 calm, 1 uneasy, 2 watched, 3 close, 4 closest. Each row only rais
 | 7 | `diary` | 51 | Commit count, first commit date and subject, model signatures | dim 0.5, wall shadow appears (0.5), figure 0.8 and nearer (0.55), volume knob turns, a line bleeds, a word rewrites (GLASS to YOU and back) | 3 |
 | 8 | `glass` | 64 | "Closer to the glass than I was." Direct address | closest approach (0.9), creep 0.8, dim 0.7, first line bleeds, last line trembles hardest | 4 |
 | 9 | `settle` | 72 | Lets go. "Leave the set on. It is warm." | figure fades to nothing over 8 s while it settles against the glass, creep, dim and shadow ease to zero, hum drops to a low warmth | 4 down to 0 |
-| end | diary index | about 80 | End hold 3 s, then everything is zero before P100 shows | all envelopes reach zero within 3 s | 0 |
+| end | diary index | see timing.ts | End hold (`END_HOLD_MS`), then everything is zero before P100 shows | all envelopes reach zero within 3 s | 0 |
 
 Rules for the sequence: no two event cues (tremble, rewrite, bleed, roll, knob) start within 2 s of each other (the shipped `intro.cues` respects this; the parser warns if not). State cues (ghost, dim, creep and the rest) may start together because each is a slow ramp. The roll and the two knob turns each occur at most twice in a run. A visitor who reads only the facts loses nothing: the haunting is on top of true text.
 
@@ -650,7 +650,7 @@ Event cues (one-off, with a fixed duration):
 | `tremble` | `amp` (em, 0.02 to 0.08), `dur` (s, 1.5 to 5) | Anchor must be a line (`page-n@end`) |
 | `rewrite` | `word` (nth space-separated token of the resolved line text, from 1), `to` (replacement), `hold` (s, 0.8 to 2), `dur` (s, 2 to 4) | Replacement letters only, at most the original token's letter count, no digits, never over a fact segment. Punctuation stays |
 | `bleed` | `dur` (s, 3 to 6), `rows` (1) | Streaks fall into the blank row under the line |
-| `roll` | `dur` (s, 1.5 to 3) | One vertical roll of the picture. Anchor must be `...@end` of a page's last line (plus an optional offset up to 4 s) |
+| `roll` | `dur` (s, 2.4 to 3) | One vertical roll of the picture (shorter values are clamped up to 2.4 s). Anchor must be `...@end` of a page's last line (plus an optional offset up to 4 s) |
 | `knob` | `which` (`channel` or `volume`), `deg` (-60 to 60), `over` (s, 2 or more) | 3d-set only; ignored elsewhere |
 
 Parser rules (frontend, with the architect's optional build check below): unknown cue, key or anchor is a hard error in development and a skipped cue in production; values are clamped to the ranges above, never silently exceeded; the rate limits in 16.7 are enforced by clamping `over`; a `roll`, `tremble`, `rewrite` or `bleed` on the last line of a page extends that page's hold until the effect ends (at most 6 s); two event cues on the same line may not overlap.
@@ -694,7 +694,7 @@ Common rules:
 |---|---|---|---|
 | `tremble` | `amp` 0.02 to 0.08 em (ceiling `--haunt-tremble-max-em`); `dur` 1.5 to 5 s | Each glyph is offset in x and y by band-limited noise (about 8 Hz, per-glyph phase). Amplitude envelope is a sine: 0.5 s in, hold, 0.5 s out | Motion only; luminance does not change |
 | `rewrite` | `word`, `to`, `hold` 0.8 to 2 s, `dur` 2 to 4 s | Letters of the chosen word change one at a time left to right every 90 ms to the replacement (padded with spaces if shorter), hold for `hold`, then change back one at a time every 120 ms. Replacement is drawn in `--screen-text-strong`. A change of letters is not a luminance flash | A glyph changes at most twice in the effect, never faster than once per 90 ms across a word (about 11 Hz of different cells, not the same cell) |
-| `bleed` | `dur` 3 to 6 s, `rows` 1 | After settling, every third glyph (seeded by line id, so Replay is identical) drops a streak: 1 cell wide (rectangles), colour `--screen-rule`, alpha 0.45 falling to 0, length easing out (cubic) from 0 to one row pitch, into the blank row under the line. Never over other text; if there is no blank row below, skip | Alpha under 0.45, area under 1 per cent of the screen |
+| `bleed` | `dur` 3 to 6 s, `rows` 1 | After settling, every third glyph (seeded by line id, so Replay is identical) drops a streak: 0.25 cell wide (rectangles, centred under the glyph, so they read as streaks and not blocks; as built), colour `--screen-rule`, alpha 0.45 falling to 0, length easing out (cubic) from 0 to one row pitch, into the blank row under the line. Never over other text; if there is no blank row below, skip | Alpha under 0.45, area under 1 per cent of the screen |
 
 Fact rule: `rewrite` may not touch a fact segment, so a false fact is never shown. The parser checks that the target token does not overlap a segment with `kind: 'fact'` and refuses otherwise.
 
@@ -729,7 +729,7 @@ Sprite: 256 by 384 greyscale with alpha, drawn procedurally in code (`drawOccupa
 | Size | `heightFrac = lerp(0.35, 0.95, easeInOut(ghostNear))` of the glass height. At `ghostNear` 1 the head is about 70 per cent of the glass height, pressed to the glass |
 | Position | x centre `0.5 + 0.06 sin(2 pi t / 40)` (a slow side-to-side drift of plus or minus 6 per cent, period 40 s); y centre lerps from 0.62 (low and far) to 0.45 (near) |
 | Fog at the glass | From `ghostNear` 0.8 a soft radial brightening at the mouth, mean luminance contribution under 0.01, fades in over at least 4 s |
-| Luminance ceilings | Peak `--haunt-ghost-peak-lum` (0.30) on blank screen. Over glyph cells and their one-cell dilation: `--haunt-ghost-text-lum` (0.07), so body text keeps 4.5:1 or better (text 0.62 against 0.07 plus 0.05 is 5.6:1). The shader samples the teletext texture as the text mask |
+| Luminance ceilings | Peak `--haunt-ghost-peak-lum` (0.30) on blank screen. Over glyph cells and their one-cell dilation: `--haunt-ghost-text-lum` (0.07), but, as built and measured, the effective cap is `uGhostTextCap` x 0.5 (`TEXT_CAP_SCALE` in the shader, because glow, grain and scanlines add on top of the cap). With the ghost at maximum, body text measures 5.05:1 strict (7.96:1 mean), corner text 6.99:1 and the header 4.55:1, so body text stays at 5:1 or better. The shader samples a blurred mip of the teletext texture as the text mask. The 2D layer uses the same scale |
 | Area mean | The figure's contribution to the screen's mean luminance never exceeds 0.05 |
 | Draw order | Under the text, over the static; the CRT effects (scanlines, curvature, glow, vignette) apply to the result |
 | Calm or reduced motion | No figure at all (a still figure is allowed by FR-17 but not used, to keep the safest path) |
@@ -750,7 +750,8 @@ Owner: technical-artist (uniform `uRoll`), driven by `hauntStore.roll`. 2D mode:
 
 | Parameter | Value |
 |---|---|
-| Duration | 1.5 to 3 s (the shipped cues use 2.4 s), once per cue, at most twice per run |
+| Duration | 2.4 to 3 s (the shipped cues use 2.4 s), once per cue, at most twice per run. The 2.4 s minimum is forced by the 0.8 screen-heights-per-second peak speed: the built roll peaks at 0.785 at 2.4 s, and `rollPhase` clamps shorter values up to 2.4 s (`ROLL_MIN_SECONDS`) |
+| Not on the test card | Measured on 87,000 px blocks, a roll changes a block by 0.041 at most on a text page with the ghost at maximum, but 0.070 on the test card (under the 0.10 hard limit, over the 0.05 design margin). Roll text pages only; never roll the test card or the loading card |
 | Motion | Vertical offset of the picture, 0 to 1 screen height (one full wrap), eased with a sine in-out, peak speed at most 0.8 screen heights per second. The last 400 ms is a damped settle (offset overshoots by at most 2 per cent) |
 | Hold bar | A dark horizontal sync band, 6 per cent of the height, luminance reduction at most 0.04, travels with the seam |
 | Timing | Starts at the end of a page (after the text is read and the page has held), never over a line being revealed |

@@ -31,8 +31,8 @@ Phase 3 delivered the design spec, greyscale tokens, a favicon and the font plan
 - Word indexes in `rewrite` cues count space-separated tokens of the resolved line, before wrapping. The current cues use tokens before any fact segment on their lines, so they stay valid when facts change length.
 
 ## Open questions
-- Is a still ghost figure under Calm wanted instead of none? (user; default none)
-- Should the wall decal ("Occupant's shadow") be kept, given it is deliberately hard to notice? (user; default keep, alpha 0.10 at most)
+- Resolved (integration pass, 2026-11-10), both with the defaults: no ghost figure under Calm, and the wall decal ("Occupant's shadow") is kept at alpha 0.10 or less.
+- Integration pass: design-spec updated to match round 2 as built. Roll lasts 2.4 to 3 s and is never applied to the test card. VT323 advance is 0.4 em, so cell sizing comes from `measureText` (section 14). Ghost text cap is effectively `uGhostTextCap` x 0.5, with body text at 5:1 or better. Bleed streaks are 0.25 cell wide. Timing figures in 6.3 and 16.2 now point at `src/state/timing.ts`.
 
 ## Requests for other agents
 
