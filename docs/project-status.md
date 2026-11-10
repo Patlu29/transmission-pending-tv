@@ -1,6 +1,6 @@
 # Project status
 
-- **Current phase:** 5. Performance
+- **Current phase:** 6. QA
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
@@ -12,6 +12,7 @@
   - Repository on GitHub account Patlu29, public, name decided with product manager and architect.
 - **Open questions:** hosting target (devops will propose; GitHub Pages fits the public repo)
 - **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
+- **Performance decisions (tech lead):** first-view JS of 380.8 kB gzip accepted (over the 350 kB architecture target, well inside NFR-3's 5 MB); adaptive DPR step-down accepted. Real-device FPS is unmeasured (headless SwiftShader only).
 - **Bug count:** not yet tested (QA is Phase 6)
 
 ## Phases
@@ -21,8 +22,8 @@
 | 2 | Architecture | Done |
 | 3 | Design | Done |
 | 4 | Build | Done |
-| 5 | Performance | In progress |
-| 6 | QA | Not started |
+| 5 | Performance | Done |
+| 6 | QA | In progress |
 | 7 | Delivery | Not started |
 
 ## Build provenance
