@@ -1,0 +1,59 @@
+# Animation cues for src/content/intro.tmpl. Owner: ux-ui-designer. Grammar and limits: docs/design-spec.md section 16.3.
+# One cue per line:  <anchor> <cue> [key=value ...]
+# Anchor: <page-id>            when the first line of the page starts to reveal
+#         <page-id>-<n>        when line n of the page starts to reveal (n from 1; same id as IntroLine.id)
+#         <anchor>@end         when that line (or the whole page) has finished revealing
+#         <anchor>+<seconds>   offset after the anchor, for example diary-2+1.5
+# Cues are ignored under Calm and reduced motion. Seconds, not digits in copy, so this file may contain numbers.
+
+# signal: calm cold open, almost nothing
+signal              hum         to=0.15 over=8
+
+# waking: the static thickens, a shape starts to cohere
+waking              ghost       to=0.12 over=6
+waking-3@end        tremble     amp=0.04 dur=3
+
+# makers: the push-in begins; one word is wrong for a moment
+makers              creep       to=0.15 over=10
+makers-3@end        rewrite     word=6 to=HOST hold=1.2 dur=3
+
+# staff: the room gets darker; the tech lead line bleeds; a knob turns itself
+staff               dim         to=0.2 over=8
+staff-2@end         bleed       dur=4 rows=1
+staff-2@end+3       knob       which=channel deg=25 over=3
+
+# phases: the picture rolls once, at the end of the page
+phases-3@end        tremble     amp=0.05 dur=2.5
+phases-3@end+3      roll        dur=2.4
+
+# bones: the figure is clearly there now, and further away than it will be
+bones               ghost       to=0.45 over=8
+bones               ghost-near  to=0.2 over=10
+bones               creep       to=0.4 over=12
+bones-2@end         rewrite     word=17 to=CELL hold=1.4 dur=3.2
+
+# diary: the longest page, the figure comes forward, the wall shadow appears
+diary               dim         to=0.5 over=8
+diary               shadow      to=0.5 over=10
+diary               ghost       to=0.8 over=10
+diary               ghost-near  to=0.55 over=12
+diary               hum         to=0.5 over=12
+diary-1@end         knob        which=volume deg=-30 over=3
+diary-3@end         bleed       dur=6 rows=1
+diary-5@end         rewrite     word=14 to=YOU hold=1.4 dur=3.2
+
+# glass: closest approach
+glass               ghost-near  to=0.9 over=8
+glass               creep       to=0.8 over=10
+glass               dim         to=0.7 over=6
+glass               hum         to=0.8 over=8
+glass-1@end         bleed       dur=4 rows=1
+glass-3@end         tremble     amp=0.06 dur=4
+
+# settle: it lets go; everything eases back to warm
+settle              ghost       to=0 over=8
+settle              ghost-near  to=1 over=4
+settle              creep       to=0 over=10
+settle              dim         to=0 over=10
+settle              shadow      to=0 over=8
+settle              hum         to=0.2 over=10

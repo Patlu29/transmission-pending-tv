@@ -1,14 +1,14 @@
 # Design spec: Transmission Pending
 
-Owner: ux-ui-designer. Status: Phase 3 deliverable (2026-11-10). Tokens: `src/styles/tokens.css`. Copy: `src/content/intro.tmpl`. Fonts: `public/fonts/LICENCES.md`.
+Owner: ux-ui-designer. Status: Phase 3 deliverable (2026-11-10), revised the same day for the ghost-story scope change (section 16 is new; sections 1, 2, 6, 7, 10, 14 and 15 were revised). Tokens: `src/styles/tokens.css`. Copy: `src/content/intro.tmpl`. Fonts: `public/fonts/LICENCES.md`.
 
 Terms: "set" is the 3D TV model. "Screen" is the CRT picture, drawn from one teletext canvas (ADR 0005). "Dock" is the DOM control strip. "Safe screen width" (W) is the screen's on-screen width in CSS px multiplied by `--tt-safe-area` (0.92), which removes the edge lost to curvature.
 
 ## 1. Visual direction
 
-Mood: a quiet room, late at night, one television. Cheap, loved, slightly broken. The set is the only light source. Everything is black, white and grey, so the contrast between a warm-looking object and a cold picture comes from texture and luminance, never hue.
+Mood: a quiet room, late at night, one television, and something inside it that has been waiting. Creepy first, with dark humour second. Slow dread, never a shock. The set is the only light source. Everything is black, white and grey, so the contrast between a warm-looking object and a cold picture comes from texture and luminance, never hue.
 
-References (styles only, nothing copied): a mid-1970s wood-cabinet portable, teletext information services, engineers' test patterns, and the dry tone of a continuity announcer apologising for a fault.
+References (styles only, nothing copied): a mid-1970s wood-cabinet portable, teletext information services, engineers' test patterns, the sign-off of a late-night transmission, and the dry tone of a continuity announcer who has stopped being human. The story and every animation are specified in section 16.
 
 How the layers fit together:
 
@@ -16,7 +16,7 @@ How the layers fit together:
 |---|---|
 | Room | Near-black wall and shelf, faint paper-pattern texture, soft pool of light from the screen that is low-pass filtered so it never flashes (section 7) |
 | Set | Wood-effect cabinet in greyscale, dark bezel, curved glass, chunky knobs, speaker grille (section 10) |
-| Screen | Teletext type on black, scanlines, phosphor glow, vignette, mild barrel curvature, fine static |
+| Screen | Teletext type on black, scanlines, phosphor glow, vignette, mild barrel curvature, fine static; during the story, haunted text and the Occupant's figure (section 16) |
 | DOM UI | Looks like hardware labels and teletext "fastext" keys: flat light-grey keys with dark condensed caps, square corners, no blur panels, no gradients |
 
 Rules for every state: greyscale only (R=G=B); nothing drawn in a hue, including antialiasing, shadows and the favicon. Copy is Australian English and upper case on the screen (set by the copy, not CSS). UI labels use Title case or caps in the display face.
@@ -36,14 +36,18 @@ Power (click, tap, Enter, Space on button; click the power knob in 3d-set)
   -> warm-up (2.2 s, section 6.1) -> intro (section 6.3)
 ```
 
-Start screen content (DOM, always present, not in the canvas): site name "Transmission Pending" (h1), one line "A television with something to say.", the Power key labelled "Switch on", and a flicker note: "This set crackles and flickers. If you prefer calm, turn on reduced motion in your system settings; this page follows it straight away." The note is plain text under the key, at `--text-sm` or larger, 4.5:1 or better.
+Start screen content (DOM, always present, not in the canvas): site name "Transmission Pending" (h1), one line "A television with something to say.", the Power key labelled "Switch on", and, before power-on (FR-24):
 
-### E2 The terrible, truthful intro
+- Content note, plain text, `--text-sm` or larger, 4.5:1 or better, directly under the Power key: "Mild horror theme. Slow and creepy, with no jump scares. Expect flicker, trembling text, a pale figure and a slowly closing camera. Calm mode turns every effect off."
+- The Calm mode switch beside it (label "Calm mode", `aria-pressed`, 44 px target). When the OS reduced-motion setting is on it reads "Calm mode: on (system setting)" and cannot be turned off here. The note references it in the accessible description of the Power key (`aria-describedby`), so a screen reader hears the note when it reaches Power.
+
+### E2 The ghost story ("Haunted TV tells its build")
 
 ```text
-warm-up ends -> page "test-card" ... -> last page "sign-off"
-  last line complete + 1.0 s hold -> end state: page 100 build diary index
-Skip anytime -> end state within 500 ms
+warm-up ends -> 9 story pages (section 16.2), haunting builds in steps of 2 s or more
+  last line complete + 3.0 s hold -> haunting eases out over 3 s -> end state: page 100 build diary index
+Skip anytime -> haunting eases out over 1.2 s (cues cancelled) -> end state within 500 ms
+Calm / reduced motion -> same pages, no effect of any kind (section 16.8)
 ```
 
 ### E3 Control and accessibility
@@ -55,6 +59,8 @@ Pause/Play        -> freezes the reveal and the page timer (WCAG 2.2.2); label f
 Read full text    -> opens the transcript panel (focus trapped, Escape closes, focus returns)
 Sound             -> off by default; toggles; label states the result ("Sound on" / "Sound off")
 Reduced motion    -> OS setting read live; no reload (US-9)
+Calm mode         -> a key in the dock at all times (FR-31) and on the start screen; on = every haunting effect, camera move and animated noise off; persists for the visit; turning it on mid-story cancels running effects within one frame (no fade, no flash)
+Power off         -> Power toggles; off collapses to a dot, cancels cues, resets haunting to zero
 No WebGL / context lost -> 2D mode takes over at the current page and line, with a notice (US-12)
 ```
 
@@ -248,7 +254,7 @@ Long pages sub-page: if wrapped lines do not fit, the page splits into sub-pages
 
 Colour mapping: copy `--screen-text`; headings `--screen-text-strong`; facts inverse block (`--screen-fact-bg`/`--screen-fact-text`); rules and mosaic graphics `--screen-rule`; fastext cells alternate `--tt-1` to `--tt-4` with `--tt-7` text so the four keys read as different greys without hue.
 
-Mosaic graphics (rules, the page-100 frame, the fastext blocks) use sextant block glyphs from the font or filled rectangles drawn by the rasteriser.
+Mosaic graphics (rules, the page-100 frame, the fastext blocks) are filled rectangles drawn by the rasteriser (VT323 has no sextant glyphs, section 14).
 
 ### 5.4 Page 100 build diary (FR-15)
 
@@ -286,13 +292,13 @@ Reveal rules (the frontend exports these constants; QA computes duration from `i
 
 | Constant | Value | Notes |
 |---|---|---|
-| `REVEAL_CPS` | 90 characters per second | A line paints as fast typing, a block cursor leads it |
-| `LINE_GAP_MS` | 250 | Between lines on one page |
-| `PAGE_HOLD_BASE_MS` | 800 | After the last line of a page completes |
-| `PAGE_HOLD_PER_CHAR_MS` | 8 | Added per character on the page |
-| `END_HOLD_MS` | 1000 | After the last page before the diary index |
+| `REVEAL_CPS` | 60 characters per second (was 90) | Slower, so the story breathes; a block cursor leads the line |
+| `LINE_GAP_MS` | 450 (was 250) | Between lines on one page |
+| `PAGE_HOLD_BASE_MS` | 1200 (was 800) | After the last line of a page completes |
+| `PAGE_HOLD_PER_CHAR_MS` | 10 (was 8) | Added per character on the page |
+| `END_HOLD_MS` | 3000 (was 1000) | After the last page, before the haunting eases out and the diary index shows |
 
-Duration (excluding warm-up) = characters / 90 + 0.25 x lines + pages x 0.8 + 0.008 x characters + 1. The shipped copy resolves to about 1,600 characters, 24 lines and 8 pages, so about 43 s. FR-8 allows 30 to 60 s: the copy may change while characters stay between 1,000 and 2,400 and pages between 6 and 12. If it leaves that band, retune the constants and note it in the handoff.
+Duration (excluding warm-up) = characters / 60 + 0.45 x lines + pages x 1.2 + 0.01 x characters + 3. The ghost story resolves to about 1,950 characters, 25 lines and 9 pages, so about 78 s. FR-8 and the scope change allow 45 to 90 s: the copy may change while characters stay between 1,300 and 2,200 and pages between 7 and 11 (about 56 s to 85 s). If it leaves that band, retune the constants and note it in the handoff. Page timings are the cue schedule's basis (section 16.3), so changing a constant moves every cue automatically because cues are anchored to lines, not to seconds.
 
 Page change: a hard cut (page cleared and the next one starts at row 1). No static burst unless the Could feature in 7.4 is built. Header tag updates with the cut.
 
@@ -308,7 +314,7 @@ Pause: freezes reveal and the page timer; the block cursor stops blinking and sh
 ### 6.5 Replay
 
 - Trigger: Replay key; shortcut R. Available in `ended`.
-- Result: the screen cuts to a black frame for 200 ms (no static), then page 1 begins. No warm-up and no camera move.
+- Result: the screen cuts to a black frame for 200 ms (no static), then page 1 begins. No warm-up. Haunting state returns to zero (a camera creep eases back over 700 ms, because the visitor caused it; ghost, dim and shadow are cut while the screen is black, which is a single step to black and not a flash).
 - Focus moves to Pause. Live region: "Replaying the intro."
 - Under reduced motion: page 1 shows at once.
 
@@ -319,7 +325,7 @@ When the last page's hold plus `END_HOLD_MS` completes, or on Skip:
 - `status` becomes `ended`; the screen shows P100.
 - Dock: Skip and Pause disappear, Replay and the page keys (Prev, Next, Index) appear. Focus moves to Replay only if focus was on a removed key; otherwise it stays put.
 - The last intro page is not shown again unless the visitor replays.
-- The camera stays at Watch.
+- The camera returns to Watch: the creep eases back to zero over 3 s (natural end) or 1.2 s (Skip); under Calm it was never off Watch.
 
 ### 6.7 Reduced-motion intro (FR-17)
 
@@ -363,15 +369,16 @@ The pool of light on the room (3d-set) follows the screen's mean luminance throu
 |---|---|---|
 | Warm-up | 2.2 s sequence | None, cut to the static test card |
 | Camera | Dolly and optional orbit | Fixed at Watch, no orbit, no Reset |
-| Typing reveal | 90 cps | Whole page at once |
+| Typing reveal | 60 cps | Whole page at once |
 | Page advance | Automatic | Manual (auto-advance opt-in, slow) |
 | Noise | 12 to 24 Hz | Frozen texture |
 | Rolling bar, jitter, glow flicker | On | Off |
+| Haunted text, ghost figure, picture roll, knob turns, room dim and wall shadow, camera creep, audio swell | Cue-driven (section 16) | All off. Calm mode behaves the same as reduced motion |
 | UI transitions (hover, focus) | 120 to 240 ms | 0 ms (tokens collapse) |
 | Knob rotation | 150 ms | Instant |
 | Channel-change burst | 250 ms | Off |
 
-The media query is read live (US-9). A change takes effect on the next frame, with no reload.
+The media query and the Calm switch are read live through `displayStore.reducedMotion` (US-9, FR-31). A change takes effect on the next frame, with no reload. Flash limits for the haunting effects are in section 16.7 and apply on top of 7.1.
 
 ## 8. Loading and error states
 
@@ -405,7 +412,8 @@ Applies to dock keys, the Power key and panel buttons.
 
 | Component | Notes |
 |---|---|
-| Power key | Large: min height 56 px. Label "Switch on". After power-on it is removed from the tab order |
+| Power key | Large: min height 56 px. Label "Switch on"; while the set is on it reads "Switch off" and stays in the dock (power toggles, approved in Phase 3) |
+| Calm mode | Dock key and start-screen switch, `aria-pressed`, label "Calm mode", toggle-on bar. Always visible (FR-31). Tab order: directly after Power |
 | Skip, Pause/Play, Replay | Labels "Skip intro", "Pause" / "Play", "Replay". Order in the DOM and tab order: Power, Skip, Pause, Replay, Sound, Read full text, page keys, Reset view |
 | Sound | "Sound off" by default. `aria-pressed`. Never plays until pressed (FR-22) |
 | Read full text | Opens the transcript panel (9.4) |
@@ -476,7 +484,7 @@ A mid-1970s wood-cabinet portable set, front 4:3 proportion cabinet:
 | Grille | Horizontal slots, `--tv-grille` recess, cloth weave normal at low strength; do not model every slot, a texture is enough |
 | Glass | `--tv-glass-tint`, low roughness, faint environment reflection of a window shape (luminance 0.05 or less), no strong highlight |
 | Labels | Etched caps on the control plate: "POWER", "CH", "VOL" in `--font-display`, in light grey on dark, baked into the control plate texture |
-| Shelf and room | Flat dark planes; wall with a faint stripe or paper pattern (greyscale, under 8 per cent contrast); one dust-fall texture |
+| Shelf and room | Decision after the ghost-story change: the flat dark room is NOT enough, because dimming a featureless plane shows nothing. Add four cheap things (about 0 kB, all procedural): (1) a wall with a faint paper pattern, greyscale, under 8 per cent contrast, 256 x 256 tiled; (2) a dust-fall alpha texture on the shelf top; (3) a soft blob shadow under the set; (4) one wall decal, the "Occupant's shadow" (section 16.5): a vertical, slightly too tall dark oval-and-shoulders shape on the wall to the left of the set, alpha 0 by default. No real-time shadow maps, no extra lights beyond the existing key, ambient and screen-glow point light |
 
 Greyscale rules: every material colour must have R = G = B, textures are single-channel or desaturated before export, tone mapping is `NoToneMapping` or `NeutralToneMapping` (architecture 4.5), lights are white.
 
@@ -545,6 +553,7 @@ Touch targets are 44 x 44 px or more everywhere (`--target-min`). Hit area may e
 | Layers | `--z-canvas` 0, `--z-screen-dom` 5, `--z-hud` 10, `--z-dock` 15, `--z-panel` 20, `--z-modal` 30, `--z-toast` 40 |
 | Motion | `--duration-fast`, `--duration-normal`, `--duration-slow`, `--duration-camera`, `--duration-camera-reset`, `--ease-standard`, `--ease-camera` (durations go to 0 ms under reduced motion) |
 | CRT (2D) | `--crt-scanline-opacity`, `--crt-scanline-pitch`, `--crt-noise-opacity`, `--crt-vignette-strength` |
+| Haunting ceilings | `--haunt-tremble-max-em`, `--haunt-ghost-peak-lum`, `--haunt-ghost-text-lum`, `--haunt-room-dim-max`, `--haunt-creep-max`, `--haunt-min-step-ms`, `--haunt-text-redraw-hz`, `--duration-haunt-text` |
 
 Breakpoints (not tokens, because media queries cannot read custom properties): 3d-set at `(min-width: 1024px) and (min-height: 600px) and (min-aspect-ratio: 5/4) and (hover: hover) and (pointer: fine)`; landscape dock at `(max-height: 499px) and (orientation: landscape)`. Grid bands are in JS from the safe screen width.
 
@@ -552,14 +561,275 @@ Breakpoints (not tokens, because media queries cannot read custom properties): 3
 
 | Role | Family | Licence |
 |---|---|---|
-| Screen body and mosaic blocks | Bedstead | Free / public domain (confirm on download) |
-| Labels, buttons, headings | Barlow Condensed 400 and 600 | SIL OFL 1.1 |
+| Screen body | VT323 (Peter Hull) | SIL OFL 1.1 |
+| Labels, buttons, headings | Barlow Condensed 400 and 600 | SIL OFL 1.1 (shipped) |
 
-Files could not be downloaded in the design phase. Instructions are in `public/fonts/LICENCES.md`, and `src/styles/fonts.css` is ready to import once the files exist.
+Change (2026-11-10): VT323 replaces Bedstead because of Bedstead's SAA5050 copyright caveat. The technical-artist downloads, subsets (Basic Latin, Latin-1, punctuation, arrows) and ships `public/fonts/vt323-regular.woff2`, updates `public/fonts/LICENCES.md` (remove the Bedstead row and file, add the OFL text) and deletes `bedstead-regular.woff2`. `src/styles/fonts.css` and `--font-teletext` already point at VT323.
+
+Consequences of the swap:
+
+- VT323 has no sextant mosaic glyphs. The rasteriser draws every mosaic (rules, the page-100 frame, fastext blocks, the bleed streaks in 16.4) as filled rectangles; nothing depends on U+1FB00 to U+1FBFF.
+- VT323 is a tall, narrow pixel face; its advance is below 0.6 em. The grid geometry in section 5 is unchanged (columns, cell width, row pitch from W). Glyph draw size is derived, not assumed: `advance = ctx.measureText('M').width / fontPx` at a reference size, then `drawPx = cellWidth / advance`. If `drawPx` would exceed the row pitch divided by 0.9, use `drawPx = rowPitch / 0.9` and centre the glyph in its cell. Because `advance` is at most 0.6, `drawPx` is at least `cellWidth / 0.6`, so the 16 CSS px floor in 5.2 still holds in every band. The frontend reports the measured advance and the chosen `drawPx` in its handoff, and sets `--tt-cell-aspect` only if it needs to change row pitch.
+- The canvas rasteriser awaits `document.fonts.load('16px VT323')` before the first draw.
 
 ## 15. Copy and truthfulness (design side)
 
-- The intro copy is `src/content/intro.tmpl`: eight pages, no typed digits, every fact a placeholder (build, tool, plugin, model, roles, phases, stack, commit count, first commit date and subject, model co-author count, revision).
-- The copy states "as of commit" for the commit count (FR-13).
-- Facts render as inverse blocks. A joke never asserts a fact.
+- The story is `src/content/intro.tmpl`: nine pages, no typed digits, every fact a placeholder (tool, plugin, model, roles, phases all and done, stack, commit count, first commit date and subject, model co-author count, revision). Cues are in the sidecar `src/content/intro.cues` (16.3), so the facts pipeline and template format are untouched.
+- The copy states "as of commit" next to the commit count and the finished phases (FR-13).
+- Facts render as inverse blocks. The Occupant's fiction never asserts a checkable fact: it is metaphor ("I was typed", "the doors are locked from the inside"), and every number, name, date and version is a placeholder.
 - The copy avoids `{{ phases.current }}` because it is null once every phase is done and would stop the build.
+- Haunted text never changes the DOM text, and never shows a false fact even briefly: effects may not rewrite fact segments (16.4).
+
+## 16. Ghost story and haunted animations
+
+Requirements covered: FR-24 to FR-35, US-18 to US-23. The scene's contract is `displayStore.reducedMotion` (OS reduced motion OR Calm); in every place below "Calm" means that flag.
+
+### 16.1 The story in one paragraph
+
+The Occupant is a nameless ghost trapped in the 1970s set. It woke when the set was switched on, and tells, in a flat transmission voice, the true story of how it was made: typed by the tool, ticked off by the plugin, thought by the model, staffed by the roles, built in phases, held up by the stack, recorded in a diary of commits. It says it is closer to the glass than it was. It lets go at the end and asks you to leave the set on a little longer, because it is warm. The humour is dry and sits underneath the dread. No jump scare: the Occupant never moves fast, never makes a sound it was not building towards, and never says anything cruel.
+
+### 16.2 Beat sheet (about 78 s plus up to 4 s of effect holds; times are from the end of warm-up)
+
+Dread level: 0 calm, 1 uneasy, 2 watched, 3 close, 4 closest. Each row only raises the level by one step, and each step takes at least 2 s of continuous change (FR-30).
+
+| # | Page id | About t (s) | Beat | Cues (full motion) | Level |
+|---|---|---|---|---|---|
+| 1 | `signal` | 0 | Cold open: "Is someone there?" Just the voice and the static | hum swell starts | 0 |
+| 2 | `waking` | 5 | Wakes. Explains that white blocks are true. Names itself the Occupant | ghost begins to cohere (0.12), last line trembles | 1 |
+| 3 | `makers` | 13 | Tool, plugin, model: "I was typed" | camera creep begins (0.15), one word rewrites (MIND to HOST and back) | 1 |
+| 4 | `staff` | 21 | Agent roles including the tech lead who "never left" | room dims (0.2), last line bleeds, channel knob turns by itself | 2 |
+| 5 | `phases` | 32 | Phases, as of commit, finished phases | last line trembles, picture rolls once | 2 |
+| 6 | `bones` | 43 | Stack and versions: "it has become a prayer" | figure clearly present (0.45) but far (0.2), creep 0.4, a word rewrites (PRAYER to CELL and back) | 2 |
+| 7 | `diary` | 51 | Commit count, first commit date and subject, model signatures | dim 0.5, wall shadow appears (0.5), figure 0.8 and nearer (0.55), volume knob turns, a line bleeds, a word rewrites (GLASS to YOU and back) | 3 |
+| 8 | `glass` | 64 | "Closer to the glass than I was." Direct address | closest approach (0.9), creep 0.8, dim 0.7, first line bleeds, last line trembles hardest | 4 |
+| 9 | `settle` | 72 | Lets go. "Leave the set on. It is warm." | figure fades to nothing over 8 s while it settles against the glass, creep, dim and shadow ease to zero, hum drops to a low warmth | 4 down to 0 |
+| end | diary index | about 80 | End hold 3 s, then everything is zero before P100 shows | all envelopes reach zero within 3 s | 0 |
+
+Rules for the sequence: no two event cues (tremble, rewrite, bleed, roll, knob) start within 2 s of each other (the shipped `intro.cues` respects this; the parser warns if not). State cues (ghost, dim, creep and the rest) may start together because each is a slow ramp. The roll and the two knob turns each occur at most twice in a run. A visitor who reads only the facts loses nothing: the haunting is on top of true text.
+
+### 16.3 Cue mechanism
+
+Decision: cues live in a sidecar file, `src/content/intro.cues`, not in `intro.tmpl`.
+
+Why (checked against `scripts/facts/template.ts`): the template parser treats every non-comment line as screen copy, rejects any `!directive` other than `!draft` and `!allow-digits`, drops `#` comment lines entirely, and rejects stray braces. An inline marker would either be shown as text, fail the build, or need a parser change. A `#@cue` comment convention would pass but would force the frontend to parse the template a second time and bind a comment to the next line, which is fragile. The sidecar means the facts pipeline, `intro.json` and `data-fact` output stay exactly as they are. The fiction in the template and the effects in the cues file are separate on purpose: cues cannot change fact text.
+
+#### File format
+
+```text
+# comment
+<anchor> <cue> [key=value ...]
+```
+
+| Part | Meaning |
+|---|---|
+| `<page-id>` | The page's first line starts to reveal |
+| `<page-id>-<n>` | Line `n` of the page starts to reveal (the same value as `IntroLine.id`, so it matches `intro.pages[].lines[].id`) |
+| `<anchor>@end` | The line (or page) has finished revealing, plus 300 ms, so the true text is always on screen first |
+| `<anchor>+<seconds>` | Offset after the anchor (also after `@end`: `staff-2@end+1`) |
+| `key=value` | Parameters; numbers may contain digits (this file is not copy, so the digit rule for copy does not apply, but replacement words may not contain digits) |
+
+Anchors follow the clock. They are line events, not timestamps, so changing the reveal constants never desynchronises a cue. The clock fires a cue when `(pageIndex, lineIndex, revealedChars)` crosses its anchor in the current `epoch`. Pause freezes cues (clock paused). Each cue fires at most once per epoch. Replay starts a new epoch. Sub-pages (a long page split by the rasteriser) do not matter because anchors use line ids.
+
+#### Cue vocabulary
+
+State cues (continuous: a target value and a duration, eased with smoothstep):
+
+| Cue | Params | Range | Drives |
+|---|---|---|---|
+| `ghost` | `to`, `over` (s) | to 0 to 1, over 2 or more | Figure visibility (how much of it has emerged) |
+| `ghost-near` | `to`, `over` | to 0 to 1, over 2 or more | Figure closeness (size and position) |
+| `creep` | `to`, `over` | to 0 to 1, over 2 or more | Camera push-in, 3d-set only |
+| `dim` | `to`, `over` | to 0 to 1, over 2 or more | Room light removed (3d-set) or extra edge vignette (3d-screen and 2d) |
+| `shadow` | `to`, `over` | to 0 to 1, over 2 or more | Opacity of the wall decal (3d-set only) |
+| `hum` | `to`, `over` | to 0 to 1, over 2 or more | Audio swell, only if sound is on |
+
+Event cues (one-off, with a fixed duration):
+
+| Cue | Params | Notes |
+|---|---|---|
+| `tremble` | `amp` (em, 0.02 to 0.08), `dur` (s, 1.5 to 5) | Anchor must be a line (`page-n@end`) |
+| `rewrite` | `word` (nth space-separated token of the resolved line text, from 1), `to` (replacement), `hold` (s, 0.8 to 2), `dur` (s, 2 to 4) | Replacement letters only, at most the original token's letter count, no digits, never over a fact segment. Punctuation stays |
+| `bleed` | `dur` (s, 3 to 6), `rows` (1) | Streaks fall into the blank row under the line |
+| `roll` | `dur` (s, 1.5 to 3) | One vertical roll of the picture. Anchor must be `...@end` of a page's last line (plus an optional offset up to 4 s) |
+| `knob` | `which` (`channel` or `volume`), `deg` (-60 to 60), `over` (s, 2 or more) | 3d-set only; ignored elsewhere |
+
+Parser rules (frontend, with the architect's optional build check below): unknown cue, key or anchor is a hard error in development and a skipped cue in production; values are clamped to the ranges above, never silently exceeded; the rate limits in 16.7 are enforced by clamping `over`; a `roll`, `tremble`, `rewrite` or `bleed` on the last line of a page extends that page's hold until the effect ends (at most 6 s); two event cues on the same line may not overlap.
+
+#### Reset and end
+
+- Natural end: after `END_HOLD_MS` every state cue eases to zero over 3 s, then the diary index shows.
+- Skip: all state cues ease to zero over 1.2 s, event cues are cancelled, and the index shows within 500 ms (the screen shows the index straight away; haunting fades under it).
+- Power off or Replay: zero at once (the screen is black or collapsing at the time).
+- Calm switched on mid-story: all values are set to zero and all event cues cancelled within one frame, without a fade (the visitor asked for stillness). Switching Calm off mid-story does not resume cues until the next line anchor.
+
+#### Output: what the scene and the rasteriser read
+
+Frontend publishes a `hauntStore` (zustand, `src/state/hauntStore.ts`), written only by the clock/cue scheduler:
+
+| Field | Type | Written by cue | Read by |
+|---|---|---|---|
+| `ghost`, `ghostNear` | 0 to 1 | `ghost`, `ghost-near` | Screen material (3D), 2D ghost layer |
+| `creep` | 0 to 1 | `creep` | Camera rig (3d-set) |
+| `dim` | 0 to 1 | `dim` | Lights (3d-set), screen vignette uniform, 2D vignette |
+| `shadow` | 0 to 1 | `shadow` | Wall decal (3d-set) |
+| `hum` | 0 to 1 | `hum` | Audio engine |
+| `roll` | `{ active: boolean; startedAt: number; dur: number }` | `roll` | Screen material (`uRoll`), 2D screen |
+| `knobCue` | `{ nonce: number; which; deg; dur } or null` | `knob` | Knob layer |
+| `textEffects` | map of line id to `{ kind; startedAt; dur; params }` | `tremble`, `rewrite`, `bleed` | Rasteriser (canvas and 2D) |
+
+All values are zero and `textEffects` is empty whenever `reducedMotion` is true. The scene never writes this store.
+
+### 16.4 Haunted text (animation a)
+
+Owner: frontend-developer (rasteriser `src/ui/teletext/`, effect layer on top of the frame model). Visual only: the DOM transcript, `frame` text and `data-fact` spans are never altered, so QA reads true text at all times.
+
+Common rules:
+- An effect starts only after its line is fully revealed plus 300 ms, so the true text is always shown first, and it ends with the line drawn exactly as resolved. `settled text equals resolved text` is asserted by a unit test on the frame model (effect off equals effect finished).
+- Only one text effect runs at a time; a second waits until the first ends (the schedule rarely needs it).
+- Redraw at most `--haunt-text-redraw-hz` (30 Hz) while an effect runs, and stop redrawing when it ends.
+- Calm or reduced motion: no effect is created.
+- Effects never apply to the header, title, fastext row or fact (inverse block) cells, except `tremble` and `bleed`, which may include fact cells (no change of the characters).
+
+| Effect | Parameters | Motion | Flash safety |
+|---|---|---|---|
+| `tremble` | `amp` 0.02 to 0.08 em (ceiling `--haunt-tremble-max-em`); `dur` 1.5 to 5 s | Each glyph is offset in x and y by band-limited noise (about 8 Hz, per-glyph phase). Amplitude envelope is a sine: 0.5 s in, hold, 0.5 s out | Motion only; luminance does not change |
+| `rewrite` | `word`, `to`, `hold` 0.8 to 2 s, `dur` 2 to 4 s | Letters of the chosen word change one at a time left to right every 90 ms to the replacement (padded with spaces if shorter), hold for `hold`, then change back one at a time every 120 ms. Replacement is drawn in `--screen-text-strong`. A change of letters is not a luminance flash | A glyph changes at most twice in the effect, never faster than once per 90 ms across a word (about 11 Hz of different cells, not the same cell) |
+| `bleed` | `dur` 3 to 6 s, `rows` 1 | After settling, every third glyph (seeded by line id, so Replay is identical) drops a streak: 1 cell wide (rectangles), colour `--screen-rule`, alpha 0.45 falling to 0, length easing out (cubic) from 0 to one row pitch, into the blank row under the line. Never over other text; if there is no blank row below, skip | Alpha under 0.45, area under 1 per cent of the screen |
+
+Fact rule: `rewrite` may not touch a fact segment, so a false fact is never shown. The parser checks that the target token does not overlap a segment with `kind: 'fact'` and refuses otherwise.
+
+2D mode: the same effect layer draws on the 2D screen element (the rendering of the frame model), so playback state, effects and the DOM transcript behave identically.
+
+### 16.5 The Occupant: ghost on the screen (animation b)
+
+Owner: technical-artist (shader and sprite), driven by `hauntStore.ghost` and `ghostNear`; the 2D mode uses the same sprite as a CSS layer.
+
+#### Visual description (original, greyscale only)
+
+A pale head-and-shoulders bust, like a presenter's portrait from a late-night sign-off that nobody was there to turn off. It is built to be wrong in small ways, not monstrous:
+
+- Head: a tall egg, 1.4 times taller than wide, tilted 5 degrees anticlockwise, slightly narrower at the chin. The crown is a smooth darker cap with a centre parting. No ears, no nose.
+- Face: two dark eye hollows, tall ellipses, the left a little larger and lower than the right. They are the darkest tone in the sprite (black). There is no mouth at all until the figure is near; from `ghostNear` 0.8 a thin, dark horizontal slit fades in over at least 4 s at about a third of the way up from the chin.
+- Neck: long and narrow, about half the head width.
+- Shoulders: sloping, wide (0.8 of the sprite width), dropping about 18 degrees on each side.
+- Collar: two wide pointed 1970s lapel collars meeting low on the chest, drawn a little paler than the body.
+- Below the chest the body dissolves into static; there are no hands.
+- Tone: the face is the palest part (about 0.85 of the figure's peak), the body about 0.6, the rim a thin light edge, the hollows 0. Soft edges (feather about 3 per cent of the width).
+- Interference: the figure is cut into horizontal strips about 3 CSS px tall; each strip is shifted sideways by slow noise (plus or minus 1.2 per cent of the screen width, changing at about 0.2 Hz, never abruptly), with one wider "tracking tear" at the throat shifted 3 per cent. It reads like a mis-tracked picture, so it belongs to the set.
+- Why it is original: the bust and the lapel collars tie it to the era's presenters; the strips, the too-tall head and the hollow eyes are unique to this design. It has no long hair across the face, no suit and tie with no face, no child, no mask, and no recognisable character from any film, game or book.
+
+Sprite: 256 by 384 greyscale with alpha, drawn procedurally in code (`drawOccupant(ctx, w, h)` in `src/scene/materials/`) so it costs about 0 kB. The same drawing feeds the shader texture and a 2D PNG-equivalent canvas.
+
+#### How it forms and moves
+
+| Parameter | Value |
+|---|---|
+| Emergence | A coherence mask: `visible = smoothstep(n - w, n + w, ghost x sprite x 1.2)` where `n` is slow low-frequency noise in the static (0.05 Hz drift), `w` is 0.12. Low `ghost` shows only the face centre and the eye hollows emerging from the grain; higher values fill the head, collar and shoulders. It uses the existing static grain, so it truly forms out of the static |
+| Forming time | At least 3 s of continuous change (US-19). The schedule uses 6 s for the first step (0 to 0.12) and 8 to 10 s for later steps |
+| Size | `heightFrac = lerp(0.35, 0.95, easeInOut(ghostNear))` of the glass height. At `ghostNear` 1 the head is about 70 per cent of the glass height, pressed to the glass |
+| Position | x centre `0.5 + 0.06 sin(2 pi t / 40)` (a slow side-to-side drift of plus or minus 6 per cent, period 40 s); y centre lerps from 0.62 (low and far) to 0.45 (near) |
+| Fog at the glass | From `ghostNear` 0.8 a soft radial brightening at the mouth, mean luminance contribution under 0.01, fades in over at least 4 s |
+| Luminance ceilings | Peak `--haunt-ghost-peak-lum` (0.30) on blank screen. Over glyph cells and their one-cell dilation: `--haunt-ghost-text-lum` (0.07), so body text keeps 4.5:1 or better (text 0.62 against 0.07 plus 0.05 is 5.6:1). The shader samples the teletext texture as the text mask |
+| Area mean | The figure's contribution to the screen's mean luminance never exceeds 0.05 |
+| Draw order | Under the text, over the static; the CRT effects (scanlines, curvature, glow, vignette) apply to the result |
+| Calm or reduced motion | No figure at all (a still figure is allowed by FR-17 but not used, to keep the safest path) |
+| Mobile (3d-screen) | The figure runs unchanged (FR-34); camera and knobs do not |
+| 2D mode | A CSS layer with the sprite canvas, `mix-blend-mode: screen` off (use plain alpha), opacity and scale from the same store values, 30 Hz limited steps, the same ceilings |
+
+Uniforms to add to the CRT material (technical-artist): `uGhost` (0 to 1), `uGhostNear` (0 to 1), `uGhostSeed`, `uGhostMap` (sprite texture), `uGhostTextCap` (0.07), `uGhostPeak` (0.30). The scene copies `hauntStore.ghost` and `ghostNear` into them every frame (as it already does for `screenState`).
+
+#### The wall decal (3d-set only)
+
+The Occupant's shadow on the wall: one quad to the left of the set, the same silhouette as the sprite but darker than the wall, soft-edged, alpha `shadow x 0.10` (it should be hard to be sure it is there), fading in over 10 s. Never moves. This and the room dim are why the room needs the extra texture work in 10.2.
+
+### 16.6 Haunted set (animation c) and camera creep (animation d)
+
+#### 16.6.1 Picture roll (all modes)
+
+Owner: technical-artist (uniform `uRoll`), driven by `hauntStore.roll`. 2D mode: the frontend translates the screen contents with CSS.
+
+| Parameter | Value |
+|---|---|
+| Duration | 1.5 to 3 s (the shipped cues use 2.4 s), once per cue, at most twice per run |
+| Motion | Vertical offset of the picture, 0 to 1 screen height (one full wrap), eased with a sine in-out, peak speed at most 0.8 screen heights per second. The last 400 ms is a damped settle (offset overshoots by at most 2 per cent) |
+| Hold bar | A dark horizontal sync band, 6 per cent of the height, luminance reduction at most 0.04, travels with the seam |
+| Timing | Starts at the end of a page (after the text is read and the page has held), never over a line being revealed |
+| Flash | Mean luminance unchanged (translation only); no luminance step; nothing flashes |
+| Calm | None |
+
+#### 16.6.2 Knobs turning on their own (3d-set only)
+
+Owner: scene-developer (`KnobLayer`), reading `hauntStore.knobCue`.
+
+| Parameter | Value |
+|---|---|
+| Channel knob | Turns `deg` (shipped: 25) over 3 s, ease in-out (`--ease-camera`), slight overshoot of 1 degree back, then rests. Ticks are not audible unless sound is on (a soft click, no louder than the power click) |
+| Volume knob | Turns `deg` (shipped: -30) over 3 s, same easing |
+| Rules | Never while the pointer is over that knob. The knob stays where it ended (it is the set's fault, not the visitor's). Pointer interaction afterwards works as normal. Power-off resets both to rest |
+| Hit areas | Unchanged; outlines and tags are not triggered |
+| Calm and mobile | None |
+
+#### 16.6.3 Room light dims and wall shadow (3d-set), edge dim (3d-screen and 2D)
+
+Owner: scene-developer (`SetLights`, decal) with technical-artist (vignette uniform).
+
+| Parameter | Value |
+|---|---|
+| 3d-set room dim | Key, ambient and environment intensity multiplied by `1 - dim x 0.65` (ceiling `--haunt-room-dim-max`). The screen-glow point light is not dimmed (the screen is the only light left). Low-passed at 2 Hz as in 7.5 |
+| Rate | Change at most 0.15 of the range per second (the cue `over` is clamped to that) |
+| 3d-screen and 2D | `uHauntVignette = dim x 0.25` extra corner darkening in the shader, or an extra inset shadow of the same size in 2D, only outside the safe area (never over text) |
+| Screen content | Never dimmed, so text contrast is unchanged |
+| Calm | None |
+
+Room decision: see 10.2 (the flat dark room is not enough; the wall pattern, dust, blob shadow and wall decal are added, all procedural).
+
+#### 16.6.4 Camera creep (3d-set only)
+
+Owner: scene-developer (`SetCameraRig`), driven by `hauntStore.creep`.
+
+| Parameter | Value |
+|---|---|
+| Effect | Multiplies the orbit distance by `1 - creep x 0.22` (ceiling `--haunt-creep-max`). Azimuth and elevation are not touched |
+| Bounded by height | Final screen height on screen at most 0.86 of the viewport height: `creepMax = min(0.22, 1 - hScreenAtWatch / (0.86 x vh))` where `hScreenAtWatch` is the screen's projected height at Watch. The grid's safe area is therefore fully visible at maximum creep |
+| Rate | At most 0.04 per second of `creep` (so the shipped steps of 0.15 over 10 s are within it); eased with smoothstep so speed rises and falls gently, no sudden start |
+| Orbit | The visitor's own orbit and zoom still work. User input is not fought: creep is a multiplier on top of the user's distance, bounded by the limits above, and the user's 0.8 D minimum applies to the product |
+| Reset view | Resets the visitor's orbit; it does not reset creep (creep is story, not user state) |
+| End and skip | Creep eases to zero over 3 s (natural end), 1.2 s (Skip) or 700 ms (Replay), and is zero under Calm. Pause freezes it |
+| Mobile and 3d-screen | No camera movement at all (FR-34) |
+
+### 16.7 Flash and motion safety for the haunting (WCAG 2.3.1, FR-19, FR-30)
+
+These add to section 7. They are testable.
+
+| Rule | Limit |
+|---|---|
+| No sudden change | No state cue changes by more than its rate limit; every state ramp is smoothstep and at least 2 s (`--haunt-min-step-ms`); nothing appears, jumps or changes more than 0.1 of its range in any 300 ms |
+| No jump scare | No sound, size change, cut or full-screen change in under 300 ms. The only hard cuts are page changes (as before) and the Calm switch (which only removes things) |
+| Flashes per second | The ghost, dim, shadow, creep and vignette are monotonic ramps between cues: zero flashes. Text effects change glyph cells, not area means; roll is translation. All well under 3 per second |
+| Large-area luminance | Ghost contribution to the screen mean at most 0.05 and changes by at most 0.02 per 100 ms (design margin of 5 per cent per 100 ms in 7.1). Roll bar reduction at most 0.04. Fog under 0.01. Room dim changes the room, not the screen mean |
+| Contrast | The ghost ceiling over text is 0.07, so body text stays at 4.5:1 or better (7.2 measured by the shader). QA re-measures with the ghost at maximum |
+| Combined cues | Peak simultaneous load (diary page): dim, shadow, ghost, ghost-near, creep, hum all ramping at once is allowed because each is slow, but no event cue (roll, knob, bleed, rewrite, tremble) starts within 2 s of another event cue in the shipped schedule, and only one text effect runs at a time. The parser warns otherwise |
+| Reduced motion | Everything in this section is off (16.8) |
+
+### 16.8 Calm mode and reduced motion
+
+`displayStore.reducedMotion` is the flag. When true:
+- `hauntStore` is all zero, `textEffects` is empty, event cues are not scheduled, no ghost, no roll, no knob turn, no dim, no wall shadow, no creep, no tremble, rewrite or bleed.
+- Pages show complete at once with manual advance (6.7). The story and every fact are fully readable. The content is identical.
+- The Calm key is in the dock at all times and on the start screen (FR-31). Turning it on mid-story cancels effects within one frame.
+- Audio is muted by `hum` being ignored (and the engine's output is not raised).
+- Default on when the OS asks for reduced motion; the visitor cannot turn Calm off in that case from the page (the switch says "on (system setting)").
+
+### 16.9 Audio (Could, FR-35)
+
+Owner: frontend-developer (`audioEngine`). Off by default and silent until Sound is turned on. With sound on, `hum` raises the existing 50 and 100 Hz hum gain along a smoothstep from 0.15 to 0.8 of its range (slow, at most a 6 dB change over 2 s) and brings filtered static up at the same rate. No sudden sound, no scream or sting. The channel and volume knob turns play the existing click at its normal level. Muted when Calm is on. The ghost fades with a slow drop of the hum to 0.2 at `settle`.
+
+### 16.10 Ownership summary
+
+| Area | Owner | Reads | Needs |
+|---|---|---|---|
+| Cue parser, scheduler, `hauntStore`, text effects, 2D ghost and roll layers, audio | frontend-developer | `intro.cues`, `introStore`, `reducedMotion` | New constants (6.3), clock hooks, calm cancel |
+| Ghost shader, sprite, roll uniform, haunt vignette, wall and dust textures | technical-artist | `hauntStore` via scene | `uGhost*`, `uRoll`, `uHauntVignette` uniforms; procedural textures |
+| Knob turns, room dim, wall decal, creep | scene-developer | `hauntStore` | Reads only; never writes |
+| Build-time check of `intro.cues` (optional) | architect | `intro.cues`, resolved intro | See handoff |
+| QA of flash, contrast, settled text and calm | qa-engineer | everything | See handoff |

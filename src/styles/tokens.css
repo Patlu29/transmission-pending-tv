@@ -84,7 +84,7 @@
 
   /* Typography */
   --font-teletext:
-    'Bedstead', 'Courier New', ui-monospace, monospace; /* screen body and mosaic blocks */
+    'VT323', 'Courier New', ui-monospace, monospace; /* screen body; mosaic blocks are drawn as rectangles (VT323 has no sextants) */
   --font-display:
     'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
   --font-ui: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
@@ -102,7 +102,7 @@
 
   /* Teletext grid (see design-spec section 5). The rasteriser reads these in JS via getComputedStyle. */
   --tt-min-font-px: 16;
-  --tt-cell-aspect: 0.6; /* cell width divided by font size */
+  --tt-cell-aspect: 0.6; /* GRID cell width divided by row-pitch basis (see design-spec 5.1 and section 14 for VT323's narrower glyph advance: draw size is derived from measureText, grid geometry stays as specified) */
   --tt-row-pitch: 1.1; /* row height divided by font size */
   --tt-safe-area: 0.92; /* share of the screen used for the grid; the rest is curvature loss */
   --tt-cols-wide: 40;
@@ -163,6 +163,16 @@
   --crt-scanline-pitch: 3px;
   --crt-noise-opacity: 0.08;
   --crt-vignette-strength: 0.85;
+
+  /* Haunting (design-spec section 16). Hard ceilings; components and shaders must not exceed them. */
+  --haunt-tremble-max-em: 0.08; /* glyph offset, share of font size */
+  --haunt-ghost-peak-lum: 0.3; /* relative luminance of the figure on blank screen */
+  --haunt-ghost-text-lum: 0.07; /* ceiling on glyph cells, keeps 4.5:1 for body text */
+  --haunt-room-dim-max: 0.65; /* share of room light removed */
+  --haunt-creep-max: 0.22; /* share of watch distance the camera may close */
+  --haunt-min-step-ms: 2000; /* shortest major escalation step (FR-30) */
+  --haunt-text-redraw-hz: 30;
+  --duration-haunt-text: 1500ms; /* shortest text effect */
 }
 
 /* Reduced motion: no UI transitions, no camera tween. The scene and clock also

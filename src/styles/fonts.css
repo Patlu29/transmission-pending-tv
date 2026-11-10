@@ -1,12 +1,14 @@
 /*
  * Font faces. Owner: ux-ui-designer.
- * DO NOT IMPORT until the WOFF2 files exist in public/fonts/ (see public/fonts/LICENCES.md).
- * Importing it earlier makes the browser request files that return 404.
- * URLs are relative to the document through Vite, which rewrites public assets with the base path (ADR 0007).
+ * VT323 (SIL OFL 1.1) replaced Bedstead on 2026-11-10 because of Bedstead's SAA5050 licence caveat.
+ * The technical-artist adds public/fonts/vt323-regular.woff2 (subset, WOFF2) and its licence text.
+ * Until that file exists the --font-teletext stack falls back to Courier New / system monospace,
+ * and the browser logs one 404 for the missing file.
+ * URLs are rewritten by Vite with the base path (ADR 0007).
  */
 @font-face {
-  font-family: 'Bedstead';
-  src: url('/fonts/bedstead-regular.woff2') format('woff2');
+  font-family: 'VT323';
+  src: url('/fonts/vt323-regular.woff2') format('woff2');
   font-weight: 400;
   font-style: normal;
   font-display: swap;

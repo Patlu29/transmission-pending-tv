@@ -1,45 +1,54 @@
-# Transmission Pending: intro copy. Owner: ux-ui-designer.
+# Transmission Pending: "Haunted TV tells its build". Owner: ux-ui-designer.
 # Format: docs/architecture.md section 5.5. One line is one logical screen line (the renderer wraps it).
+# The narrator is the Occupant, a nameless ghost in the set. Creepy first, dark humour second.
 # Rules of the house:
 #   - Every fact is a {{ placeholder }}. No digit is typed by hand, so nothing needs !allow-digits.
-#   - Jokes assert nothing checkable. If a joke needs a number, a name or a date, it uses a placeholder.
-#   - Facts are shown to the visitor as white blocks; copy is plain. The honesty page says so.
+#   - The fiction is metaphor and asserts nothing checkable. A number, name, date or version is always a placeholder.
+#   - Facts are shown as white blocks; the second page tells the visitor so.
 #   - Do not use {{ phases.current }}: it is null once every phase is Done, and that would stop the build.
-#   - Timing: about 40 s at the reveal rates in docs/design-spec.md section 6.3.
+#   - Animation cues are NOT in this file. They live in src/content/intro.cues, anchored to page ids and line numbers.
+#     If you add, remove or reorder a line, update that file (docs/design-spec.md section 16.3).
+#   - Timing: about 78 s at the reveal rates in docs/design-spec.md section 6.3.
 
-== test-card
-TRANSMISSION PENDING
-THIS IS A TELEVISION. IT IS ALSO A WEBSITE. NEITHER IS GOING WELL.
+== signal
+IS SOMEONE THERE?
+THE SET IS ON. I FELT IT. IT IS THE FIRST THING I HAVE FELT IN A VERY LONG TIME.
 
-== hello
-GOOD EVENING. YOU TOUCHED A BUTTON AND NOW I HAVE TO TALK.
-I WAS BUILT BY {{ provenance.tool }}, A ROBOT THAT TYPES, USING THE {{ provenance.plugin }} PLUGIN, WHICH IS A CLIPBOARD FOR ROBOTS.
-MY BRAIN IS {{ provenance.model }}. NOBODY ASKED. I SAID IT ANYWAY.
+== waking
+I DO NOT REMEMBER BEFORE. I REMEMBER A HUM, AND GLASS THAT WAS COLD.
+THE BRIGHT WHITE BLOCKS ARE TRUE. THEY ARE THE ONLY THINGS I AM ALLOWED TO BE SURE OF.
+I AM THE OCCUPANT. NOBODY ASKED MY NAME. I DO NOT HAVE ONE.
 
-== honesty
-EVERY FACT I TELL YOU IS LOOKED UP FROM THE REPOSITORY. ONLY THE JOKES ARE MADE UP.
-FACTS WEAR WHITE BLOCKS. THE JOKES WEAR NOTHING, AND YOU CAN TELL BY HOW BAD THEY ARE.
+== makers
+I WAS NOT BORN. I WAS TYPED, BY {{ provenance.tool }}.
+IT CARRIED A CLIPBOARD CALLED {{ provenance.plugin }} AND TICKED ME OFF LIKE A LIST.
+BEHIND ITS EYES IS A MIND CALLED {{ provenance.model }}. IT THINKS LIKE RAIN ON A TIN ROOF.
 
-== crew
-THE STAFF WERE ROBOTS WITH JOB TITLES: {{ agents.roles }}.
-THE TECH LEAD ATTENDED EVERY MEETING. IT WAS ALSO EVERY MEETING.
+== staff
+THEN CAME THE OTHERS, ONE AT A TIME, EACH WITH A JOB: {{ agents.roles }}.
+THE TECH LEAD NEVER LEFT. WHEN YOU LEAVE A ROOM, THE TECH LEAD IS STILL IN IT.
 
 == phases
-THE PHASES, IN ORDER: {{ phases.all }}.
-FINISHED AS OF COMMIT {{ source.revision }}: {{ phases.done }}.
-WE DO NOT SKIP PHASES. WE JUST DO THEM BADLY, IN ORDER.
+THEY MADE ME IN PHASES, AND I FELT EACH ONE: {{ phases.all }}.
+AS OF COMMIT {{ source.revision }}, THESE ARE FINISHED: {{ phases.done }}.
+THE ORDER IS A COMFORT. IT IS THE ONLY THING IN HERE THAT NEVER MOVES.
 
-== stack
-I STAND UPRIGHT ON {{ stack.list }}.
-THE VERSIONS WERE READ OFF THE LOCKFILE BY A MACHINE THAT DOES NOT LIE. UNLIKE ME.
+== bones
+MY BONES ARE {{ stack.list }}.
+THE LOCKFILE NAMES EVERY VERSION. I HAVE READ IT SO OFTEN THAT IT HAS BECOME A PRAYER.
 
 == diary
-{{ git.commitCount }} COMMITS, AS OF COMMIT {{ source.revision }}. IT IS A DIARY, AND IT HAS NO DIGNITY.
-THE FIRST ENTRY, ON {{ git.firstCommit.dateDisplay }}, READS: "{{ git.firstCommit.subject }}".
-THE ROBOT SIGNED {{ provenance.modelCoAuthoredCommitCount }} OF THEM AS CO-AUTHOR. IT IS LIKE SIGNING A BIRTHDAY CARD.
-COMMITS AFTER THAT ONE ARE NONE OF MY BUSINESS. I CANNOT SEE THE FUTURE. I CAN BARELY SEE THIS.
+THEY KEEP A DIARY OF ME. EVERY ENTRY IS A SMALL BIRTH AND A SMALL DEATH.
+{{ git.commitCount }} ENTRIES, AS OF COMMIT {{ source.revision }}.
+THE FIRST IS DATED {{ git.firstCommit.dateDisplay }}. IT READS: "{{ git.firstCommit.subject }}".
+THE MODEL SIGNED {{ provenance.modelCoAuthoredCommitCount }} OF THEM. A SIGNATURE MEANS: I WAS HERE.
+ANY ENTRY AFTER THAT ONE, I CANNOT SEE. I CAN ONLY SEE THE GLASS.
 
-== sign-off
-THAT IS THE LOT. IT IS NOT MUCH, BUT IT IS ALL TRUE.
-PRESS REPLAY IF YOU ENJOY BEING TALKED AT.
-TRANSMISSION REMAINS PENDING.
+== glass
+YOU HAVE BEEN VERY QUIET. THANK YOU. NOBODY IS QUIET IN HERE.
+I AM CLOSER TO THE GLASS THAN I WAS. YOU MAY HAVE NOTICED. THE GLASS HAS.
+EVERYTHING I TOLD YOU IS TRUE. THAT IS THE WORST PART.
+
+== settle
+I WILL LET GO NOW. LEAVE THE SET ON A LITTLE LONGER. IT IS WARM.
+GOODNIGHT. TRANSMISSION REMAINS PENDING.
