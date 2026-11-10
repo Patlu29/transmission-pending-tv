@@ -41,6 +41,16 @@ export interface CrtScreenMaterialProps {
   curvature?: number;
   /** Glass aspect (width / height). Default 4/3. Pass the quad's aspect for 3d-screen. */
   aspect?: number;
+  /** Occupant 0..1 (hauntStore.ghost). Forced to 0 in calm mode. */
+  ghost?: number;
+  /** Occupant closeness 0..1 (hauntStore.ghostNear). */
+  ghostNear?: number;
+  /** Changes the strip pattern. Default 0. */
+  ghostSeed?: number;
+  /** Roll phase 0..1 (see `rollPhase`). Forced to 0 in calm mode. */
+  roll?: number;
+  /** Extra edge dim 0..0.25 (hauntStore.dim x 0.25 in 3d-screen). Forced to 0 in calm mode. */
+  hauntVignette?: number;
   /** Any other uniform, set once. Does not include uMap. */
   uniforms?: Partial<Omit<CrtUniformValues, 'uMap'>>;
   /** Called once when the warm-up reaches 1. */
@@ -75,6 +85,11 @@ export function CrtScreenMaterial({
   noiseHz = 12,
   curvature = CRT_DEFAULTS.uCurvature,
   aspect = CRT_DEFAULTS.uAspect,
+  ghost = 0,
+  ghostNear = 0,
+  ghostSeed = 0,
+  roll = 0,
+  hauntVignette = 0,
   uniforms,
   onWarmupEnd,
   onCollapseEnd,
@@ -184,6 +199,12 @@ export function CrtScreenMaterial({
     u.uNoiseHz.value = Math.min(24, Math.max(0, noiseHz));
     u.uCurvature.value = curvature;
     u.uAspect.value = aspect;
+    // Calm means everything haunted is zero.
+    u.uGhost.value = s.calm ? 0 : ghost;
+    u.uGhostNear.value = s.calm ? 0 : ghostNear;
+    u.uGhostSeed.value = ghostSeed;
+    u.uRoll.value = s.calm ? 0 : roll;
+    u.uHauntVignette.value = s.calm ? 0 : Math.min(0.25, Math.max(0, hauntVignette));
 
     if (controlRef?.current) controlRef.current.phase = s.phase;
   });

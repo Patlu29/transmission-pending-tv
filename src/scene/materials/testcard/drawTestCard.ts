@@ -2,8 +2,8 @@
  * Original test card (design-spec section 11), drawn procedurally into any 2D canvas context.
  * Greyscale only. No broadcaster logo, name, clock, face, mascot or characteristic layout.
  *
- * Needs the fonts "Barlow Condensed" 600 and "Bedstead" loaded for the caption. Await
- * `document.fonts.load('600 32px "Barlow Condensed"')` and `document.fonts.load('22px Bedstead')` first.
+ * Needs the fonts "Barlow Condensed" 600 and "VT323" loaded for the caption. Await
+ * `document.fonts.load('600 32px "Barlow Condensed"')` and `document.fonts.load('24px VT323')` first.
  */
 
 /** Greys of the teletext palette (src/styles/tokens.css --tt-0 to --tt-7). */
@@ -26,7 +26,7 @@ export interface TestCardOptions {
 }
 
 const DISPLAY_FONT = '"Barlow Condensed", "Arial Narrow", Arial, sans-serif';
-const TELETEXT_FONT = 'Bedstead, "Courier New", monospace';
+const TELETEXT_FONT = 'VT323, "Courier New", monospace';
 
 interface Layout {
   /** Pixels per composition unit. */
@@ -279,7 +279,7 @@ export function drawTestCard(
       ? (options.subCaption ?? 'STAND BY')
       : `TUNING... ${Math.max(0, Math.min(100, Math.round(loading)))}%`;
   ctx.fillStyle = TT[5];
-  ctx.font = `${22 * tu}px ${TELETEXT_FONT}`;
+  ctx.font = `${30 * tu}px ${TELETEXT_FONT}`;
   ctx.fillText(sub, cx, plateY + 72 * tu);
 
   ctx.restore();

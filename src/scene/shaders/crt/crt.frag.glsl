@@ -31,6 +31,14 @@ uniform float uCorner;         // corner radius as a fraction of the glass width
 uniform float uStaticLevel;    // warm-up static luminance gain (mean = level x 0.5)
 uniform float uReflection;     // faint window reflection while the set is off
 uniform float uJitter;         // 0..1 horizontal jitter enable
+uniform sampler2D uGhostMap;   // Occupant sprite: R = tone, A = coverage (drawOccupant, 256 x 384)
+uniform float uGhost;          // 0..1 how much of the figure has emerged from the static
+uniform float uGhostNear;      // 0..1 closeness (size and position, mouth and fog from 0.8)
+uniform float uGhostSeed;      // any number; changes the strip tracking pattern
+uniform float uGhostTextCap;   // luminance ceiling for the ghost over text cells (0.07)
+uniform float uGhostPeak;      // luminance ceiling for the ghost on blank screen (0.30)
+uniform float uRoll;           // 0 = none, 0..1 = phase through one vertical roll
+uniform float uHauntVignette;  // 0..0.25 extra edge dim, outside the safe area only
 
 varying vec2 vUv;
 
@@ -40,6 +48,10 @@ const float WARMUP_SECONDS = 2.2;
 const float BAR_PERIOD = 6.0;       // seconds per pass (design-spec 7.3)
 const float BAR_HEIGHT = 0.18;      // 18 per cent of the screen
 const float BAR_DELTA = 0.025;      // luminance delta, under the 0.04 limit
+const float GHOST_AREA_GAIN = 0.6;   // tuned so the figure's mean contribution stays under 0.05
+// uGhostTextCap is the ceiling before the other layers; glow, grain and scanlines sit on top of it, so the
+// effective cap is scaled to keep the post-effect text contrast at 4.5:1 or better (measured).
+const float TEXT_CAP_SCALE = 0.5;
 const float GLOW_CAP = 0.025;       // glow can lift the dark ground by this much at most
 const vec3 LUMA = vec3(0.2126, 0.7152, 0.0722);
 
@@ -47,6 +59,24 @@ float hash12(vec2 p) {
   vec3 p3 = fract(vec3(p.xyx) * 0.1031);
   p3 += dot(p3, p3.yzx + 33.33);
   return fract((p3.x + p3.y) * p3.z);
+}
+
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash12(i), hash12(i + vec2(1.0, 0.0)), f.x),
+             mix(hash12(i + vec2(0.0, 1.0)), hash12(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// Vertical roll offset (screen heights) for phase p in 0..1. Mirrors rollOffset() in createCrtMaterial.ts.
+// Main sweep over the first 5/6 with a cosine ease (one full wrap), then a damped settle (overshoot under 2 per cent).
+float rollOffset(float p) {
+  if (p <= 0.0) return 0.0;
+  float main = 5.0 / 6.0;
+  if (p < main) return 0.5 - 0.5 * cos(3.14159265 * p / main);
+  float r = (p - main) / (1.0 - main);
+  return 1.0 + 0.03 * sin(3.14159265 * r) * (1.0 - r);
 }
 
 // Elliptical beam spot: bright core with a small halo. Radii in CSS px.
@@ -60,6 +90,7 @@ float beam(vec2 dCss, vec2 radii) {
 
 void main() {
   // Derivatives first, in uniform control flow.
+  // (uvC derivatives are taken after the barrel mapping below, still in uniform control flow.)
   vec2 uvPerPx = max(fwidth(vUv) * uPixelRatio, vec2(1e-6));
   vec2 cssPerUv = 1.0 / uvPerPx;
   float scanPitchPx = 1.0 / (max(fwidth(vUv.y), 1e-6) * uScanlines);
@@ -103,8 +134,56 @@ void main() {
   uvC.x += 0.5 * uvPerPx.x * jOn * uJitter * motion * step(1.0, uWarmup) * (1.0 - collapsing);
 
   // Picture and phosphor glow.
-  float pic = dot(texture2D(uMap, uvC).rgb, LUMA);
-  float glow = dot(textureLod(uMap, uvC, uGlowLod).rgb, LUMA);
+  // Picture roll: the picture wraps vertically, glass outline and scanlines stay put.
+  float ro = rollOffset(uRoll) * motion * (1.0 - collapsing);
+  vec2 uvDx = dFdx(uvC);
+  vec2 uvDy = dFdy(uvC);
+  vec2 uvR = uvC;
+  if (ro > 0.0) uvR.y = fract(uvC.y + ro);
+  float pic = dot(textureGrad(uMap, uvR, uvDx, uvDy).rgb, LUMA);
+  float glow = dot(textureLod(uMap, uvR, uGlowLod).rgb, LUMA);
+
+  // Noise cell in screen space so the grain is at least uGrainPx CSS px, whatever the angle.
+  vec2 cell = floor(gl_FragCoord.xy / (max(uGrainPx, 2.0) * uPixelRatio));
+  float frame = floor(uTime * min(uNoiseHz, 24.0)) * (1.0 - calm);
+  float nl = hash12(cell + vec2(frame * 37.0, frame * 17.0) + vec2(11.0, 29.0));   // mean 0.5
+
+  // ---- The Occupant: a bust that forms out of the static ----
+  float ghostL = 0.0;
+  if (uGhost > 0.0001 && calm < 0.5) {
+    float ne = uGhostNear * uGhostNear * (3.0 - 2.0 * uGhostNear);
+    float spriteH = mix(0.35, 0.95, ne) * (0.7 / 0.95) / 0.3229;       // glass heights; head = 124 of 384
+    vec2 headC = vec2(0.06 * sin(6.2831853 * uTime / 40.0) * uAspect, 0.5 - mix(0.62, 0.45, ne));
+    vec2 pg = vec2((uvR.x - 0.5) * uAspect, uvR.y - 0.5);
+    float syTop = 0.3125 - (pg.y - headC.y) / spriteH;                 // sprite row from the top, 0..1
+    // Mis-tracked strips about 3 CSS px tall, slow correlated noise, plus a tear at the throat.
+    float strip = floor(gl_FragCoord.y / (3.0 * uPixelRatio));
+    float shift = (vnoise(vec2(strip * 0.25 + uGhostSeed * 7.0, uTime * 0.2)) - 0.5) * 2.0 * 0.012;
+    shift += 0.03 * exp(-pow((syTop - 0.508) / 0.018, 2.0));
+    vec2 s = vec2(0.5 + (pg.x - headC.x - shift * uAspect) / (spriteH * 0.66667), syTop);
+    float inside = step(0.0, s.x) * step(s.x, 1.0) * step(0.0, s.y) * step(s.y, 1.0);
+    vec4 spr = textureLod(uGhostMap, vec2(s.x, 1.0 - s.y), 0.0);
+    float tone = spr.r;
+    float cover = spr.a * inside;
+    // Mouth slit from near 0.8, a third of the way up from the chin.
+    float mouthA = smoothstep(0.8, 1.0, uGhostNear);
+    vec2 md = abs(vec2(s.x - 0.5, s.y - 0.367)) / vec2(0.043, 0.0045);
+    cover *= 1.0 - mouthA * (1.0 - smoothstep(0.8, 1.1, max(md.x, md.y)));
+    // Emergence: threshold against slow noise mixed with the live grain.
+    float low = vnoise(uvR * vec2(9.0 * uAspect, 9.0) + vec2(uTime * 0.05, uGhostSeed * 3.1));
+    float n = mix(low, nl, 0.5);
+    float want = uGhost * 1.2 * (0.55 + 0.45 * clamp(tone / 0.85, 0.0, 1.0));
+    float vis = smoothstep(n - 0.12, n + 0.12, want);
+    ghostL = uGhostPeak * GHOST_AREA_GAIN * (1.0 - 0.45 * ne) * (tone / 0.85) * cover * vis;
+    // Fog at the glass, under 0.01.
+    vec2 mouthP = vec2(headC.x, headC.y - (0.367 - 0.3125) * spriteH);
+    vec2 fd = (pg - mouthP) / 0.14;
+    ghostL += 0.01 * mouthA * exp(-dot(fd, fd));
+    ghostL = min(ghostL, uGhostPeak);
+    // Over glyph cells and one cell round them the figure never exceeds the text cap.
+    float textMask = smoothstep(0.0008, 0.01, dot(textureLod(uMap, uvR, 3.5).rgb, LUMA));
+    ghostL = mix(ghostL, min(ghostL, uGhostTextCap * TEXT_CAP_SCALE), textMask);
+  }
 
   // Scanlines (faded out when the pitch drops under about 2 device px, to avoid moire).
   float scan = 0.5 + 0.5 * cos(6.2831853 * vUv.y * uScanlines);
@@ -115,17 +194,17 @@ void main() {
 
   float flicker = 1.0 + 0.005 * sin(6.2831853 * 1.3 * uTime) * motion;   // 0.5 per cent, 1.3 Hz
   float glowAdd = min(glow * uGlow * flicker, GLOW_CAP);
-  float img = (pic * uBrightness * (1.0 - scanDark) + glowAdd * uBrightness) * vig * inTex;
+  float hv = 1.0 - uHauntVignette * motion * smoothstep(0.92, 1.0, max(abs(d.x), abs(d.y)));
+  float img = ((pic + ghostL) * uBrightness * (1.0 - scanDark) + glowAdd * uBrightness) * vig * hv * inTex;
+  // Roll hold bar: a dark band riding the seam, at most 0.04 luminance.
+  float seam = 1.0 - fract(ro);
+  float rollBand = (1.0 - smoothstep(0.0, 0.03, abs(uvC.y - seam))) * step(0.0001, ro);
+  img -= min(img, 0.04) * rollBand;
 
   // Rolling hum bar, after warm-up only, 6 s per pass, off in calm mode.
   float barCentre = 1.0 + BAR_HEIGHT * 0.5 - fract(uTime / BAR_PERIOD) * (1.0 + BAR_HEIGHT);
   float bar = 1.0 - smoothstep(0.0, BAR_HEIGHT * 0.5, abs(vUv.y - barCentre));
   bar *= BAR_DELTA * uBar * motion * smoothstep(2.0, 2.2, t) * fade;
-
-  // Noise cell in screen space so the grain is at least uGrainPx CSS px, whatever the angle.
-  vec2 cell = floor(gl_FragCoord.xy / (max(uGrainPx, 2.0) * uPixelRatio));
-  float frame = floor(uTime * min(uNoiseHz, 24.0)) * (1.0 - calm);
-  float nl = hash12(cell + vec2(frame * 37.0, frame * 17.0) + vec2(11.0, 29.0));   // mean 0.5
 
   // ---- Warm-up ----
   float c = smoothstep(1.5, 2.2, t);                           // static -> picture cross-fade

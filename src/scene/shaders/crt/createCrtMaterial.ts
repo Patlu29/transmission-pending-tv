@@ -1,4 +1,5 @@
 import {
+  CanvasTexture,
   ClampToEdgeWrapping,
   LinearFilter,
   LinearMipmapLinearFilter,
@@ -7,6 +8,7 @@ import {
   SRGBColorSpace,
   type Texture,
 } from 'three';
+import { createOccupantCanvas } from '../../materials/ghost/drawOccupant.ts';
 import vertexShader from './crt.vert.glsl?raw';
 import fragmentShader from './crt.frag.glsl?raw';
 
@@ -67,9 +69,25 @@ export interface CrtUniformValues {
   uReflection: number;
   /** 1 enables the 0.5 px jitter in full motion. */
   uJitter: number;
+  /** Occupant sprite (`drawOccupant`, R = tone, A = coverage). Linear filter, no mipmaps. */
+  uGhostMap: Texture | null;
+  /** 0..1 how much of the figure has emerged from the static (`hauntStore.ghost`). */
+  uGhost: number;
+  /** 0..1 closeness: size, position, mouth and fog from 0.8 (`hauntStore.ghostNear`). */
+  uGhostNear: number;
+  /** Any number. Changes the strip tracking pattern. */
+  uGhostSeed: number;
+  /** Luminance ceiling for the figure over glyph cells and one cell round them. Default 0.07. */
+  uGhostTextCap: number;
+  /** Luminance ceiling for the figure on blank screen. Default 0.30. */
+  uGhostPeak: number;
+  /** 0 = no roll, else phase 0..1 through one roll (see `rollPhase`). */
+  uRoll: number;
+  /** 0..0.25 extra dim at the edge, outside the safe area only (`hauntStore.dim` in 3d-screen). */
+  uHauntVignette: number;
 }
 
-export const CRT_DEFAULTS: Omit<CrtUniformValues, 'uMap'> = {
+export const CRT_DEFAULTS: Omit<CrtUniformValues, 'uMap' | 'uGhostMap'> = {
   uTime: 0,
   uWarmup: 0,
   uCollapse: 0,
@@ -92,6 +110,13 @@ export const CRT_DEFAULTS: Omit<CrtUniformValues, 'uMap'> = {
   uStaticLevel: 0.5,
   uReflection: 0.025,
   uJitter: 1,
+  uGhost: 0,
+  uGhostNear: 0,
+  uGhostSeed: 0,
+  uGhostTextCap: 0.07,
+  uGhostPeak: 0.3,
+  uRoll: 0,
+  uHauntVignette: 0,
 };
 
 export type CrtShaderMaterial = ShaderMaterial & {
@@ -113,12 +138,34 @@ export function prepareScreenTexture<T extends Texture>(texture: T): T {
   return texture;
 }
 
+let sharedOccupant: CanvasTexture | null = null;
+
+/** The shared Occupant sprite texture (linear filter, no mipmaps, raw tone in R). Browser only; created once. */
+export function getOccupantTexture(): CanvasTexture | null {
+  if (typeof document === 'undefined') return null;
+  if (!sharedOccupant) {
+    const tex = new CanvasTexture(createOccupantCanvas());
+    tex.generateMipmaps = false;
+    tex.minFilter = LinearFilter;
+    tex.magFilter = LinearFilter;
+    tex.wrapS = ClampToEdgeWrapping;
+    tex.wrapT = ClampToEdgeWrapping;
+    sharedOccupant = tex;
+  }
+  return sharedOccupant;
+}
+
 /** Builds the CRT screen ShaderMaterial. Requires WebGL2. Dispose it when done. */
 export function createCrtScreenMaterial(
   texture: Texture | null,
   overrides: Partial<Omit<CrtUniformValues, 'uMap'>> = {},
 ): CrtShaderMaterial {
-  const values: CrtUniformValues = { uMap: texture, ...CRT_DEFAULTS, ...overrides };
+  const values: CrtUniformValues = {
+    uMap: texture,
+    uGhostMap: getOccupantTexture(),
+    ...CRT_DEFAULTS,
+    ...overrides,
+  };
   const uniforms: Record<string, { value: unknown }> = {};
   for (const [key, value] of Object.entries(values)) uniforms[key] = { value };
   const material = new ShaderMaterial({
@@ -185,4 +232,36 @@ export function estimateCrtMeanLuminance(options: {
   const area = Math.min(1, (Math.PI * (reveal * 1.4142) ** 2) / 4);
   const staticMean = opacity * staticLevel * 0.5 * area * 0.9;
   return staticMean + picture * c * (0.3 + 0.7 * c);
+}
+
+/** Shortest roll that respects the 0.8 screen heights per second peak speed (design-spec 16.6.1). */
+export const ROLL_MIN_SECONDS = 2.4;
+
+/**
+ * Roll offset in screen heights for phase p (0..1). Same formula as the shader: a cosine sweep over the first
+ * 5/6 (one full wrap), then a damped settle that overshoots by under 2 per cent. Use it for the 2D mode:
+ * translate the screen contents by `rollOffset(p) % 1` of the screen height and draw a second copy to wrap.
+ */
+export function rollOffset(p: number): number {
+  if (p <= 0) return 0;
+  const main = 5 / 6;
+  if (p < main) return 0.5 - 0.5 * Math.cos((Math.PI * p) / main);
+  const r = (p - main) / (1 - main);
+  return 1 + 0.03 * Math.sin(Math.PI * r) * (1 - r);
+}
+
+/**
+ * Phase for `uRoll` from the roll record in hauntStore: `{ active, startedAt, dur }` with times in seconds on the
+ * same clock as `now`. Returns 0 when not active, and never goes below 0.0001 while rolling so the shader sees it.
+ * `dur` is clamped up to `ROLL_MIN_SECONDS`.
+ */
+export function rollPhase(
+  roll: { active: boolean; startedAt: number; dur: number },
+  now: number,
+): number {
+  if (!roll.active) return 0;
+  const dur = Math.max(roll.dur, ROLL_MIN_SECONDS);
+  const p = (now - roll.startedAt) / dur;
+  if (p <= 0 || p >= 1) return 0;
+  return Math.max(p, 0.0001);
 }

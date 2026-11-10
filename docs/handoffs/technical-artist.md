@@ -1,13 +1,13 @@
 # Handoff: technical-artist
 
 ## Summary
-Fonts are downloaded, subset and licensed (50.7 kB of WOFF2, Bedstead plus Barlow Condensed 400 and 600). The CRT screen shader is done, with a drop-in React component, a plain material factory and a 2D CSS equivalent. The original test card exists as live drawing code and as a baked greyscale PNG. The TV body is built in code (9,736 triangles, 0 bytes to download, nodes `screen`, `knob-power`, `knob-channel`, `knob-volume`). `npm run build` passes. Everything was checked in headless Google Chrome (ANGLE and SwiftShader); Safari and Firefox were not tested.
+Fonts are downloaded, subset and licensed (round 1 used Bedstead; round 2 replaced it with VT323, see Round 2). The CRT screen shader is done, with a drop-in React component, a plain material factory and a 2D CSS equivalent. The original test card exists as live drawing code and as a baked greyscale PNG. The TV body is built in code (9,736 triangles, 0 bytes to download, nodes `screen`, `knob-power`, `knob-channel`, `knob-volume`). `npm run build` passes. Everything was checked in headless Google Chrome (ANGLE and SwiftShader); Safari and Firefox were not tested.
 
 ## Assets (size, triangles, textures)
 
 | Asset | Path | Size | Triangles | Notes |
 |---|---|---|---|---|
-| Bedstead 3.261 subset | `public/fonts/bedstead-regular.woff2` | 6.2 kB | n/a | 302 glyphs including U+1FB00-1FBFF sextants and U+2580-259F blocks. Advance 0.6 em |
+| ~~Bedstead~~ | removed in round 2 | n/a | n/a | replaced by `vt323-regular.woff2` (16.0 kB, advance 0.4 em) |
 | Barlow Condensed 400 | `public/fonts/barlow-condensed-400.woff2` | 21.6 kB | n/a | Latin-1, punctuation, arrows |
 | Barlow Condensed 600 | `public/fonts/barlow-condensed-600.woff2` | 22.9 kB | n/a | same |
 | Font licences | `public/fonts/licences/` | 13 kB text | n/a | CC0 `COPYING`, the `bedstead.c` notice, OFL 1.1. Table in `public/fonts/LICENCES.md` |
@@ -20,7 +20,7 @@ Fonts are downloaded, subset and licensed (50.7 kB of WOFF2, Bedstead plus Barlo
 Fonts total 50.7 kB, against 150 kB. No GLB: nothing to compress, so there is no Draco, Meshopt or KTX2 step, and the 1.5 MB model budget is met with 0 bytes. TV materials: 5 (wood, bezel, trim, knob, plate), plus the screen material. Draw calls for the set: 8.
 
 ### Font licence verdict (read from the downloaded text)
-- Bedstead: the zip's `COPYING` is CC0 1.0, and the header of `bedstead.c` says the four authors dedicate the generator and "the embodied typeface" to the public domain. **Caveat the owner should accept or reject:** the same header says many glyph shapes come from the Mullard SAA5050 typeface, whose copyright "will still be owned by Mullard's corporate successors", and relies on section 55 of the UK Copyright, Designs and Patents Act 1988. The author's web page adds "I'm not a lawyer, though, so this may well be wrong." I used Bedstead because the licence text is permissive and the font is widely redistributed, and recorded the caveat in `public/fonts/LICENCES.md`. VT323 (OFL 1.1) is the documented swap.
+- Bedstead (REMOVED in round 2, kept here for the record): the zip's `COPYING` is CC0 1.0, and the header of `bedstead.c` says the four authors dedicate the generator and "the embodied typeface" to the public domain. **Caveat the owner should accept or reject:** the same header says many glyph shapes come from the Mullard SAA5050 typeface, whose copyright "will still be owned by Mullard's corporate successors", and relies on section 55 of the UK Copyright, Designs and Patents Act 1988. The author's web page adds "I'm not a lawyer, though, so this may well be wrong." I used Bedstead because the licence text is permissive and the font is widely redistributed, and recorded the caveat in `public/fonts/LICENCES.md`. VT323 (OFL 1.1) is the documented swap.
 - Barlow Condensed: SIL OFL 1.1, no Reserved Font Name, licence text shipped.
 
 ## Components, props, uniforms, paths
@@ -123,7 +123,7 @@ Look: the wood reads under a directional key of intensity about 3 plus `GreyEnvi
 Props: `intensity` (0.35), `resolution` (64). No file, no background.
 
 ### Test card (`src/scene/materials/testcard/drawTestCard.ts`)
-`drawTestCard(ctx, width, height, { loadingPercent?, subCaption? })` and `createTestCardCanvas(w, h, opts)`. Section 11 elements 1 to 13 are all implemented. 4:3 canvases show the exact 1000 x 750 composition; other landscape ratios keep it centred with the field and grid extended; portrait (aspect under 1.15) uses the section 11 portrait layout (circle at 0.7 of the short side, wedges in horizontal bands, strips full width, caption at least 16 px tall). `loadingPercent` set means the caption plate reads `TUNING... NN%`. Await `document.fonts.load('600 32px "Barlow Condensed"')` and `document.fonts.load('22px Bedstead')` first. `TT` exports the eight greys. Mean linear luminance 0.208.
+`drawTestCard(ctx, width, height, { loadingPercent?, subCaption? })` and `createTestCardCanvas(w, h, opts)`. Section 11 elements 1 to 13 are all implemented. 4:3 canvases show the exact 1000 x 750 composition; other landscape ratios keep it centred with the field and grid extended; portrait (aspect under 1.15) uses the section 11 portrait layout (circle at 0.7 of the short side, wedges in horizontal bands, strips full width, caption at least 16 px tall). `loadingPercent` set means the caption plate reads `TUNING... NN%`. Await `document.fonts.load('600 32px "Barlow Condensed"')` and `document.fonts.load('24px VT323')` first. `TT` exports the eight greys. Mean linear luminance 0.208.
 
 ### 2D overlay (`src/scene/materials/crt2d/crt2d.css`)
 `.crt2d` on the screen element: scanlines (`::before`, token pitch and opacity), vignette (the token's inset shadow), static (`::after`, `public/textures/noise-tile-64.png` at 128 px, 12 Hz stepped, 24 Hz with `.crt2d--idle`, frozen with `data-calm="true"` or `prefers-reduced-motion`). `.crt2d__glow` on the text adds the glow. No curvature warp. Split decided: the shader owns 3D, this CSS owns 2D mode, frontend imports it.
@@ -157,7 +157,7 @@ I did not touch `assets/source/` (it holds only `.gitkeep`) or any file outside 
 - Flash rules are met by the shader on its own. The page content (what the rasteriser draws and when it changes) must also respect section 7.
 
 ## Open questions
-- Accept Bedstead's residual SAA5050 copyright caveat, or swap to VT323? (tech lead or project owner)
+- (Resolved in round 2: VT323 chosen.)
 - Section 10.2 asks for a room wall paper pattern and a dust texture. I did not make them (see Not done); is a flat dark room enough? (ux-ui-designer)
 
 ## Not done
@@ -169,7 +169,88 @@ I did not touch `assets/source/` (it holds only `.gitkeep`) or any file outside 
 
 ## Requests for other agents
 - scene-developer: replace the placeholder `objects/TvSet.tsx` with `TvBody` (`import { TvBody, GreyEnvironment } from '@/scene/materials'`). Pass your existing CRT material as the child (`<primitive object={material} attach="material" />`), so `ScreenSurface`'s own mesh is not needed in `3d-set`; keep it for `3d-screen`. Use `nodesRef` or the node names for `KnobLayer` picking. The set's screen mesh already has the dome, so keep `uCurvature` 0.04 and `uAspect` 4/3 there. Put the shelf top at `TV_LAYOUT.shelfY`. Mount `<GreyEnvironment />` (intensity 0.3 to 0.6) so metals and the clear coat read. Also drive `uNoiseHz` (24 with no text, 12 behind text), `uBar` (0 on the diary index), `uBrightness` (0.4 while `loading`), `uWarmup` 1 for the loading card and 0 for set-off, as you asked; the shader owns the faint reflection at `uWarmup` 0. You can use `estimateCrtMeanLuminance` for the room light (pass `pictureMean` 0.208 for the test card).
-- frontend-developer: import `src/styles/fonts.css` (the files now exist) and `@/scene/materials/crt2d/crt2d.css`. Await `document.fonts.load('16px Bedstead')` and `document.fonts.load('600 16px "Barlow Condensed"')` before the first canvas draw. Use `drawTestCard` for the idle and loading picture (so the card is identical in 3D and any canvas use), or the baked `test-card-960x720.png` as the 2D mode image. In 2D mode use `class="crt2d crt2d--text"` (or `crt2d--idle` behind the card) with `data-calm` mirrored from `displayStore.motion`. Keep the rasteriser's text colours as in design-spec 5.3; the contrast numbers above assume them.
+- frontend-developer: import `src/styles/fonts.css` (the files now exist) and `@/scene/materials/crt2d/crt2d.css`. Await `document.fonts.load('16px VT323')` and `document.fonts.load('600 16px "Barlow Condensed"')` before the first canvas draw. Use `drawTestCard` for the idle and loading picture (so the card is identical in 3D and any canvas use), or the baked `test-card-960x720.png` as the 2D mode image. In 2D mode use `class="crt2d crt2d--text"` (or `crt2d--idle` behind the card) with `data-calm` mirrored from `displayStore.motion`. Keep the rasteriser's text colours as in design-spec 5.3; the contrast numbers above assume them.
 - ux-ui-designer: `src/styles/fonts.css` still says "DO NOT IMPORT until the WOFF2 files exist", and `docs/design-spec.md` section 14 still says the files could not be downloaded. Please update both. Keep `--screen-header-bg` at `--tt-2` or darker (the white header text measures 4.51:1 worst case after effects). The 3D scanline darkness is 0.18, not the 2D token 0.28.
 - qa-engineer: shader checks that passed here and are worth repeating in the real app: R, G, B within 2 levels in all modes; warm-up mean luminance monotonic from 1.0 s; collapse never rises by more than 0.002; calm frames identical at different times; grain cell of at least 2 CSS px; text contrast on the three sample rows above. Test the collapse at a 4x CPU slowdown, as the 0.1 s frame-delta clamp in `CrtScreenMaterial` stretches it in time without changing its shape.
 - tech-lead: commit `public/fonts/*.woff2`, `public/fonts/licences/`, `public/textures/*.png` as binary files; none are generated at build time.
+
+
+---
+
+# Round 2: ghost story (the Occupant)
+
+Build passes (`npm run build`) and `npm run lint` passes. Measurements: headless Google Chrome (ANGLE and SwiftShader), 960 x 720, DPR 1. Safari, Firefox and a real GPU were not tested.
+
+## 1. Font: VT323 replaces Bedstead
+- Added `public/fonts/vt323-regular.woff2` (16.0 kB, 200 glyphs: Basic Latin, Latin-1, punctuation, arrows, `kern` only) from https://github.com/phoikoi/VT323, licence `public/fonts/licences/OFL-VT323.txt` (SIL OFL 1.1, "Copyright 2011, The VT323 Project Authors", no Reserved Font Name).
+- Removed `bedstead-regular.woff2` and `licences/Bedstead-*`. `public/fonts/LICENCES.md` rewritten. Fonts total 60.5 kB of 150 kB.
+- **Measured metrics for the frontend:** units per em 1000, advance of every glyph tested (A, M, i, space, 0) is **400, so 0.4 em per cell**; hhea ascent 800, descent 200 (line box 1.0 em). `--tt-cell-aspect` 0.6 no longer matches; use `measureText`. VT323 has no sextant block glyphs and no U+2580-259F in the subset, so draw all mosaics, rules, fastext blocks and bleed streaks as rectangles.
+- The test card caption and the baked `public/textures/test-card-960x720.png` now use VT323 (sub-caption drawn at 30 units because VT323 is small for its em). `public/textures/LICENCES.md` updated.
+
+## 2. Shader: new uniforms (all in `CrtUniformValues`, defaults in `CRT_DEFAULTS`)
+
+| Uniform | Default | Meaning |
+|---|---|---|
+| `uGhost` | 0 | 0..1 how much of the Occupant has emerged from the static (`hauntStore.ghost`) |
+| `uGhostNear` | 0 | 0..1 closeness (`hauntStore.ghostNear`): size, position, mouth slit and glass fog from 0.8 |
+| `uGhostSeed` | 0 | Any number; changes the strip tracking pattern |
+| `uGhostMap` | shared sprite | Occupant sprite texture. **Set automatically** by `createCrtScreenMaterial` (`getOccupantTexture()`), so existing code needs no change except copying the other uniforms |
+| `uGhostTextCap` | 0.07 | Ghost luminance ceiling over glyph cells and a one-cell dilation |
+| `uGhostPeak` | 0.30 | Ghost luminance ceiling on blank screen |
+| `uRoll` | 0 | 0 = no roll; else phase 0..1 through one roll. Use `rollPhase(hauntStore.roll, nowSeconds)` |
+| `uHauntVignette` | 0 | 0..0.25 extra edge dim, only outside the 0.92 safe area (box metric), so it cannot touch text. In 3d-screen pass `hauntStore.dim * 0.25` |
+
+Calm: the shader multiplies the ghost, roll and haunt vignette by "not calm" (`uCalm`), so setting `uCalm` 1 zeroes all of it even if the host forgets to; the `CrtScreenMaterial` component also zeroes the props.
+
+### Behaviour and measurements
+- **Emergence:** `vis = smoothstep(n - 0.12, n + 0.12, ghost x 1.2 x tone weight)`, with `n` a mix of 0.05 Hz drifting noise and the live grain, so the figure truly forms out of the static (at 0.12 only a few face pixels appear; at 0.45 a dotted head and collar; at 0.8 filled).
+- **Sprite and placement:** as design-spec 16.5: egg head 1.4 times taller than wide tilted 5 degrees, hollow eyes (left larger and lower), long neck, sloping shoulders, wide pointed lapels, body dissolving below the chest, mis-tracked strips of 3 CSS px with slow correlated noise (plus or minus 1.2 per cent of the width) and a 3 per cent tear at the throat, head 0.26 to 0.70 of the glass height, x drift plus or minus 6 per cent with a 40 s period, y 0.62 to 0.45, mouth slit from near 0.8, fog under 0.01. Original design.
+- **Ceilings (ghost at 1, near 1, text page, Chrome):** mean contribution to the screen +0.018 (limit 0.05); +0.015 at (0.8, 0.55); +0.005 at (0.45, 0.2). Per-frame luminance changes only come from the 0.2 Hz strip noise and the schedule's envelopes, so the change per 100 ms is far under 0.02.
+- **Contrast with the ghost at maximum** (same method as round 1, but background pixels are limited to within 12 px of a glyph, the one-cell dilation the cap protects; worst of 8 time points; the bar crosses the text): body text 5.05:1 strict and 7.96:1 mean (before the ghost: 6.5:1 and 9.7:1); corner text 6.99:1 strict; header bar 4.55:1 strict (unchanged, header stays on `--tt-2` or darker). All at or above 4.5:1. To get there the effective text cap is `uGhostTextCap x 0.5` (`TEXT_CAP_SCALE` in the GLSL and `GHOST_TEXT_CAP_SCALE` in TS), because glow, grain and scanlines add on top of the cap; the text mask is a blurred mip (lod 3.5) of the teletext canvas, so it follows whatever the rasteriser draws.
+- **Roll:** `rollOffset(p)` (TS and GLSL identical): cosine sweep over the first 5/6 (one full wrap), then a damped settle (overshoot under 2 per cent). Peak speed is 0.785 screen heights per second at `dur` 2.4 s, so **the roll must last at least 2.4 s** (`ROLL_MIN_SECONDS`; `rollPhase` clamps `dur` up to it, so the 1.5 s lower bound in the spec cannot be honoured without breaking the 0.8 limit; the shipped cue uses 2.4). A dark hold bar of 6 per cent height and at most 0.04 luminance rides the seam. Only the picture and ghost move; the glass outline and scanlines stay. Measured on 12 blocks of about 87,000 px, steps of 100 ms: largest block change 0.041 on a text page with the ghost at maximum, 0.070 on the test card (under the 0.10 hard limit, over the 0.05 design margin). So: **do not roll the test card**, roll text pages only (the shipped cues do). Whole-screen mean moves by at most 0.007 during a roll.
+- Greyscale: R, G and B identical in every frame tested (max channel difference 0) including ghost at maximum and mid-roll.
+
+## 3. Occupant sprite and 2D equivalents
+- `drawOccupant(ctx, w = 256, h = 384, { mode: 'sprite' | 'silhouette', mouth? })` and `createOccupantCanvas()` (`src/scene/materials/ghost/drawOccupant.ts`). Sprite: R = G = B = tone (face about 0.85, body 0.6, hollows 0), alpha = coverage. Silhouette: soft white shape for the decal.
+- `drawGhost2D(ctx, w, h, { ghost, near, time, aspect, seed?, peak?, textCap?, noiseHz?, scale?, textMask?, uniformCap? })` (`ghost/drawGhost2D.ts`): CPU port of the same emergence, strips, placement and ceilings. It paints white with alpha equal to the sRGB-encoded luminance, so over black it shows the same grey. Draw it into a low-resolution canvas (for example 240 x 180, `image-rendering: pixelated`) stacked above the 2D screen background and **below the text**, at most 30 Hz, never under Calm. Pass the rasteriser canvas as `textMask` to cap the figure over text (measured 6.8 ms per call at 240 x 180 including the mask), or `uniformCap: true` for a cheaper but fainter layer. Same `GHOST_AREA_GAIN` and `GHOST_TEXT_CAP_SCALE` as the shader.
+- 2D roll: `rollOffset(p)` and `rollPhase(roll, now)`. Translate the screen contents by `(rollOffset(p) % 1)` of the screen height and draw a second copy one screen height above to wrap. Keep the glass outline fixed. No CSS exists for the roll because it needs the wrap; the 2D hold bar is optional.
+- 2D edge dim: unchanged advice, an inset shadow only outside the safe area.
+
+## 4. Room pieces (`src/scene/materials/room/`, exported from `@/scene/materials`)
+All procedural, greyscale, about 0 kB, all textures disposed on unmount.
+
+| Component | Mount | Notes |
+|---|---|---|
+| `<WallPaper position width height color tile />` | `position={[0, 0.9, -0.95]}` faces +z | Faint diamond lattice, pixel values 120 to 136 (under 8 per cent contrast), 256 px tile. Lit `MeshStandardMaterial`, so the scene's key/ambient dim darkens it. `color` (default `#3a3a3a`) multiplies the pattern |
+| `<Shelf position width depth color />` | `position={[x, TV_LAYOUT.shelfY, z]}` | Dark lit plane plus a dust-fall overlay (alpha up to 0.35). Group origin is the centre of the shelf surface |
+| `<BlobShadow position width depth opacity />` | under the cabinet, `y = shelfY + 0.002`, cabinet centre is x = 0.135 | Black radial-alpha ellipse, unlit |
+| `<OccupantDecal position height shadow decalRef />` | on the wall to the left of the set, for example `[-1.25, 0.25, -0.947]` | Soft Occupant silhouette, black, opacity `decalOpacity(shadow)` which is at most 0.10. Never moves. Unlit |
+| `<RoomPieces decalRef shadow />` | one mount, placed for `TvBody` | All four at those positions |
+
+- Update the decal without React state: `decalRef.current.opacity = decalOpacity(hauntStore.shadow)` inside `useFrame` (pass `decalRef`).
+- **Room dim must not touch the screen:** the screen is a `ShaderMaterial` that ignores lights, so multiplying key, ambient and environment by `1 - dim x 0.65` leaves the picture alone by construction. The room dim only shows on lit materials: wall, shelf, cabinet, bezel, knobs. The decal and the blob shadow are unlit black overlays, so the dim does not change them. The only thing the screen shows of the dim is `uHauntVignette` in 3d-screen.
+- The pattern is invisible by design at the usual brightness (alpha and contrast are low): check it at the lit brightness you choose; the dust is the part that reads.
+
+## 5. CrtScreenMaterial component: new props
+`ghost`, `ghostNear`, `ghostSeed`, `roll` (phase for `uRoll`), `hauntVignette`. All are forced to 0 when `calm` is true. Plain-material users (the scene-developer) copy them into `material.uniforms` as in round 1.
+
+## Files changed in round 2
+- `public/fonts/vt323-regular.woff2`, `licences/OFL-VT323.txt`, `LICENCES.md` (rewritten); deleted `bedstead-regular.woff2`, `licences/Bedstead-*`
+- `public/textures/test-card-960x720.png` (re-baked with VT323), `public/textures/LICENCES.md`
+- `src/scene/shaders/crt/crt.frag.glsl`, `createCrtMaterial.ts`
+- `src/scene/materials/CrtScreenMaterial.tsx`, `index.ts`, `testcard/drawTestCard.ts`
+- New: `src/scene/materials/ghost/drawOccupant.ts`, `ghost/drawGhost2D.ts`, `room/roomTextures.ts`, `room/RoomPieces.tsx`
+
+## Decisions
+- Text cap scaled by 0.5 and a wide mip-based mask: the spec's 0.07 ceiling alone gave 3.5:1 to 4.2:1 once glow, grain and scanlines were on top. The uniform keeps its documented value and meaning ("ceiling"); the shader is stricter.
+- Roll minimum 2.4 s (see above), because the 0.8 screen heights per second peak speed fixes the shortest sweep. The roll is a full wrap, so the picture ends where it began.
+- Head height, not sprite height, follows the spec's "head about 70 per cent of the glass height at near 1": the bust is about 2.2 glass heights tall at that point and clips at the glass, so only the face, neck and top of the lapels show.
+- Ghost gain 0.6 (`GHOST_AREA_GAIN`) keeps the mean contribution at 0.018 at maximum, well under 0.05, so the figure is visible but pale; raise it up to about 1.5 if more presence is wanted (the mean would reach about 0.045).
+
+## Requests for other agents (round 2)
+- scene-developer: in `ScreenSurface`, copy `hauntStore.ghost` to `uGhost`, `ghostNear` to `uGhostNear`, `rollPhase(hauntStore.roll, nowSeconds)` to `uRoll`, `dim * 0.25` to `uHauntVignette` (3d-screen only; zero in 3d-set, where `SetLights` does the dim), and a fixed `uGhostSeed`. The ghost sprite is attached by the factory; do nothing for `uGhostMap`. Replace `Room.tsx` with `RoomPieces` (or the four parts) and drive `decalRef.current.opacity = decalOpacity(shadow)`. Keep `uNoiseHz` 12 behind text. Do not roll the test card. Use `drawTestCard` for the card; VT323 must be loaded first.
+- frontend-developer: `await document.fonts.load('16px VT323')`; VT323 advance is 0.4 em (use `measureText`), no mosaic glyphs (draw rectangles). 2D mode: stack a low-res canvas with `drawGhost2D` above the screen background and below the text, at most 30 Hz, none under Calm, `textMask` = your rasteriser canvas; implement the roll with `rollOffset`/`rollPhase` and clamp the roll duration to at least `ROLL_MIN_SECONDS` (2.4 s) in the cue scheduler (the spec's 1.5 s lower bound cannot meet the speed limit).
+- ux-ui-designer: update design-spec 16.6.1 (roll duration 2.4 to 3 s) and 14 (VT323 advance 0.4 em, `--tt-cell-aspect` is now the measured value). Keep the header on `--tt-2` or darker (4.55:1).
+- architect: add the same minimum of 2.4 s to the cue validator's `roll` range if you build it.
+- qa-engineer: with the ghost at maximum expect body text at 5:1 strict, ghost mean +0.018, no region change over 0.05 per 100 ms during a roll on a text page; do not test a roll over the test card (0.07).
+- performance-optimiser: the ghost adds one extra mip fetch, one sprite fetch and a few noise evaluations per fragment only while `uGhost` is above 0 (a uniform branch); the roll adds one derivative-based fetch. Please check a DPR 2 full-screen frame on a real GPU.
