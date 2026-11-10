@@ -159,3 +159,25 @@ All zero (and `textEffects` empty, `knobCue` null) whenever `displayStore.reduce
 - ux-ui-designer / tech lead: the story measures 89.3 s against a 90 s limit (see above); decide whether to retune constants or trim copy before the facts grow.
 - qa-engineer: `window.__APP_TEST__` now also exposes `useHauntStore`. Frame-analyse with the ghost at maximum (diary and glass pages); the 2D ghost is capped at 0.30 and 0.07 over text by construction, the 3D one by the shader.
 - architect: optional `scripts/facts/cues.ts` validator is not needed for correctness: `tests/unit/cues.test.ts` covers anchors, grammar and ranges.
+
+---
+
+## Integration (duration retune)
+
+Tech lead decision: 89.3 s left no headroom, so the reveal constants are retuned. Copy and `intro.cues` are unchanged.
+
+| Constant | Round 2 | Now |
+|---|---|---|
+| `REVEAL_CPS` | 60 | **100** |
+| `LINE_GAP_MS` | 450 | **350** |
+| `PAGE_HOLD_BASE_MS` | 1200 | **800** |
+| `PAGE_HOLD_PER_CHAR_MS` | 10 | **6** |
+| `END_HOLD_MS` | 3000 | 3000 |
+
+- **Today's facts:** 70.2 s modelled, **69.05 s measured** in a real 60 fps browser run (2D, 40 x 16 grid, 22 commits, 7 agents). Before the retune the same run measured 77.3 s.
+- **Projected worst case** (10 role labels, commit count 999, today's stack, a 95-character first-commit subject): **71.1 s**, against the 85 s ceiling.
+- Why reveal speed and not the holds: most page holds are extended by the haunted-text effects (up to 6 s each, set by `intro.cues`), so trimming the holds saves little. 100 cps is the main lever; the holds are trimmed a little as well. The effect durations in `intro.cues` are the next lever if more headroom is needed (ux-ui-designer owns them).
+- `src/state/duration.ts` (`estimateStoryDurationMs(intro, cues)`) simulates the clock: reveal, line gaps, per-screen holds (pages split into screens at 40 columns by 13 content rows), the hold extension while an event cue is queued, running or pending (capped at 6 s), and the end hold, plus a calibrated 0.5 s per screen (`MEASURED_SCREEN_OVERHEAD_MS`). It agrees with the browser run within about 1 s.
+- `tests/unit/duration.test.ts`: the worst case must be 85 s or less; today's real generated facts must be at least 45 s (and at most 90 s).
+- `src/ui/teletext/playlist.ts` now caches per resolved-intro object, so tests that build modified intros do not share cached screens.
+- Open: reveal at 100 cps is quicker than the design-spec 6.3 table (60); ux-ui-designer should update the spec figures.

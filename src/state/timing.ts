@@ -3,10 +3,10 @@
  * duration from `intro.characterCount` with these; re-exported by
  * `src/hooks/useIntroClock.ts`.
  */
-export const REVEAL_CPS = 60;
-export const LINE_GAP_MS = 450;
-export const PAGE_HOLD_BASE_MS = 1200;
-export const PAGE_HOLD_PER_CHAR_MS = 10;
+export const REVEAL_CPS = 100;
+export const LINE_GAP_MS = 350;
+export const PAGE_HOLD_BASE_MS = 800;
+export const PAGE_HOLD_PER_CHAR_MS = 6;
 export const END_HOLD_MS = 3000;
 
 /** Warm-up (full motion) and the hold on the card before page 1. */

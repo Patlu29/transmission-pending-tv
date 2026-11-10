@@ -10,7 +10,8 @@ export interface PlaylistFrame {
   chars: number;
 }
 
-const cache = new Map<string, PlaylistFrame[]>();
+/** Cached per resolved intro object (identity), so tests with different facts never share results. */
+const cache = new WeakMap<ResolvedIntro, Map<string, PlaylistFrame[]>>();
 
 function packPage(
   page: IntroPage,
@@ -44,11 +45,13 @@ export function buildPlaylist(
   cols: number,
   capacity: number,
 ): PlaylistFrame[] {
-  const key = `${intro.revision}|${cols}x${capacity}`;
-  const hit = cache.get(key);
+  const key = `${cols}x${capacity}`;
+  let perIntro = cache.get(intro);
+  if (!perIntro) cache.set(intro, (perIntro = new Map()));
+  const hit = perIntro.get(key);
   if (hit) return hit;
   const frames = intro.pages.flatMap((page, i) => packPage(page, i, cols, capacity));
-  cache.set(key, frames);
+  perIntro.set(key, frames);
   return frames;
 }
 
