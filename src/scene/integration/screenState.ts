@@ -18,6 +18,10 @@ export interface ScreenState {
   warmMs: number;
   /** CRT uBrightness: 0.4 for the dim loading card, otherwise 1. */
   brightness: number;
+  /** CRT uNoiseHz: 24 with no text (idle, warm-up), 12 behind text. */
+  noiseHz: number;
+  /** CRT uBar: 0 on the diary index (status ended), else 1. */
+  bar: number;
   /** True under reduced motion or Calm. */
   reduced: boolean;
   /** Estimated mean relative luminance of the picture (0..0.5), before the 2 Hz low-pass. */
@@ -31,6 +35,8 @@ export const screenState: ScreenState = {
   collapse: 0,
   brightness: 1,
   warmMs: -1,
+  noiseHz: 24,
+  bar: 1,
   reduced: false,
   meanLuminance: 0,
 };

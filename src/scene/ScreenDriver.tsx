@@ -1,7 +1,8 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { COLLAPSE_MS, screenState, WARMUP_MS } from './integration/screenState';
-import { useDisplayStore, useIntroStore } from './integration/stores';
+import { useDisplayStore, useHauntStore, useIntroStore } from './integration/stores';
+import { estimateCrtMeanLuminance } from './materials';
 
 /**
  * Derives screenState (warm-up timeline, CRT collapse on power-off, brightness,
@@ -31,9 +32,11 @@ export function ScreenDriver() {
     onChange();
     const a = useIntroStore.subscribe(onChange);
     const b = useDisplayStore.subscribe(onChange);
+    const c = useHauntStore.subscribe(() => invalidate());
     return () => {
       a();
       b();
+      c();
     };
   }, [invalidate]);
 
@@ -75,20 +78,15 @@ export function ScreenDriver() {
       s.collapse = 0;
     }
 
-    // Mean luminance estimate for the room light (spec 6.1: 0 -> 0.15 -> 0.30 -> pages).
-    let lum: number;
-    if (s.warmMs >= 0) {
-      lum =
-        s.warmMs < 1000
-          ? 0
-          : s.warmMs < 1500
-            ? 0.15 * ((s.warmMs - 1000) / 500)
-            : 0.15 + 0.15 * Math.min(1, (s.warmMs - 1500) / 700);
-    } else {
-      lum = status === 'playing' || status === 'ended' ? 0.12 : status === 'warming' ? 0.3 : 0;
-      if (status === 'loading') lum = 0.3;
-    }
-    s.meanLuminance = lum * s.brightness * (1 - s.collapse);
+    s.noiseHz = status === 'playing' || status === 'ended' ? 12 : 24;
+    s.bar = status === 'ended' ? 0 : 1;
+    // Mean luminance for the room light, from the technical-artist's model.
+    s.meanLuminance = estimateCrtMeanLuminance({
+      warmup: s.warmup,
+      collapse: s.collapse,
+      pictureMean: status === 'playing' || status === 'ended' ? 0.12 : 0.208,
+      brightness: s.brightness,
+    });
 
     if (moving || (status === 'playing' && !reduced)) invalidate();
   });

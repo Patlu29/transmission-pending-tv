@@ -51,3 +51,37 @@ No GLB is loaded yet, so there are no asset sizes or triangle counts to list.
 - technical-artist: deliver `tv.glb` with node names from design-spec 10 and the pivot at the screen centre. Tell me whether the GLB already contains the screen mesh (then `ScreenSurface` should assign the CRT material to it instead of drawing its own quad). Confirm `uWarmup` is 1 and `uBrightness` is 0.4 for the loading card, and `uWarmup` 0 for the set-off look.
 - technical-artist: give `createCrtScreenMaterial` a way to report its mean luminance, if you want it to drive the room light instead of my estimate.
 - architect: no stack changes needed. The scene uses inline `eslint-disable react-hooks/immutability` in `KnobLayer.tsx` and `ScreenSurface.tsx` for the imperative R3F mutations that the React Compiler lint rule rejects.
+
+## Round 2 (ghost story)
+
+### Summary
+Round-1 integration is done: the real `introStore`, the technical-artist's `TvBody` with the CRT material on the glass, `GreyEnvironment`, and the uniform drive. The haunt animations are in (camera creep, knob cues, room dim, CRT ghost, roll and vignette uniforms), reading a haunt store through one seam. `npm run build` and `npm run lint` pass. A headless Chrome run showed the TvBody set, the lit room and the room dim with a haunt store set by hand.
+
+### Changes
+- `integration/stores.ts`: `useIntroStore` now re-exports `@/state/introStore`. New **haunt seam**: a local `useHauntStore` stub with the spec 16.3 fields (`ghost`, `ghostNear`, `creep`, `dim`, `shadow`, `hum`, `roll`, `knobCue`). `readHaunt()` returns all zeros when `displayStore.reducedMotion` is true (Calm and OS reduced motion), so no haunt motion reaches any consumer.
+- `integration/useCrtMaterial.ts` (new): builds the CRT material and drives its uniforms every frame: `uTime`, `uWarmup`, `uCollapse`, `uCalm`, `uJitter`, `uBrightness` (0.4 loading), `uNoiseHz` (24 with no text, 12 for playing and ended), `uBar` (0 when `ended`), `uPixelRatio`. Haunt uniforms `uGhost`, `uGhostNear`, `uRoll`, `uHauntVignette` are set only if the shader declares them (they are not in the shader yet; no change is needed here once they land).
+- `objects/TvSet.tsx`: now `<TvBody>` with the CRT material as the glass (`uCurvature` 0.04, `uAspect` 4/3). `objects/ScreenSurface.tsx` is the 3d-screen quad only (curvature 0.08).
+- `objects/Room.tsx`: shelf top at `TV_LAYOUT.shelfY`. `Experience.tsx` mounts `<GreyEnvironment intensity={0.4} />` in 3d-set.
+- `ScreenDriver.tsx`: room-light luminance now comes from `estimateCrtMeanLuminance` (picture mean 0.208 for the card, 0.12 for text pages), and it invalidates on haunt changes.
+- `cameras/SetCameraRig.tsx`: creep multiplies the visitor's distance by `1 - creep x creepMax`, where `creepMax = min(0.22, 1 - hScreenAtWatch / (0.86 vh))`. The follower is rate-limited to 0.04 per second upward and 1.2 per second downward (so Skip and Replay can ease back), the product respects the 0.8 D minimum, Reset view does not touch creep, and Calm zeroes it within one frame. Arrow keys and Home on `window` are ignored while `status === 'ended'`.
+- `objects/KnobLayer.tsx`: knob cues turn the channel or volume knob by `deg` over at least 2 s (cue `dur`, ease `--ease-camera`, 1 degree overshoot then rest). It is skipped while the pointer is over that knob, the knob stays where it ended, and power-off or Calm returns both knobs to rest at once. Outlines and tags are not triggered.
+- `lights/SetLights.tsx`: key, ambient and `scene.environmentIntensity` are multiplied by `1 - dim x 0.65`, low-passed at 2 Hz. The screen-glow point light is not dimmed.
+- Reset view: the scene has no Reset control of its own (no DOM besides the Html knob tags). The clipped top-left one is not from `src/scene`. `.hud__reset` stays the only one; the scene only writes `cameraOffWatch` and reads `cameraResetNonce`.
+
+### Remaining placeholders
+| Where | What |
+|---|---|
+| `integration/stores.ts` | `useHauntStore` stub until `src/state/hauntStore.ts` exists. Swap: `export { useHauntStore } from '@/state/hauntStore'` and delete the stub (keep `readHaunt`) |
+| `objects/Room.tsx` | Flat wall and shelf. Marked HAUNT SEAM for wall pattern, dust, blob shadow and the Occupant wall decal (opacity `shadow x 0.10`). The technical-artist's room pieces did not exist yet |
+| `integration/useScreenTexture.ts` | Own test-card canvas until the rasteriser sets `screenCanvas` (in my headless run the intro store was still `loading`, so the placeholder showed "TUNING") |
+| `useCrtMaterial.ts` | The shader has no `uGhost`, `uGhostNear`, `uRoll` or `uHauntVignette` yet, so the haunt values go nowhere on screen |
+
+### Assumptions
+- `roll.startedAt` is in `performance.now()` ms and `roll.dur` in seconds (values over 20 are treated as ms). `uRoll` receives the offset in screen heights (0 to 1.02, sine in-out, 400 ms settle), per spec 16.6.1; tell me if the shader wants raw progress instead.
+- `knobCue.dur` is in seconds (values over 20 are treated as ms), and `knobCue.nonce` changes for every new cue.
+- Knob rotation about z: positive `deg` turns clockwise seen from the front, the same direction as the power knob.
+- Home is also ignored on `window` while `ended` (diary spec uses Home for P100); the Reset view key still works.
+
+### Requests for other agents
+- frontend-developer: create `src/state/hauntStore.ts` with the 16.3 field names, then the swap above. Confirm the `roll` and `knobCue` time units. Keep calling `markWebglLost`, `setSceneReady` and the other scene actions as before.
+- technical-artist: add `uGhost`, `uGhostNear`, `uRoll`, `uHauntVignette` to the CRT shader and material defaults (I set them by name when present). Deliver the wall pattern, dust, blob shadow and decal as components so I can mount them in `Room.tsx` (the decal takes an opacity prop or reads `shadow`). Say if `uRoll` should be an offset or a progress value.

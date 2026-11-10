@@ -53,3 +53,9 @@ export function easeCamera(t: number): number {
   u = Math.min(1, Math.max(0, u));
   return bez(y1, y2, u);
 }
+
+// Camera creep (design-spec 16.6.4)
+export const CREEP_MAX = 0.22; // --haunt-creep-max
+export const CREEP_SCREEN_FRAC = 0.86; // screen at most 0.86 of the viewport height
+export const CREEP_RATE_UP = 0.04; // per second at most
+export const CREEP_RATE_DOWN = 1.2; // easing back to zero (700 ms replay, 1.2 s skip)

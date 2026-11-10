@@ -2,8 +2,8 @@ import { PerspectiveCamera } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { MathUtils } from 'three';
-import { useDisplayStore, useIntroStore } from '../integration/stores';
-import { TV_SCREEN_WIDTH } from '../objects/TvSet';
+import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
+import { TV_LAYOUT } from '../materials';
 import {
   DAMPING,
   easeCamera,
@@ -14,6 +14,10 @@ import {
   LIMITS,
   OFF_WATCH_ANGLE,
   OFF_WATCH_K,
+  CREEP_MAX,
+  CREEP_RATE_UP,
+  CREEP_RATE_DOWN,
+  CREEP_SCREEN_FRAC,
   POWER_DOLLY_MS,
   RESET_MS,
   WATCH,
@@ -51,17 +55,18 @@ export function SetCameraRig() {
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
 
-  const D = useRef(watchDistance(size.width, size.height, TV_SCREEN_WIDTH));
+  const D = useRef(watchDistance(size.width, size.height, TV_LAYOUT.screen.width));
   const cur = useRef<Pose>({ ...IDLE });
   const goal = useRef<Pose>({ ...IDLE });
   const tween = useRef<Tween | null>(null);
   const offWatch = useRef(false);
+  const creep = useRef(0); // rate-limited follower of hauntStore.creep
   const scene = useThree((s) => s.scene); // knob layer sets scene.userData.hoveringKnob
 
   // Recompute D on resize, debounced 150 ms, only while no tween runs.
   useEffect(() => {
     const id = setTimeout(() => {
-      D.current = watchDistance(size.width, size.height, TV_SCREEN_WIDTH);
+      D.current = watchDistance(size.width, size.height, TV_LAYOUT.screen.width);
       invalidate();
     }, 150);
     return () => clearTimeout(id);
@@ -155,6 +160,12 @@ export function SetCameraRig() {
       const t = e.target as HTMLElement | null;
       if (t && t !== document.body && !dom.parentElement?.contains(t)) return; // not in the stage
       if (e.altKey || e.ctrlKey || e.metaKey) return;
+      // The diary stage uses arrows (and Home) for paging while status is 'ended'.
+      if (
+        useIntroStore.getState().status === 'ended' &&
+        (e.key.startsWith('Arrow') || e.key === 'Home')
+      )
+        return;
       if (e.key === 'Home') {
         if (isPowered()) tweenTo(WATCH, RESET_MS);
         return;
@@ -198,7 +209,9 @@ export function SetCameraRig() {
     dom.addEventListener('wheel', onWheel, { passive: false });
     dom.addEventListener('dblclick', onDouble);
     window.addEventListener('keydown', onKey);
+    const unHaunt = useHauntStore.subscribe(() => invalidate());
     return () => {
+      unHaunt();
       unIntro();
       unDisplay();
       dom.removeEventListener('pointerdown', onDown);
@@ -242,7 +255,18 @@ export function SetCameraRig() {
       }
     }
 
-    const r = c.k * D.current;
+    // Camera creep (spec 16.6.4): multiplies the visitor's distance by 1 - creep x creepMax.
+    const watchD = D.current;
+    const hScreenFrac =
+      TV_LAYOUT.screen.height / (2 * Math.tan((FOV_DEG * Math.PI) / 360) * watchD);
+    const creepMax = Math.max(0, Math.min(CREEP_MAX, 1 - hScreenFrac / CREEP_SCREEN_FRAC));
+    const wanted = readHaunt().creep;
+    if (useDisplayStore.getState().reducedMotion) creep.current = 0; // Calm: gone within one frame
+    const diff = wanted - creep.current;
+    const step = diff > 0 ? CREEP_RATE_UP * dt : CREEP_RATE_DOWN * dt;
+    creep.current += Math.max(-step, Math.min(step, diff));
+    if (Math.abs(wanted - creep.current) > 1e-4) moving = true;
+    const r = Math.max(LIMITS.kMin * watchD, c.k * watchD * (1 - creep.current * creepMax));
     const ce = Math.cos(c.el);
     camera.position.set(r * Math.sin(c.az) * ce, r * Math.sin(c.el), r * Math.cos(c.az) * ce);
     camera.lookAt(0, 0, 0);

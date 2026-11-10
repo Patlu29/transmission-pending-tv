@@ -3,7 +3,8 @@ import { Html } from '@react-three/drei';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Box3, BackSide, Mesh, MeshBasicMaterial, Vector3, type Object3D } from 'three';
-import { useDisplayStore, useIntroStore } from '../integration/stores';
+import { easeCamera } from '../cameras/poses';
+import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
 
 type KnobId = 'power' | 'channel' | 'volume';
 const NODE: Record<KnobId, string> = {
@@ -15,7 +16,15 @@ const IDS = Object.keys(NODE) as KnobId[];
 const OUTLINE_MS = 100; // full strength within 100 ms (spec 4.3)
 const KNOB_TURN = (40 * Math.PI) / 180; // power knob turns 40 degrees
 const KNOB_TURN_MS = 150;
-const HULL = 0.006; // outline thickness, in the knob's local units
+const HULL = 0.006;
+const HAUNT_OVERSHOOT_DEG = 1;
+
+interface KnobTurn {
+  from: number; // degrees applied at the start
+  to: number; // degrees at rest after the turn
+  elapsed: number;
+  dur: number; // seconds
+} // outline thickness, in the knob's local units
 
 function idFromObject(obj: Object3D | null): KnobId | null {
   for (let o = obj; o; o = o.parent) {
@@ -64,6 +73,11 @@ export function KnobLayer({ children }: { children: ReactNode }) {
   );
   const hullMeshes = useRef<Mesh[]>([]);
   const turn = useRef(0);
+  // Haunted turns (design-spec 16.6.2): accumulated degrees per knob, plus the running turn.
+  const hauntDeg = useRef<Record<'channel' | 'volume', number>>({ channel: 0, volume: 0 });
+  const hauntTurn = useRef<Partial<Record<'channel' | 'volume', KnobTurn>>>({});
+  const baseZ = useRef<Partial<Record<KnobId, number>>>({});
+  const hoveredRef = useRef<KnobId | null>(null);
   const [, setReady] = useState(0);
 
   // Locate knob nodes, attach hull meshes and compute tag anchors.
@@ -75,6 +89,7 @@ export function KnobLayer({ children }: { children: ReactNode }) {
       const node = group.getObjectByName(NODE[id]);
       if (!node) continue;
       nodes.current[id] = node;
+      baseZ.current[id] = node.rotation.z;
       const box = new Box3().setFromObject(node);
       const c = box.getCenter(new Vector3());
       c.x = box.max.x; // anchor on the knob's right edge
@@ -100,6 +115,7 @@ export function KnobLayer({ children }: { children: ReactNode }) {
   useEffect(() => () => Object.values(hullMats).forEach((m) => m.dispose()), [hullMats]);
 
   useEffect(() => {
+    hoveredRef.current = hovered;
     scene.userData.hoveringKnob = hovered !== null;
     document.body.style.cursor = hovered ? 'pointer' : '';
     invalidate();
@@ -108,6 +124,28 @@ export function KnobLayer({ children }: { children: ReactNode }) {
       document.body.style.cursor = '';
     };
   }, [hovered, scene, invalidate]);
+
+  // Knob cues from the story. Never while the pointer is over that knob; none under Calm.
+  useEffect(() => {
+    let lastNonce = useHauntStore.getState().knobCue?.nonce ?? 0;
+    const unsub = useHauntStore.subscribe(() => {
+      const cue = readHaunt().knobCue;
+      if (!cue || cue.nonce === lastNonce) return;
+      lastNonce = cue.nonce;
+      if (hoveredRef.current === cue.which || !nodes.current[cue.which]) return;
+      const from = hauntDeg.current[cue.which];
+      const to = from + cue.deg;
+      hauntDeg.current[cue.which] = to; // the knob stays where it ends
+      hauntTurn.current[cue.which] = {
+        from,
+        to,
+        elapsed: 0,
+        dur: Math.max(2, cue.dur > 20 ? cue.dur / 1000 : cue.dur),
+      };
+      invalidate();
+    });
+    return unsub;
+  }, [invalidate]);
 
   useFrame((_, delta) => {
     const reduced = useDisplayStore.getState().motion === 'reduced';
@@ -135,6 +173,38 @@ export function KnobLayer({ children }: { children: ReactNode }) {
       const knob = nodes.current.power;
       if (knob) knob.rotation.z = -nextA; // clockwise from the front
       moving = true;
+    }
+
+    // Haunted turns. Power-off (or Calm) returns both knobs to rest at once.
+    const poweredNow = on && !reduced;
+    for (const which of ['channel', 'volume'] as const) {
+      const node = nodes.current[which];
+      if (!node) continue;
+      const base = baseZ.current[which] ?? 0;
+      const t = hauntTurn.current[which];
+      if (!poweredNow) {
+        if (t || hauntDeg.current[which] !== 0) {
+          hauntTurn.current[which] = undefined;
+          hauntDeg.current[which] = 0;
+          node.rotation.z = base;
+          moving = true;
+        }
+        continue;
+      }
+      if (!t) continue;
+      t.elapsed += Math.min(delta, 0.1);
+      const u = Math.min(1, t.elapsed / t.dur);
+      const span = t.to - t.from;
+      const sign = Math.sign(span) || 1;
+      let deg: number;
+      if (u < 0.85) deg = t.from + easeCamera(u / 0.85) * (span + sign * HAUNT_OVERSHOOT_DEG);
+      else {
+        const k = (u - 0.85) / 0.15;
+        deg = t.to + sign * HAUNT_OVERSHOOT_DEG * (1 - k * k * (3 - 2 * k));
+      }
+      node.rotation.z = base - (deg * Math.PI) / 180;
+      moving = true;
+      if (u >= 1) hauntTurn.current[which] = undefined;
     }
     if (moving) invalidate();
   });

@@ -6,6 +6,7 @@ import { SetLights } from './lights/SetLights';
 import { KnobLayer } from './objects/KnobLayer';
 import { Room } from './objects/Room';
 import { TvSet } from './objects/TvSet';
+import { GreyEnvironment } from './materials';
 import { ScreenDriver } from './ScreenDriver';
 import { ScreenOnly } from './ScreenOnly';
 import { ContextWatcher, ErrorBoundary, ProgressReporter, ReadyReporter } from './StatusReporter';
@@ -50,6 +51,7 @@ export default function Experience() {
               {mode === '3d-set' ? (
                 <>
                   <SetCameraRig />
+                  <GreyEnvironment intensity={0.4} />
                   <SetLights />
                   <Room />
                   <KnobLayer>

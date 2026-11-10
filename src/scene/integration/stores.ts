@@ -1,52 +1,52 @@
-// INTEGRATION SEAM 1 of 4: store access.
-//
-// The scene reads stores only (architecture 4.1). displayStore is the real one.
-// src/state/introStore.ts did not exist yet, so useIntroStore below is a PLACEHOLDER
-// zustand store with the shape from architecture 4.2.
-//
-// TO SWAP: delete the placeholder `create(...)` block and its helpers, and write
-//   export { useIntroStore } from '@/state/introStore';
-// IntroSlice is the minimum the scene needs (status plus power() and nextPage()).
+// INTEGRATION SEAM 1 of 4: store access. The scene reads stores only (architecture 4.1).
 import { create } from 'zustand';
+import { useDisplayStore } from '@/state/displayStore';
 
-export type IntroStatus = 'off' | 'loading' | 'ready' | 'warming' | 'playing' | 'ended';
+export { useIntroStore } from '@/state/introStore';
+export type { IntroStatus } from '@/state/introStore';
+export { useDisplayStore };
 
-export interface IntroSlice {
-  status: IntroStatus;
-  pageIndex: number;
-  lineIndex: number;
-  revealedChars: number;
-  /** Assumed to toggle: off -> on, and on -> off (user decision: power toggles). */
-  power(): void;
-  skip(): void;
-  replay(): void;
-  nextPage(): void;
-  prevPage(): void;
+// ---------------------------------------------------------------------------
+// HAUNT SEAM (round 2). The frontend-developer creates src/state/hauntStore.ts
+// (design-spec 16.3 field names). Until it exists, this local stub has the same
+// shape. TO SWAP: delete the stub below and write
+//   export { useHauntStore } from '@/state/hauntStore';
+// (the scene never writes this store).
+// ---------------------------------------------------------------------------
+export interface HauntState {
+  ghost: number;
+  ghostNear: number;
+  creep: number;
+  dim: number;
+  shadow: number;
+  hum: number;
+  roll: { active: boolean; startedAt: number; dur: number };
+  knobCue: { nonce: number; which: 'channel' | 'volume'; deg: number; dur: number } | null;
 }
 
-let warmTimer: ReturnType<typeof setTimeout> | undefined;
-
-export const useIntroStore = create<IntroSlice>()((set, get) => ({
-  status: 'ready',
-  pageIndex: 0,
-  lineIndex: 0,
-  revealedChars: 0,
-  power() {
-    clearTimeout(warmTimer);
-    if (get().status === 'off' || get().status === 'ready') {
-      set({ status: 'warming' });
-      warmTimer = setTimeout(() => set({ status: 'playing' }), 2200);
-    } else {
-      set({ status: 'ready' });
-    }
-  },
-  skip() {},
-  replay() {},
-  nextPage() {},
-  prevPage() {},
+export const useHauntStore = create<HauntState>()(() => ({
+  ghost: 0,
+  ghostNear: 0,
+  creep: 0,
+  dim: 0,
+  shadow: 0,
+  hum: 0,
+  roll: { active: false, startedAt: 0, dur: 0 },
+  knobCue: null,
 }));
 
-// The real display store exists (src/state/displayStore.ts): `motion` already folds in
-// the Calm switch, and it provides screenCanvas, screenVersion, screenRect,
-// cameraResetNonce, cameraOffWatch and the scene's reporting actions.
-export { useDisplayStore } from '@/state/displayStore';
+const ZERO: HauntState = {
+  ghost: 0,
+  ghostNear: 0,
+  creep: 0,
+  dim: 0,
+  shadow: 0,
+  hum: 0,
+  roll: { active: false, startedAt: 0, dur: 0 },
+  knobCue: null,
+};
+
+/** Haunt values as the scene must use them: all zero under Calm or reduced motion (spec 16.8). */
+export function readHaunt(): HauntState {
+  return useDisplayStore.getState().reducedMotion ? ZERO : useHauntStore.getState();
+}
