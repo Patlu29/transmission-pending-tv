@@ -1,4 +1,177 @@
-/* PLACEHOLDER. Owner: ux-ui-designer. Greyscale design tokens (FR-2: R=G=B only). */
+/*
+ * Transmission Pending: design tokens. Owner: ux-ui-designer.
+ * GREYSCALE ONLY (FR-2): every colour below has R = G = B. Do not add a coloured value.
+ * Summary and usage rules: docs/design-spec.md section 4.
+ * Components use tokens, never raw values. Media queries cannot read custom
+ * properties, so the breakpoints are listed in comments and in the spec.
+ */
 :root {
   color-scheme: dark;
+
+  /* Grey ramp (luminance steps; 0 is black, 1000 is white) */
+  --grey-0: #000000;
+  --grey-50: #0a0a0a;
+  --grey-100: #141414;
+  --grey-150: #1c1c1c;
+  --grey-200: #262626;
+  --grey-300: #3a3a3a;
+  --grey-400: #5c5c5c;
+  --grey-500: #6b6b6b;
+  --grey-600: #8c8c8c;
+  --grey-700: #a8a8a8;
+  --grey-800: #bdbdbd;
+  --grey-850: #d9d9d9;
+  --grey-900: #e8e8e8;
+  --grey-1000: #f5f5f5;
+
+  /* Semantic colour: page and UI chrome */
+  --color-bg: var(--grey-50);
+  --color-room: var(--grey-100);
+  --color-surface: var(--grey-150);
+  --color-surface-raised: var(--grey-200);
+  --color-border: var(--grey-500); /* 3.7:1 on --color-bg, meets 3:1 for controls */
+  --color-border-subtle: var(--grey-300);
+  --color-text: var(--grey-900); /* 14:1 on --color-bg */
+  --color-text-muted: var(--grey-700); /* 8.3:1 on --color-bg */
+  --color-text-subtle: var(--grey-600); /* 5.9:1 on --color-bg, minimum for body text */
+  --color-text-on-light: var(--grey-50);
+  --color-control-bg: var(--grey-850);
+  --color-control-text: var(--grey-50); /* 13:1 on --color-control-bg */
+  --color-control-bg-hover: var(--grey-1000);
+  --color-control-bg-active: var(--grey-700);
+  --color-control-bg-disabled: var(--grey-300);
+  --color-control-text-disabled: var(--grey-600);
+  --color-focus: var(--grey-1000); /* paired with --color-focus-halo so it shows on dark and light */
+  --color-focus-halo: var(--grey-0);
+  --color-scrim: rgba(0, 0, 0, 0.72);
+
+  /* Screen (teletext) palette. The eight teletext colours become eight greys. */
+  --tt-0: #000000; /* teletext black: screen background */
+  --tt-1: #3a3a3a;
+  --tt-2: #5c5c5c;
+  --tt-3: #8c8c8c;
+  --tt-4: #a8a8a8; /* default copy text */
+  --tt-5: #cfcfcf;
+  --tt-6: #e8e8e8;
+  --tt-7: #ffffff; /* header text, verified facts block text on --tt-0 */
+  --screen-bg: var(--tt-0);
+  --screen-text: var(--tt-5); /* copy: 14.5:1 on --screen-bg */
+  --screen-text-strong: var(--tt-7);
+  --screen-fact-bg: var(--tt-6); /* a verified fact is drawn as an inverse block */
+  --screen-fact-text: var(--tt-0);
+  --screen-header-bg: var(--tt-2);
+  --screen-header-text: var(--tt-7);
+  --screen-rule: var(--tt-3);
+  --screen-glow: rgba(255, 255, 255, 0.18); /* CSS 2D mode text-shadow; the 3D shader owns its own glow */
+
+  /* TV body (reference values for the technical artist; see design-spec section 10) */
+  --tv-wood-dark: #262626;
+  --tv-wood-mid: #4a4a4a;
+  --tv-wood-light: #6b6b6b;
+  --tv-bezel: #141414;
+  --tv-trim: #a8a8a8;
+  --tv-knob: #cfcfcf;
+  --tv-knob-mark: #0a0a0a;
+  --tv-grille: #0a0a0a;
+  --tv-glass-tint: #0c0c0c;
+
+  /* Typography */
+  --font-teletext: 'Bedstead', 'Courier New', ui-monospace, monospace; /* screen body and mosaic blocks */
+  --font-display: 'Barlow Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
+  --font-ui: 'Barlow Condensed', 'Arial Narrow', Arial, sans-serif;
+  --font-weight-regular: 400;
+  --font-weight-strong: 600;
+  --text-xs: 0.875rem; /* 14px: UI hint text only, never on the screen */
+  --text-sm: 1rem; /* 16px: minimum for anything that carries meaning */
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --leading-tight: 1.1;
+  --leading-normal: 1.5;
+  --tracking-label: 0.08em;
+
+  /* Teletext grid (see design-spec section 5). The rasteriser reads these in JS via getComputedStyle. */
+  --tt-min-font-px: 16;
+  --tt-cell-aspect: 0.6; /* cell width divided by font size */
+  --tt-row-pitch: 1.1; /* row height divided by font size */
+  --tt-safe-area: 0.92; /* share of the screen used for the grid; the rest is curvature loss */
+  --tt-cols-wide: 40;
+  --tt-cols-medium: 32;
+  --tt-cols-narrow: 26;
+  --tt-cols-tiny: 20;
+  /* Grid breakpoints are on the SAFE screen width in CSS px, not the viewport:
+     >= 384 -> 40 cols, 320 to 383 -> 32, 250 to 319 -> 26, 192 to 249 -> 20. */
+
+  /* Spacing (4 px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --target-min: 44px; /* minimum touch target, both axes */
+  --dock-size: 64px; /* control dock height (portrait) or width (landscape phone) */
+  --bezel-thin: 8px; /* 3d-screen bezel */
+
+  /* Shape and depth */
+  --radius-none: 0;
+  --radius-sm: 2px; /* buttons: hardware keys, barely rounded */
+  --radius-md: 6px;
+  --radius-lg: 16px;
+  --radius-screen: 6% / 8%; /* CRT corner radius; 2D mode uses this on the screen element */
+  --border-width: 2px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --shadow-panel: 0 8px 24px rgba(0, 0, 0, 0.6);
+  --shadow-key: 0 2px 0 #000000, 0 4px 8px rgba(0, 0, 0, 0.5);
+  --shadow-screen-inset: inset 0 0 60px 20px rgba(0, 0, 0, 0.85); /* 2D vignette */
+  --shadow-bezel-inset: inset 0 0 0 2px #000000, inset 0 0 24px 4px rgba(0, 0, 0, 0.9);
+
+  /* Layers */
+  --z-canvas: 0;
+  --z-screen-dom: 5; /* 2D screen and the visually hidden transcript */
+  --z-hud: 10;
+  --z-dock: 15;
+  --z-panel: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+
+  /* Motion (UI only; the CRT timings are in docs/design-spec.md section 7) */
+  --duration-fast: 120ms;
+  --duration-normal: 240ms;
+  --duration-slow: 600ms;
+  --duration-camera: 1200ms; /* power-on dolly in 3d-set */
+  --duration-camera-reset: 700ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-camera: cubic-bezier(0.45, 0, 0.2, 1);
+
+  /* CRT effect defaults for the 2D mode (the 3D shader mirrors them as uniforms) */
+  --crt-scanline-opacity: 0.28;
+  --crt-scanline-pitch: 3px;
+  --crt-noise-opacity: 0.08;
+  --crt-vignette-strength: 0.85;
+}
+
+/* Reduced motion: no UI transitions, no camera tween. The scene and clock also
+   read the media query live (US-9); this only covers CSS. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-camera: 0ms;
+    --duration-camera-reset: 0ms;
+    --crt-noise-opacity: 0.05;
+  }
+}
+
+/* Forced colours (Windows high contrast): let the system draw focus. */
+@media (forced-colors: active) {
+  :root {
+    --focus-ring-width: 3px;
+  }
 }
