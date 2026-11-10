@@ -1,0 +1,204 @@
+/* eslint-disable react-hooks/immutability, react-hooks/refs -- R3F objects (materials, nodes, refs) are mutated imperatively by design */
+import { Html } from '@react-three/drei';
+import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Box3, BackSide, Mesh, MeshBasicMaterial, Vector3, type Object3D } from 'three';
+import { useDisplayStore, useIntroStore } from '../integration/stores';
+
+type KnobId = 'power' | 'channel' | 'volume';
+const NODE: Record<KnobId, string> = {
+  power: 'knob-power',
+  channel: 'knob-channel',
+  volume: 'knob-volume',
+};
+const IDS = Object.keys(NODE) as KnobId[];
+const OUTLINE_MS = 100; // full strength within 100 ms (spec 4.3)
+const KNOB_TURN = (40 * Math.PI) / 180; // power knob turns 40 degrees
+const KNOB_TURN_MS = 150;
+const HULL = 0.006; // outline thickness, in the knob's local units
+
+function idFromObject(obj: Object3D | null): KnobId | null {
+  for (let o = obj; o; o = o.parent) {
+    const id = IDS.find((k) => NODE[k] === o!.name);
+    if (id) return id;
+  }
+  return null;
+}
+
+/**
+ * Wraps the TV model. Finds the knob nodes by name, handles hover and click,
+ * draws an inverted-hull outline (no post-processing), shows an anchored DOM tag,
+ * and turns the power knob. Works for the placeholder body and the real glTF alike
+ * as long as the nodes are named `knob-power`, `knob-channel` and `knob-volume`.
+ */
+export function KnobLayer({ children }: { children: ReactNode }) {
+  const root = useRef<Object3D>(null);
+  const invalidate = useThree((s) => s.invalidate);
+  const scene = useThree((s) => s.scene);
+  const [hovered, setHovered] = useState<KnobId | null>(null);
+  const nodes = useRef<Partial<Record<KnobId, Object3D>>>({});
+  const anchors = useRef<Partial<Record<KnobId, Vector3>>>({});
+  const hullMats = useMemo(
+    () =>
+      Object.fromEntries(
+        IDS.map((id) => {
+          const m = new MeshBasicMaterial({
+            color: '#f5f5f5', // --grey-1000
+            side: BackSide,
+            transparent: true,
+            opacity: 0,
+            depthWrite: false,
+            toneMapped: false,
+          });
+          m.onBeforeCompile = (shader) => {
+            shader.vertexShader = shader.vertexShader.replace(
+              '#include <begin_vertex>',
+              `#include <begin_vertex>
+               transformed += normalize(normal) * ${HULL.toFixed(4)};`,
+            );
+          };
+          return [id, m];
+        }),
+      ) as Record<KnobId, MeshBasicMaterial>,
+    [],
+  );
+  const hullMeshes = useRef<Mesh[]>([]);
+  const turn = useRef(0);
+  const [, setReady] = useState(0);
+
+  // Locate knob nodes, attach hull meshes and compute tag anchors.
+  useEffect(() => {
+    const group = root.current;
+    if (!group) return;
+    group.updateWorldMatrix(true, true);
+    for (const id of IDS) {
+      const node = group.getObjectByName(NODE[id]);
+      if (!node) continue;
+      nodes.current[id] = node;
+      const box = new Box3().setFromObject(node);
+      const c = box.getCenter(new Vector3());
+      c.x = box.max.x; // anchor on the knob's right edge
+      anchors.current[id] = group.worldToLocal(c);
+      node.traverse((o) => {
+        if (!(o as Mesh).isMesh || o.userData.isHull) return;
+        const hull = new Mesh((o as Mesh).geometry, hullMats[id]); // geometry is shared, not owned
+        hull.userData.isHull = true;
+        hull.raycast = () => {}; // never picked
+        hull.renderOrder = 2;
+        o.add(hull);
+        hullMeshes.current.push(hull);
+      });
+    }
+    setReady((n) => n + 1);
+    return () => {
+      hullMeshes.current.forEach((h) => h.removeFromParent());
+      hullMeshes.current = [];
+      nodes.current = {};
+    };
+  }, [hullMats]);
+
+  useEffect(() => () => Object.values(hullMats).forEach((m) => m.dispose()), [hullMats]);
+
+  useEffect(() => {
+    scene.userData.hoveringKnob = hovered !== null;
+    document.body.style.cursor = hovered ? 'pointer' : '';
+    invalidate();
+    return () => {
+      scene.userData.hoveringKnob = false;
+      document.body.style.cursor = '';
+    };
+  }, [hovered, scene, invalidate]);
+
+  useFrame((_, delta) => {
+    const reduced = useDisplayStore.getState().motion === 'reduced';
+    let moving = false;
+    // outline fade
+    for (const id of IDS) {
+      const m = hullMats[id];
+      const target = hovered === id ? 1 : 0;
+      const step = reduced ? 1 : delta / (OUTLINE_MS / 1000);
+      const next =
+        m.opacity + Math.sign(target - m.opacity) * Math.min(step, Math.abs(target - m.opacity));
+      if (next !== m.opacity) moving = true;
+      m.opacity = next;
+    }
+    // power knob turn
+    const s = useIntroStore.getState().status;
+    const on = s === 'warming' || s === 'playing' || s === 'ended';
+    const goal = on ? KNOB_TURN : 0;
+    const stepA = reduced ? KNOB_TURN : (KNOB_TURN * delta) / (KNOB_TURN_MS / 1000);
+    const nextA =
+      turn.current +
+      Math.sign(goal - turn.current) * Math.min(stepA, Math.abs(goal - turn.current));
+    if (nextA !== turn.current) {
+      turn.current = nextA;
+      const knob = nodes.current.power;
+      if (knob) knob.rotation.z = -nextA; // clockwise from the front
+      moving = true;
+    }
+    if (moving) invalidate();
+  });
+
+  const motion = useDisplayStore((s) => s.motion);
+  const status = useIntroStore((s) => s.status);
+  const channelLocked = status === 'playing' && motion === 'full';
+  const tagText: Record<KnobId, string> = {
+    power: 'Power',
+    channel: channelLocked ? 'Channel (after the show)' : 'Channel',
+    volume: 'Sound',
+  };
+
+  const onOver = (e: ThreeEvent<PointerEvent>) => {
+    const id = idFromObject(e.object);
+    if (id) e.stopPropagation();
+    setHovered(id);
+  };
+  const onOut = () => setHovered(null);
+  const onClick = (e: ThreeEvent<MouseEvent>) => {
+    const id = idFromObject(e.object);
+    if (!id) return;
+    e.stopPropagation();
+    const intro = useIntroStore.getState();
+    const display = useDisplayStore.getState();
+    if (id === 'power') {
+      if (intro.status !== 'loading') intro.power(); // same action as the Switch on key
+    } else if (id === 'channel') {
+      const manual = intro.status === 'ended' || display.motion === 'reduced';
+      if (manual && intro.status !== 'off' && intro.status !== 'loading') intro.nextPage();
+    } else {
+      display.toggleAudio();
+    }
+  };
+
+  const anchor = hovered ? anchors.current[hovered] : undefined;
+  return (
+    <group ref={root} onPointerOver={onOver} onPointerOut={onOut} onClick={onClick}>
+      {children}
+      {hovered && anchor && (
+        <Html
+          position={anchor}
+          occlude="raycast"
+          zIndexRange={[5, 0]}
+          style={{ pointerEvents: 'none', userSelect: 'none' }}
+        >
+          <div
+            aria-hidden="true"
+            style={{
+              marginLeft: 14,
+              padding: '2px 8px',
+              whiteSpace: 'nowrap',
+              background: '#141414',
+              color: '#f5f5f5',
+              border: '1px solid #8c8c8c',
+              font: '600 14px/1.3 var(--font-display, sans-serif)',
+              letterSpacing: '0.08em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {tagText[hovered]}
+          </div>
+        </Html>
+      )}
+    </group>
+  );
+}
