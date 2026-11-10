@@ -140,7 +140,7 @@ export function KnobLayer({ children }: { children: ReactNode }) {
         from,
         to,
         elapsed: 0,
-        dur: Math.max(2, cue.dur > 20 ? cue.dur / 1000 : cue.dur),
+        dur: Math.max(2, cue.dur),
       };
       invalidate();
     });

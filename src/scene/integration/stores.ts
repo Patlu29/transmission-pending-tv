@@ -1,41 +1,23 @@
 // INTEGRATION SEAM 1 of 4: store access. The scene reads stores only (architecture 4.1).
-import { create } from 'zustand';
 import { useDisplayStore } from '@/state/displayStore';
 
 export { useIntroStore } from '@/state/introStore';
 export type { IntroStatus } from '@/state/introStore';
 export { useDisplayStore };
 
-// ---------------------------------------------------------------------------
-// HAUNT SEAM (round 2). The frontend-developer creates src/state/hauntStore.ts
-// (design-spec 16.3 field names). Until it exists, this local stub has the same
-// shape. TO SWAP: delete the stub below and write
-//   export { useHauntStore } from '@/state/hauntStore';
-// (the scene never writes this store).
-// ---------------------------------------------------------------------------
-export interface HauntState {
-  ghost: number;
-  ghostNear: number;
-  creep: number;
-  dim: number;
-  shadow: number;
-  hum: number;
-  roll: { active: boolean; startedAt: number; dur: number };
-  knobCue: { nonce: number; which: 'channel' | 'volume'; deg: number; dur: number } | null;
+// Haunt state (design-spec 16.3), written only by the frontend's cue scheduler.
+// The scene reads it and never writes. Units: values 0..1, `dur` in seconds,
+// `startedAt` in performance.now() ms.
+import { useHauntStore } from '@/state/hauntStore';
+import type { HauntValues, KnobCue, RollState } from '@/state/hauntStore';
+export { useHauntStore };
+
+export interface HauntRead extends HauntValues {
+  roll: RollState;
+  knobCue: KnobCue | null;
 }
 
-export const useHauntStore = create<HauntState>()(() => ({
-  ghost: 0,
-  ghostNear: 0,
-  creep: 0,
-  dim: 0,
-  shadow: 0,
-  hum: 0,
-  roll: { active: false, startedAt: 0, dur: 0 },
-  knobCue: null,
-}));
-
-const ZERO: HauntState = {
+const ZERO: HauntRead = {
   ghost: 0,
   ghostNear: 0,
   creep: 0,
@@ -47,6 +29,6 @@ const ZERO: HauntState = {
 };
 
 /** Haunt values as the scene must use them: all zero under Calm or reduced motion (spec 16.8). */
-export function readHaunt(): HauntState {
+export function readHaunt(): HauntRead {
   return useDisplayStore.getState().reducedMotion ? ZERO : useHauntStore.getState();
 }

@@ -85,3 +85,13 @@ Round-1 integration is done: the real `introStore`, the technical-artist's `TvBo
 ### Requests for other agents
 - frontend-developer: create `src/state/hauntStore.ts` with the 16.3 field names, then the swap above. Confirm the `roll` and `knobCue` time units. Keep calling `markWebglLost`, `setSceneReady` and the other scene actions as before.
 - technical-artist: add `uGhost`, `uGhostNear`, `uRoll`, `uHauntVignette` to the CRT shader and material defaults (I set them by name when present). Deliver the wall pattern, dust, blob shadow and decal as components so I can mount them in `Room.tsx` (the decal takes an opacity prop or reads `shadow`). Say if `uRoll` should be an offset or a progress value.
+
+## Integration (round 2 wrap-up)
+
+- `integration/stores.ts`: `useHauntStore` is now `export { useHauntStore } from '@/state/hauntStore'` (stub deleted). `readHaunt()` is kept and still returns zeros under Calm or reduced motion. The scene only reads the store. Units checked against the hauntStore header: `dur` seconds, `startedAt` `performance.now()` ms, values 0..1. The earlier "over 20 means ms" tolerance for `knobCue.dur` is removed.
+- `objects/Room.tsx`: now the technical-artist's `RoomPieces`; `decalRef.current.opacity = decalOpacity(shadow)` each frame, no React state.
+- `integration/useCrtMaterial.ts`: copies `ghost`, `ghostNear` and `rollPhase(roll, now)` into `uGhost`, `uGhostNear`, `uRoll`. `rollPhase` takes seconds on one clock, so `startedAt / 1000` and `performance.now() / 1000` are passed (this replaces my own roll offset; the shader does the easing). The roll is forced to 0 unless status is `playing` or `ended`, so the test card never rolls. `uHauntVignette` is `dim x 0.25` in 3d-screen only and 0 in 3d-set.
+- Test hook (dev and test builds only): `window.__SCENE_TEST__.crtUniforms` exposes the live CRT uniforms.
+- Checks: `npm run lint`, `typecheck`, `test` (27 passed) and `build` pass. Headless Chrome, real app, `?mode=3d-set`: power on, then during the story the uniforms follow the store (ghost 0.12 and `uNoiseHz` 12 while the store showed ghost 0.12, creep 0.05). With the haunt store hand-set every 20 ms (ghost 0.6, ghostNear 0.4, dim 0.5, roll 1 s into 2.4 s): `uGhost` 0.6, `uGhostNear` 0.4, `uRoll` 0.417 (matches 1/2.4) in both modes, `uHauntVignette` 0 in 3d-set and 0.125 in 3d-screen. No page errors.
+
+Remaining requests: none new. I did not set `uGhostSeed` (the shader default applies). Not verified by eye: the room pieces and the decal at high `shadow`.
