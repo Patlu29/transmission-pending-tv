@@ -44,35 +44,40 @@
 .crt2d::after {
   content: '';
   position: absolute;
-  inset: 0;
+  /* Oversized by the travel of the loop and moved with transform (compositor only), instead of
+     animating background-position, which repainted the whole screen at every step. The tile origin
+     is still the top-left corner, so each step shows the same pixels as before. */
+  inset: 0 -456px -228px 0;
   z-index: 3;
   pointer-events: none;
   background: url('/textures/noise-tile-64.png') 0 0 / 128px 128px repeat;
   opacity: var(--crt-noise-opacity);
   image-rendering: pixelated;
+  will-change: transform;
   animation: crt2d-noise-12 1s steps(12) infinite;
 }
 
 .crt2d--idle::after {
+  inset: 0 -912px -456px 0;
   animation-name: crt2d-noise-24;
   animation-timing-function: steps(24);
 }
 
 @keyframes crt2d-noise-12 {
   from {
-    background-position: 0 0;
+    transform: translate(0, 0);
   }
   to {
-    background-position: -456px -228px;
+    transform: translate(-456px, -228px);
   }
 }
 
 @keyframes crt2d-noise-24 {
   from {
-    background-position: 0 0;
+    transform: translate(0, 0);
   }
   to {
-    background-position: -912px -456px;
+    transform: translate(-912px, -456px);
   }
 }
 
@@ -84,6 +89,7 @@
 /* Calm mode and reduced motion: one frozen noise frame. */
 .crt2d[data-calm='true']::after {
   animation: none;
+  will-change: auto;
 }
 
 @media (prefers-reduced-motion: reduce) {

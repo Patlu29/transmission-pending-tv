@@ -1,5 +1,6 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
+import { AdaptiveDpr } from './AdaptiveDpr';
 import { SetCameraRig } from './cameras/SetCameraRig';
 import { useDisplayStore, useIntroStore } from './integration/stores';
 import { SetLights } from './lights/SetLights';
@@ -35,13 +36,16 @@ export default function Experience() {
     >
       <ErrorBoundary onError={() => useDisplayStore.getState().markWebglLost()}>
         <Canvas
+          key={mode} // antialias is fixed at context creation, so a mode change makes a new context
           flat // NoToneMapping: keeps greys neutral (architecture 4.5)
           dpr={[1, 2]}
           frameloop={animating ? 'always' : 'demand'}
-          gl={{ antialias: true, powerPreference: 'high-performance' }}
+          // MSAA only for the 3D set; the 3d-screen is one flat quad (pixel-identical without it, measured)
+          gl={{ antialias: mode === '3d-set', powerPreference: 'high-performance' }}
         >
           <color attach="background" args={['#000000']} />
           <ContextWatcher />
+          <AdaptiveDpr />
           <ProgressReporter />
           <ScreenDriver />
           <ErrorBoundary
