@@ -9,3 +9,6 @@ playwright-report/
 !.env.example
 # Generated at build time by scripts/facts/collect.ts
 src/generated/
+
+# Agent exploration screenshots and scripts
+.scratch/
