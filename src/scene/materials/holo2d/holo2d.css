@@ -1,0 +1,164 @@
+/*
+ * 2D-mode holo screen (design-spec-2050 3.6 and 3.3). Owner: technical-artist. Replaces crt2d.css for 2050.
+ * Import once (frontend-developer): import '@/scene/materials/holo2d/holo2d.css';
+ *
+ * Markup:
+ *   <div class="holo2d-field" data-calm="false">             a slow conic-gradient field behind the sheet (frozen in Calm)
+ *     <div class="holo2d holo2d--on" data-calm="false"> ...transcript screen... </div>
+ *   </div>
+ *   .holo2d--bloom  runs the 2.2 s mask reveal (seed of light to the full sheet); .holo2d--fold runs the 0.55 s fold
+ *   .holo2d--on     settled; omit both classes and add .holo2d--off for dark glass
+ *   data-calm="true" (or prefers-reduced-motion) cuts every animation to its end state
+ *
+ * Rules kept from the 1970s overlay: animate only `transform`, `opacity` and the mask (never `background-position`,
+ * never a filter). No scanlines, no curvature. Fine light-field grain only (the 64 px noise tile at 2 px cells, 12 Hz, moved with transform).
+ * The sheet is the SCREEN, not the YouTube player, so a mask on it is allowed; nothing here is ever placed on the player.
+ */
+.holo2d-field {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #05070d;
+}
+.holo2d-field::before {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  z-index: 0;
+  background: conic-gradient(
+    from 0deg,
+    rgba(143, 227, 255, 0.1),
+    rgba(185, 164, 255, 0.1),
+    rgba(255, 184, 220, 0.06),
+    rgba(143, 227, 255, 0.1)
+  );
+  animation: holo2d-spin 90s linear infinite;
+  pointer-events: none;
+}
+.holo2d-field[data-calm='true']::before {
+  animation: none;
+}
+
+.holo2d {
+  position: relative;
+  z-index: 1;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: var(--radius-screen, 28px);
+  background: var(--screen-bg, #060a14);
+  /* 2 px edge light and a soft inner glow of at most 8 px */
+  box-shadow:
+    inset 0 0 0 2px rgba(143, 227, 255, 0.55),
+    inset 0 0 8px 0 rgba(143, 227, 255, 0.18),
+    0 0 8px 0 rgba(143, 227, 255, 0.22);
+}
+
+/* light-field grain: 2 px cells, stepped at 12 Hz, constant mean */
+.holo2d::after {
+  content: '';
+  position: absolute;
+  /* Oversized by the loop's travel and moved with transform (compositor only), as crt2d.css does. */
+  inset: 0 -456px -228px 0;
+  z-index: 3;
+  pointer-events: none;
+  background: url('/textures/noise-tile-64.png') 0 0 / 128px 128px repeat;
+  opacity: 0.045;
+  image-rendering: pixelated;
+  will-change: transform;
+  animation: holo2d-grain 1s steps(12) infinite;
+}
+.holo2d[data-calm='true']::after {
+  animation: none;
+}
+
+.holo2d--off {
+  box-shadow: inset 0 0 0 2px rgba(143, 227, 255, 0.08);
+  background: #070b16;
+}
+.holo2d--off > * {
+  visibility: hidden;
+}
+
+/* materialise: a mask reveal from a point to the full sheet in 2.2 s; fold: back to a point in 0.55 s */
+.holo2d--bloom {
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 55%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0 55%, transparent 70%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: holo2d-bloom 2.2s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+.holo2d--fold {
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0 55%, transparent 70%);
+  mask-image: radial-gradient(circle at 50% 50%, #000 0 55%, transparent 70%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  animation: holo2d-fold 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* the Occupant's layer and text glow stay below the grain; glow only on strong text */
+.holo2d__glow {
+  text-shadow: 0 0 6px var(--screen-glow, rgba(143, 227, 255, 0.22));
+}
+
+@keyframes holo2d-bloom {
+  from {
+    -webkit-mask-size: 0% 0%;
+    mask-size: 0% 0%;
+    opacity: 0.4;
+  }
+  to {
+    -webkit-mask-size: 300% 300%;
+    mask-size: 300% 300%;
+    opacity: 1;
+  }
+}
+@keyframes holo2d-fold {
+  from {
+    -webkit-mask-size: 300% 300%;
+    mask-size: 300% 300%;
+    opacity: 1;
+  }
+  to {
+    -webkit-mask-size: 0% 0%;
+    mask-size: 0% 0%;
+    opacity: 0;
+  }
+}
+@keyframes holo2d-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes holo2d-grain {
+  from {
+    transform: translate(0, 0);
+  }
+  to {
+    transform: translate(-456px, -228px);
+  }
+}
+
+/* Calm and reduced motion: cut to the end state */
+.holo2d[data-calm='true'].holo2d--bloom,
+.holo2d[data-calm='true'].holo2d--fold {
+  animation: none;
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .holo2d-field::before,
+  .holo2d::after,
+  .holo2d--bloom,
+  .holo2d--fold {
+    animation: none;
+  }
+  .holo2d--bloom,
+  .holo2d--fold {
+    -webkit-mask-image: none;
+    mask-image: none;
+  }
+}

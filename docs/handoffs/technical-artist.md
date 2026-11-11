@@ -349,3 +349,98 @@ Draw calls and triangles are `renderer.info` after one frame (including the harn
 ## v2 follow-ups (2026-11-11)
 - **Mountain-sky dark block:** cause was on my side. The cloud rows fade to zero inside `uKeepOut`, and under them sat a dark `SeaFloor`, so a keep-out rect that extends down to the bottom of the view (an included info row or dock, or a wrong height) blanked the sea in a block as wide as the rect. Fixes: (1) the cloud rows now fade to at most 55 per cent (`keepMin` on `PuffLayer`), so they can never vanish; (2) the sea floor is now cloud-coloured, not dark; (3) `setKeepOut` clamps the rect height to its width (no room's player rect is taller than wide). Checked with a deliberately mis-set rect (bottom forced to the viewport edge): the sea stays whole. Scene-developer: pass only the player rect to `setKeepOut`, not the info row or dock.
 - **Drive-in:** the dashboard now has a rim-lit top edge, an instrument hood with two amber gauge pods (12 ticks, a needle, glow), slim A-pillars with a rim light, and a readable steering-wheel arc (thick dark rim with a lighter top edge, two spokes) rising above the dash line, all well under the rect. Room sound is the frontend's `src/hooks/roomSound.ts`; nothing to do on my side.
+
+---
+
+# 2050 (Phase 4a): holographic glass
+
+`npm run build` and `npm run lint` pass, and `npx tsc -b` is clean for my folders. `npm test`: 173 of 175 pass. The two failures are not code faults of mine: `tests/unit/repo.test.ts` "the teletext typeface is VT323, with its licence file listed" (expected, the font was replaced; the qa-engineer replaces it) and `tests/unit/v2-layout-channels.test.ts` "switches to focus at 1280 x 720" (the frontend's layout work in progress). Nothing is committed. Measured in headless Chrome (ANGLE and SwiftShader) with a 1280 x 720 harness and a 3D harness; Safari, Firefox and real GPUs are untested.
+
+New code is additive: the 1970s CRT, TV and room files are untouched until the scene swaps (removal list below). Import the 2050 art from `@/scene/materials/holo` (`src/scene/materials/holo/index.ts`).
+
+## 1. Fonts (`public/fonts/`)
+Space Grotesk (variable, weight axis 300 to 700, `space-grotesk-latin.woff2` 18.4 kB), Atkinson Hyperlegible (`-400` 14.6 kB, `-700` 14.9 kB), Space Mono (`space-mono-regular.woff2` 13.9 kB, `space-mono-bold.woff2` 14.1 kB). **Total 75.9 kB** (budget 150 kB). Subset to Basic Latin, Latin-1, dashes, quotes, bullet, ellipsis and arrows. Full OFL 1.1 texts are in `public/fonts/licences/` (`OFL-Space-Grotesk.txt`, `OFL-Atkinson-Hyperlegible.txt`, `OFL-Space-Mono.txt`; none declares a Reserved Font Name). `LICENCES.md` is rewritten. VT323, Barlow Condensed and their licence texts are removed (they stay on `main`). File names match `src/styles/fonts-2050.css`.
+- **Space Mono advance: 612 of 1000 units, so 0.612 em per cell**, in both weights and for every glyph tested. Ascent 1120, descent 361 (a 1.481 em line box, taller than the 1.1 row pitch), so derive the draw size from `measureText` and place by baseline.
+- Look-alikes at 16 px, checked at 3x zoom: `1`, `l`, `I` clearly differ (flag, tail, serifs). Space Mono's zero is a dotted zero, narrower than `O`; distinct but the dot is faint under about 18 px (use weight 700 for numerals). Atkinson has a slashed zero. Space Mono has `ss01` and `ss02` alternates (change 1 and I) and no `zero` feature.
+
+## 2. Holo shader (`src/scene/shaders/holo/`)
+`holo.vert.glsl`, `holo.frag.glsl`, `createHoloMaterial.ts`. Same factory shape as the CRT one:
+
+| 1970s | 2050 |
+|---|---|
+| `createCrtScreenMaterial(tex, overrides)` | `createHoloScreenMaterial(tex, overrides)` |
+| `CRT_DEFAULTS`, `CrtUniformValues`, `CrtShaderMaterial` | `HOLO_DEFAULTS`, `HoloUniformValues`, `HoloShaderMaterial` |
+| `setCrtTexture`, `crtUniforms` | `setHoloTexture`, `holoUniforms` |
+| `estimateCrtMeanLuminance({ warmup, collapse, pictureMean, brightness?, staticLevel? })` | `estimateHoloMeanLuminance({ warmup, collapse, pictureMean, brightness? })` (table from measured frames) |
+| `prepareScreenTexture`, `rollOffset`, `rollPhase`, `ROLL_MIN_SECONDS`, `WARMUP_SECONDS` 2.2, `COLLAPSE_SECONDS` 0.55, `getOccupantTexture` | same names |
+
+Everything is exported from `@/scene/materials/holo`. `useCrtMaterial` becomes a copy with these names (the seam: same uniforms driven the same way, including `uRoll = rollPhase(...)`; no changes to `screenState`).
+
+### Uniforms
+Unchanged contract (all still driven the same way): `uMap`, `uTime`, `uWarmup`, `uCollapse`, `uCalm`, `uPixelRatio`, `uAspect` (default 16/9), `uBrightness` (0.4 for the loading pattern), `uBar`, `uBurst`, `uNoiseHz`, `uNoiseAmp` (0.012), `uGrainPx` (2.5), `uGlow` (0.1), `uGlowLod` (2.5), `uVignette` (0.2), `uCorner` (0.016), `uReflection` (0.03), `uGhost`, `uGhostNear`, `uGhostSeed`, `uGhostMap`, `uGhostTextCap` (0.07), `uGhostPeak` (0.30), `uRoll`, `uHauntVignette`.
+New: `uEdge` (default 1: draw the 2 px edge light inside the glass; set **0 on the 3d-set pane** because `HoloDisplay` has its own edge light, keep 1 in 3d-screen and 2d) and `uMono` (default 0: set 1 in Monochrome to grey the output and drop the colour fringe; the canvas CSS filter does the rest).
+Retired, still declared and ignored so the seam compiles (remove next release): `uCurvature`, `uScanlines`, `uScanStrength`, `uStaticLevel`, `uJitter`.
+
+### Behaviour and measurements (1280 x 720 harness)
+- **Materialise (2.2 s, `uWarmup`):** seed of light (6 px) 0 to 0.4 s; horizontal and vertical hairlines grow to the glass bounds 0.4 to 0.8 s; the edge light traces round from the line ends 0.8 to 1.1 s; the field fills outward from the centre 1.1 to 1.8 s (blurred card, mip 4 to 1, with interference-fringe grain); it sharpens 1.8 to 2.2 s (mip 1 to 0) and the edge lights up. Mean luminance, seconds to mean: 0.1 s 0.000, 0.5 s 0.0004, 0.9 s 0.0017, 1.1 s 0.0036, 1.5 s 0.018, 1.7 s 0.043, 1.9 s 0.046, 2.05 s 0.057, 2.2 s 0.065 (the calibration field's own mean is 0.066, **not** the spec's estimate of 0.14, so the ramp ends there). Rises monotonically, no overshoot. Largest change on any 341 x 256 tile per 100 ms: 0.046.
+- **Fold (0.55 s, `uCollapse`):** softens 0 to 200 ms, contracts to the outline and hairlines 200 to 400 ms, hairlines shrink to the seed and fade 400 to 550 ms. Mean falls monotonically 0.066, 0.060, 0.052, 0.046, 0.007, 0.005, 0.002, 0 (it only falls). The contraction step is 0.08 on one tile per 50 ms; it is one decrease to dark, not an alternation, so it is not a flash, but it is above the 0.05 design margin: if the designer wants it under, the fold needs to be longer than 0.55 s.
+- **Calm (`uCalm` 1):** two renders at different `uTime`, and a render with ghost, slip, band, burst and edge dim all at maximum compared with a clean one, are **pixel-identical (0 differing pixels)**: both materialise and fold cut, grain is frozen, and the haunt uniforms are ignored.
+- **Phase slip (`uRoll`):** same `rollOffset(p)` (cosine sweep over the first 5/6, one wrap, damped settle under 2 per cent, minimum duration `ROLL_MIN_SECONDS` 2.4 s, peak speed 0.785 screen heights per second). The picture layer wraps; the background glow layer lags 12 per cent behind and picks up a tiny view offset, so a soft parallax opens and closes. No sync band. Largest tile change per 100 ms on a text page: 0.049. Do not slip the standby pattern or a live player (slip is a channel 0 text-page cue, as before).
+- **The Occupant (2050 figure):** 48 horizontal light slices, each with a brighter top line, shifted by slow correlated noise (plus or minus 1.2 per cent of the width, 0.2 Hz) with a wider tear at the throat; a head 1.45 times taller than wide, tilted 6 degrees clockwise, darker crown cap, no parting, ears, nose or mouth; two hollow voids (the right larger and lower); a thin seam of light brow to chin (brightest tone) that parts into a slit up to 8 units wide from `uGhostNear` 0.8; a neck ring; narrow shoulders and a high collar line; dissolving below the chest. It condenses out of two-octave speckle (grain 2 to 4 px, re-seeded at 4 Hz at most). Colour: `#cfeaff` with a `--haze` fringe on the left edge and `--lumen` on the right (about 1 px, 35 per cent); `uMono` removes the fringe. Same placement, size and drift as before. Original, no recognisable character.
+- **Ceilings (ghost at maximum, blank card):** mean contribution +0.013 (limit 0.05); largest change per 100 ms while ramping 0 to 1 over 8 s: 0.0005 (limit 0.02). Text contrast with the ghost at maximum (strict 5th percentile of text against 95th percentile of the background within 12 px of a glyph, worst of 8 time points, bar crossing): body text 6.2:1, corner text 8.0:1, header chip 7.8:1, fact chip 9.7:1. All at least 4.5:1. The text cap is `uGhostTextCap` x 0.9 over glyph cells and a one-cell dilation.
+- **Red-flash:** 0 pixels with red fraction above 0.8 (and brightness above 0.2) in any frame of the materialise, fold and slip sequences. The palette has no saturated red; the fringe is violet and cyan.
+- **Light field:** the glow layer is one extra mip sample of the same `uMap` (no render targets); 2 further layers are not needed to read as depth (the lag and parallax are the effect). Output is colour, NeutralToneMapping works (do not include `tonemapping_pars_fragment`: three adds it when tone mapping is on).
+
+## 3. Models and art (`src/scene/materials/holo/`, `standby/`, `holo2d/`)
+
+### `HoloDisplay` (replaces `TvBody`)
+`import { HoloDisplay, HOLO_LAYOUT } from '@/scene/materials/holo'`. Procedural, 0 bytes, **10,198 triangles**, 11 draw calls. Metres, origin at the centre of the player rect, +z towards the viewer, glass front at z = 0.
+- Props: `children` (the screen material, attached to the `screen` mesh), `powerAngle`, `channelAngle`, `volumeAngle` (radians, rotation about each ring's own axis; the ring and dimple nodes have local z pointing up, so `node.rotation.z` turns them as `KnobLayer` already does), `powerHandlers` / `channelHandlers` / `volumeHandlers` (`onClick`, `onPointerOver`, `onPointerOut`, `onPointerDown`; the ring mesh is the event target), `edgeBoost` (edge light strength, 1 steady, up to 1.4 for the 300 ms channel-change pulse; set it per frame while animating), `nodesRef` (`HoloNodes`, alias `TvNodes`), plus any `group` prop. No `tint` (there is no tint rule any more).
+- Nodes (direct children of group `holo-display`): `screen`, `knob-power` (dimple), `knob-channel` (outer ring), `knob-volume` (inner ring), `cabinet` (puck body with speaker slits), `bezel` (6 mm pearl ceramic border), `trim` (satin edge), `control-plate` (puck top face), `glass-body`, `edge-light` (2 px steady lumen frame flush outside the rect), `edge-halo` (additive glow of at most 8 px, alpha 0.3).
+- `HOLO_LAYOUT` (same field names as `TV_LAYOUT` where the camera code uses them): `cabinet {width 1.2, height 0.675}`, `shelfY` -0.4775, `originOffsetX` 0, `screen {width 1.152, height 0.648, aspect 16/9}` (**use `HOLO_LAYOUT.screen.width` as `widthM`**; the player rect is the glass inset by 1.5 per cent), `pane`, `glass`, `puck {width 0.45, depth 0.3, height 0.1, cz -0.06, topY}`, `rings`. Pane 1.2 m wide, 9 mm thick, hovering 4 cm over the puck. The `screen` mesh is flat with UVs 0..1 (u right, v up).
+- Materials: pearl ceramic `#e8eaf0`, satin `#c9d3e4`, graphite `#1a2030`, smoked glass `#070b16`, lumen ring and edge light (unlit, steady). Needs `HoloEnvironment` (or any environment) for the ceramic and bevel to read.
+
+### `HoloEnvironment` (replaces `GreyEnvironment`)
+Props `intensity` (0.5), `resolution` (64). A coloured studio built with `PMREMGenerator` directly (lumen key panel, violet haze strip, overhead ring, faint ember fill): the dispose-safe approach of the performance pass, everything disposed on unmount. No file, no background.
+
+### `HoloRoom` (replaces `RoomPieces`; `createHoloRoomUniforms()`)
+Mount: `<HoloRoom calm={calm} uniforms={roomUniforms} decalRef={decalRef} quality={'high' | 'low'} />`. Frosted back-lit wall panel (shader, static frost grain, bright rim), floor with a soft reflection of the pane's light, light cushion under the puck, an overhead ring light with an additive cone shell (keep-out faded), 30 dust sprites (14 on `low`; drift under 4 px/s; none in Calm), and the Occupant's shadow behind the wall (`decalRef.current.opacity = decalOpacity(shadow)`, at most 0.10). Draw calls about 8. Additive meshes only: no post-processing, no ray-marching.
+- **Room dim:** `createHoloRoomUniforms()` returns the shared room uniforms plus `uRoomLight`. The scene sets `uRoomLight.value = 1 - dim x 0.65` each frame; it dims the wall back-light, the ring light and the cone. The pane's own light is not on it. (The wall is unlit, so `SetLights` does not dim it.) Call `setKeepOut(uniforms, rect)` as for the other rooms (cone and dust fade inside the rect plus halo).
+
+### Calibration field: `drawStandby` (replaces `drawTestCard`)
+`drawStandby(ctx, width, height, { loadingPercent?, subCaption? })` and `createStandbyCanvas(w, h, opts)` in `standby/drawStandby.ts`; `TT` exports the eight screen tones. Same call shape. All 9 elements of design-spec-2050 3.4: dot grid, two 24-ring interference rosettes (additive, so moire shows), conic iris with pupil, axes with ticks, corner L-brackets, 12-step ladder, spectrum rails (margins on 16:9, two bands on portrait), caption "TRANSMISSION PENDING" (Space Grotesk 600) and "STAND BY" or "TUNING... NN%" (Space Mono). 16:9 shows the whole 1600 x 900 composition; a 4:3 canvas shows its centre; portrait is fitted to the shorter side. Await `document.fonts.load('600 56px "Space Grotesk"')` and `document.fonts.load('28px "Space Mono"')` first. Mean linear luminance 0.066 on 16:9. No PNG baked (2D mode can draw it live).
+
+### Occupant sprite and 2D equivalents
+- `drawOccupant(ctx, w = 256, h = 384, { mode: 'sprite' | 'silhouette' })`, `createOccupantCanvas()`, `OCCUPANT_*` in `holo/occupant2050.ts` (same API as the 1970s file; R = tone, A = coverage). **`Ghost2D.tsx` finds `drawOccupant` by globbing `/src/scene/materials/**/*ccupant*.ts` and takes the first, in path order, so `ghost/drawOccupant.ts` (1970s) wins until it is deleted.** Delete it (see removal list) and the 2D layer uses the 2050 figure.
+- `holo/drawGhost2D.ts`: `drawGhost2D(ctx, w, h, { ghost, near, time, aspect, seed?, textMask?, uniformCap?, mono?, scale? })`, the CPU port with the 48 slices, the same ceilings (`GHOST_AREA_GAIN` 1.4, `GHOST_TEXT_CAP_SCALE` 0.9), colour `#cfeaff`, `mono` greys it. Same usage notes as before (30 Hz at most, below the text, never in Calm).
+- `holo2d/holo2d.css`: `.holo2d-field` (slow conic field, frozen in Calm), `.holo2d` (glass sheet: 2 px edge light, soft inner glow, grain), `.holo2d--bloom` (2.2 s mask reveal), `.holo2d--fold` (0.55 s), `.holo2d--off`, `.holo2d__glow`, `data-calm="true"` cuts every animation. Animates only `transform`, `opacity` and the mask (the grain loop moves with `transform`, as `crt2d.css` does). Replaces `crt2d.css`.
+
+## 4. Swap checklist for the scene-developer
+1. `useCrtMaterial` to a holo copy: `createHoloScreenMaterial(null, { uAspect: 16 / 9, uEdge: 0 })` in 3d-set (`uEdge: 1` for `ScreenSurface`), copy `uMono` from the Colour setting, everything else as now.
+2. `TvSet.tsx`: `<HoloDisplay nodesRef edgeBoost>` with the holo material as child; live channels keep the flat black `meshBasicMaterial` child (the `screen` mesh is already flat and 16:9, so no dome to hide). `screen.widthM = HOLO_LAYOUT.screen.width` (1.152), 16:9, `fill` 0.60.
+3. `poses.ts` and `SetCameraRig`: import `HOLO_LAYOUT` instead of `TV_LAYOUT` (same `cabinet.width`, `cabinet.height`, `shelfY`, `originOffsetX`, `screen.height` fields). The device is 1.2 m wide and 0.815 m tall from the floor to the pane top.
+4. `Room.tsx`: `HoloRoom` and `HoloEnvironment`; set `uRoomLight` for the dim cue; `SetLights` can keep the key and ambient for the pane and puck.
+5. `KnobLayer`: no change in node names; the rings turn about their own z axis; use `edgeBoost` for the channel-change pulse (300 ms, 1.4 x, once per 1000 ms, none in Calm). Tone mapping: `NeutralToneMapping` is recommended; `flat` (none) also works.
+
+## 5. Old files to remove after the swap (mark for removal)
+- `src/scene/shaders/crt/` (all four files), `src/scene/materials/CrtScreenMaterial.tsx`
+- `src/scene/materials/tv/` (`TvBody.tsx`, `layout.ts`, `tvGeometry.ts`, `tvMaterials.ts`, `tvTextures.ts`), `GreyEnvironment.tsx`
+- `src/scene/materials/testcard/`, `src/scene/materials/ghost/` (both `drawOccupant.ts` and `drawGhost2D.ts`), `src/scene/materials/crt2d/`
+- `src/scene/materials/room/` (1970s wall paper, shelf, blob shadow, decal), `src/scene/materials/rooms/tvRoom/TvRoomExtras.tsx` (lamp, rug, bezel ring, tint)
+- the exports of those in `src/scene/materials/index.ts` and `rooms/index.ts`/`specs.ts` (`TV_ROOM_*`); the shared `rooms/roomKit.ts`, `roomParts.tsx` stay (the other eight rooms and `HoloRoom` use them)
+- `public/textures/test-card-960x720.png` (1970s). Keep `public/textures/noise-tile-64.png` (used by `holo2d.css`).
+- Favicon: the design spec does not ask for one (ADR 0012 assigns `public/favicon.svg` to the ux-ui-designer), so I did not make one.
+
+## 6. Not done
+- `HoloScreenMaterial` React component (the CRT one is unused by the scene, which drives uniforms itself); say if you want it.
+- Selective bloom (needs an ADR) and any post-processing: not used, per ADR 0012.
+- Real-device and other-browser checks; the 2D mask reveal in a real browser was not run.
+- The `glitch` cue (chrome flicker) is DOM-side; nothing needed from the shader.
+
+## 7. Requests (2050)
+- scene-developer: the swap checklist in section 4; set `uEdge` 0 on the set pane, `uMono` from the Colour setting, `uRoomLight` for the dim cue, and `edgeBoost` for the channel-change pulse. Keep `setKeepOut` calls as they are. Camera far plane must stay at least 60 x the room's `widthM`.
+- frontend-developer: import `holo2d.css` instead of `crt2d.css`; swap `drawTestCard` for `drawStandby` in `draw.ts` and `Screen2D.tsx` (same call shape); await the new fonts before the first canvas draw; Space Mono advance is 0.612 em (use `measureText`; the line box is 1.481 em, position by baseline). `Ghost2D` will pick up the 2050 figure when the old `ghost/drawOccupant.ts` is deleted, or point it at `holo/occupant2050.ts` and `holo/drawGhost2D.ts` directly.
+- ux-ui-designer: the calibration field's mean is 0.066, not 0.14, so the materialise ends at 0.066 (monotonic, no overshoot); the fold's contraction step is 0.08 per 50 ms on one tile (monotonic fall, so not a flash) and would need more than 0.55 s to get under 0.05 per 100 ms; confirm that is accepted. Zero vs O in Space Mono is a faint dot at 16 px: confirm weight 700 for numerals, or ask for the `ss` alternates.
+- qa-engineer: replace the VT323 assertions in `tests/unit/repo.test.ts` (fonts and licence files are now the three OFL families); redo flash and contrast checks on the holo sequence (my numbers above are the starting point); add the red-flash check (0 pixels in my sequences).
+- architect: `index.html` font preload should point at `space-mono-regular.woff2`.
+- performance-optimiser: the holo shader adds a second texture fetch for the background layer and a `textureGrad` for the picture (the same cost as the CRT roll fetch) and `HoloRoom` adds additive cone overdraw; please measure on a real phone at the adapted DPR (the budget is 2 ms for haze, beams and glow).
