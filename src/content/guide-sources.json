@@ -23,8 +23,8 @@
       "permission": "requested",
       "confidence": "high",
       "checked": "2026-11-11",
-      "enabled": true,
-      "note": "Source: docs/research/embeddable-channels.md section 1. 24x7 live, embeddable."
+      "enabled": false,
+      "note": "Source: docs/research/embeddable-channels.md section 1. 24x7 live, embeddable. Disabled until the permission email to the broadcaster is confirmed as sent."
     },
     {
       "number": 2,
@@ -42,8 +42,8 @@
       "permission": "requested",
       "confidence": "high",
       "checked": "2026-11-11",
-      "enabled": true,
-      "note": "Source: research section 1. English international news, 24x7."
+      "enabled": false,
+      "note": "Source: research section 1. English international news, 24x7. Disabled until the permission email to the broadcaster is confirmed as sent."
     },
     {
       "number": 3,
@@ -61,8 +61,8 @@
       "permission": "requested",
       "confidence": "high",
       "checked": "2026-11-11",
-      "enabled": true,
-      "note": "Source: research section 1. 24x7."
+      "enabled": false,
+      "note": "Source: research section 1. 24x7. Disabled until the permission email to the broadcaster is confirmed as sent."
     },
     {
       "number": 4,
@@ -80,8 +80,8 @@
       "permission": "requested",
       "confidence": "high",
       "checked": "2026-11-11",
-      "enabled": true,
-      "note": "Source: research section 1. 24x7."
+      "enabled": false,
+      "note": "Source: research section 1. 24x7. Disabled until the permission email to the broadcaster is confirmed as sent."
     },
     {
       "number": 5,
@@ -99,8 +99,1045 @@
       "permission": "requested",
       "confidence": "high",
       "checked": "2026-11-11",
+      "enabled": false,
+      "note": "Source: research section 1. Runs two live streams (Sansad TV 1 and 2); the resolver picks one (preferTitle, then most viewers). Languages assumed Hindi and English; confirm. No broadcaster terms page was found. Disabled until the permission email to the broadcaster is confirmed as sent."
+    },
+    {
+      "number": 6,
+      "name": "Aaj Tak",
+      "channelId": "UCt4t-jeY85JegMlZ-E5UWtA",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Aaj Tak on YouTube",
+        "url": "https://www.youtube.com/channel/UCt4t-jeY85JegMlZ-E5UWtA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
       "enabled": true,
-      "note": "Source: research section 1. Runs two live streams (Sansad TV 1 and 2); the resolver picks one (preferTitle, then most viewers). Languages assumed Hindi and English; confirm. No broadcaster terms page was found."
+      "preferTitle": "Aaj Tak LIVE TV",
+      "note": "Source: research section 2. Handle @aajtak; ID from the /@aajtak page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 7,
+      "name": "ABP News",
+      "channelId": "UCRWFSbif-RFENbBrSiez1DA",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "ABP News on YouTube",
+        "url": "https://www.youtube.com/channel/UCRWFSbif-RFENbBrSiez1DA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "ABP NEWS LIVE",
+      "note": "Source: research section 2. Handle @ABPNEWS; ID from the /@ABPNEWS page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 8,
+      "name": "NDTV India",
+      "channelId": "UC9CYT9gSNLevX5ey2_6CK0Q",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NDTV India on YouTube",
+        "url": "https://www.youtube.com/channel/UC9CYT9gSNLevX5ey2_6CK0Q"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "NDTV India LIVE",
+      "note": "Source: research section 2. Handle @ndtvindia; ID from the /@ndtvindia page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 9,
+      "name": "Zee News",
+      "channelId": "UCIvaYmXn910QMdemBG3v1pQ",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Zee News on YouTube",
+        "url": "https://www.youtube.com/channel/UCIvaYmXn910QMdemBG3v1pQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Zee News LIVE",
+      "note": "Source: research section 2. Handle @zeenews; ID from the /@zeenews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 10,
+      "name": "India TV",
+      "channelId": "UCttspZesZIDEwwpVIgoZtWQ",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "India TV on YouTube",
+        "url": "https://www.youtube.com/channel/UCttspZesZIDEwwpVIgoZtWQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "India TV LIVE",
+      "note": "Source: research section 2. Handle @indiatv; ID from the /@indiatv page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 11,
+      "name": "News18 India",
+      "channelId": "UCPP3etACgdUWvizcES1dJ8Q",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "News18 India on YouTube",
+        "url": "https://www.youtube.com/channel/UCPP3etACgdUWvizcES1dJ8Q"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "News18 India LIVE",
+      "note": "Source: research section 2. Handle @News18India; ID from the /@News18India page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 12,
+      "name": "Times Now Navbharat",
+      "channelId": "UCMk9Tdc-d1BIcAFaSppiVkw",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Times Now Navbharat on YouTube",
+        "url": "https://www.youtube.com/channel/UCMk9Tdc-d1BIcAFaSppiVkw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @TimesNowNavbharat; ID from the /@TimesNowNavbharat page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 13,
+      "name": "Republic Bharat",
+      "channelId": "UC7wXt18f2iA3EDXeqAVuKng",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Republic Bharat on YouTube",
+        "url": "https://www.youtube.com/channel/UC7wXt18f2iA3EDXeqAVuKng"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @RepublicBharat; ID from the /@RepublicBharat page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 14,
+      "name": "TV9 Bharatvarsh",
+      "channelId": "UCOutOIcn_oho8pyVN3Ng-Pg",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "TV9 Bharatvarsh on YouTube",
+        "url": "https://www.youtube.com/channel/UCOutOIcn_oho8pyVN3Ng-Pg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @TV9Bharatvarsh; ID from the /@TV9Bharatvarsh page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 15,
+      "name": "News Nation",
+      "channelId": "UCsNdeLwEZf86swPD3qJJ7Dw",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "News Nation on YouTube",
+        "url": "https://www.youtube.com/channel/UCsNdeLwEZf86swPD3qJJ7Dw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "News Nation LIVE TV",
+      "note": "Source: research section 2. Handle @NewsNationTV; ID from the /@NewsNationTV page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 16,
+      "name": "News24",
+      "channelId": "UCuzS3rPQAYqHcLWqOFuY0pw",
+      "languages": ["hi"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "News24 on YouTube",
+        "url": "https://www.youtube.com/channel/UCuzS3rPQAYqHcLWqOFuY0pw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @News24thinkfirst; ID from the /@News24thinkfirst page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 17,
+      "name": "India Today",
+      "channelId": "UCYPvAwZP8pZhSMW8qs7cVCw",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "India Today on YouTube",
+        "url": "https://www.youtube.com/channel/UCYPvAwZP8pZhSMW8qs7cVCw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "India Today LIVE",
+      "note": "Source: research section 2. Handle @IndiaToday; ID from the /@IndiaToday page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 18,
+      "name": "NDTV 24x7",
+      "channelId": "UCZFMm1mMw0F81Z37aaEzTUA",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NDTV 24x7 on YouTube",
+        "url": "https://www.youtube.com/channel/UCZFMm1mMw0F81Z37aaEzTUA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "NDTV LIVE TV",
+      "note": "Source: research section 2. Handle @NDTV; ID from the /@NDTV page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 19,
+      "name": "CNN-News18",
+      "channelId": "UCef1-8eOpJgud7szVPlZQAQ",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "CNN-News18 on YouTube",
+        "url": "https://www.youtube.com/channel/UCef1-8eOpJgud7szVPlZQAQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @CNNnews18; ID from the /@CNNnews18 page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 20,
+      "name": "Times Now",
+      "channelId": "UC6RJ7-PaXg6TIH2BzZfTV7w",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Times Now on YouTube",
+        "url": "https://www.youtube.com/channel/UC6RJ7-PaXg6TIH2BzZfTV7w"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Times Now LIVE TV",
+      "note": "Source: research section 2. Handle @TimesNow; ID from the /@TimesNow page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 21,
+      "name": "Mirror Now",
+      "channelId": "UCWCEYVwSqr7Epo6sSCfUgiw",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Mirror Now on YouTube",
+        "url": "https://www.youtube.com/channel/UCWCEYVwSqr7Epo6sSCfUgiw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @MirrorNow; ID from the /@MirrorNow page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 22,
+      "name": "WION",
+      "channelId": "UC_gUM8rL-Lrg6O3adPW9K1g",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "WION on YouTube",
+        "url": "https://www.youtube.com/channel/UC_gUM8rL-Lrg6O3adPW9K1g"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "WION LIVE News",
+      "note": "Source: research section 2. Handle @WION; ID from the /@WION page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 23,
+      "name": "Republic World",
+      "channelId": "UCwqusr8YDwM-3mEYTDeJHzw",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Republic World on YouTube",
+        "url": "https://www.youtube.com/channel/UCwqusr8YDwM-3mEYTDeJHzw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @RepublicWorld; ID from the /@RepublicWorld page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 24,
+      "name": "ET Now",
+      "channelId": "UCI_mwTKUhicNzFrhm33MzBQ",
+      "languages": ["en"],
+      "genre": "business",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "ET Now on YouTube",
+        "url": "https://www.youtube.com/channel/UCI_mwTKUhicNzFrhm33MzBQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @ETNow; ID from the /@ETNow page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 25,
+      "name": "CNBC-TV18",
+      "channelId": "UCmRbHAgG2k2vDUvb3xsEunQ",
+      "languages": ["en"],
+      "genre": "business",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "CNBC-TV18 on YouTube",
+        "url": "https://www.youtube.com/channel/UCmRbHAgG2k2vDUvb3xsEunQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @CNBC-TV18; ID from the /@CNBC-TV18 page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 26,
+      "name": "Zee Business",
+      "channelId": "UCkXopQ3ubd-rnXnStZqCl2w",
+      "languages": ["hi"],
+      "genre": "business",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Zee Business on YouTube",
+        "url": "https://www.youtube.com/channel/UCkXopQ3ubd-rnXnStZqCl2w"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @ZeeBusiness; ID from the /@ZeeBusiness page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 27,
+      "name": "NDTV Profit",
+      "channelId": "UC3uJIdRFTGgLWrUziaHbzrg",
+      "languages": ["en", "hi"],
+      "genre": "business",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NDTV Profit on YouTube",
+        "url": "https://www.youtube.com/channel/UC3uJIdRFTGgLWrUziaHbzrg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @NDTVProfitIndia; ID from the /@NDTVProfitIndia page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Streams seen in English and Hindi; languages approximate."
+    },
+    {
+      "number": 28,
+      "name": "ABP Majha",
+      "channelId": "UCH7nv1A9xIrAifZJNvt7cgA",
+      "languages": ["mr"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "ABP Majha on YouTube",
+        "url": "https://www.youtube.com/channel/UCH7nv1A9xIrAifZJNvt7cgA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @abpmajhatv; ID from the /@abpmajhatv page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 29,
+      "name": "Zee 24 Taas",
+      "channelId": "UCVbsFo8aCgvIRIO9RYwsQMA",
+      "languages": ["mr"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Zee 24 Taas on YouTube",
+        "url": "https://www.youtube.com/channel/UCVbsFo8aCgvIRIO9RYwsQMA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @ZEE24Taas; ID from the /@ZEE24Taas page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 30,
+      "name": "Asianet News",
+      "channelId": "UCf8w5m0YsRa8MHQ5bwSGmbw",
+      "languages": ["ml"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Asianet News on YouTube",
+        "url": "https://www.youtube.com/channel/UCf8w5m0YsRa8MHQ5bwSGmbw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "24x7",
+      "note": "Source: research section 2. Handle @asianetnews; ID from the /@asianetnews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 31,
+      "name": "Manorama News",
+      "channelId": "UCP0uG-mcMImgKnJz-VjJZmQ",
+      "languages": ["ml"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Manorama News on YouTube",
+        "url": "https://www.youtube.com/channel/UCP0uG-mcMImgKnJz-VjJZmQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Manorama News Live",
+      "note": "Source: research section 2. Handle @manoramanews; ID from the /@manoramanews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 32,
+      "name": "Thanthi TV",
+      "channelId": "UC-JFyL0zDFOsPMpuWu39rPA",
+      "languages": ["ta"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Thanthi TV on YouTube",
+        "url": "https://www.youtube.com/channel/UC-JFyL0zDFOsPMpuWu39rPA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @thanthitv; ID from the /@thanthitv page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 33,
+      "name": "Polimer News",
+      "channelId": "UC8Z-VjXBtDJTvq6aqkIskPg",
+      "languages": ["ta"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Polimer News on YouTube",
+        "url": "https://www.youtube.com/channel/UC8Z-VjXBtDJTvq6aqkIskPg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @PolimerNews; ID from the /@PolimerNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 34,
+      "name": "Sun News",
+      "channelId": "UCYlh4lH762HvHt6mmiecyWQ",
+      "languages": ["ta"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Sun News on YouTube",
+        "url": "https://www.youtube.com/channel/UCYlh4lH762HvHt6mmiecyWQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @SunNewsTamil; ID from the /@SunNewsTamil page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 35,
+      "name": "TV9 Telugu",
+      "channelId": "UCPXTXMecYqnRKNdqdVOGSFg",
+      "languages": ["te"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "TV9 Telugu on YouTube",
+        "url": "https://www.youtube.com/channel/UCPXTXMecYqnRKNdqdVOGSFg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @tv9telugulive; ID from the /@tv9telugulive page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 36,
+      "name": "NTV Telugu",
+      "channelId": "UCumtYpCY26F6Jr3satUgMvA",
+      "languages": ["te"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NTV Telugu on YouTube",
+        "url": "https://www.youtube.com/channel/UCumtYpCY26F6Jr3satUgMvA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @ntvtelugu; ID from the /@ntvtelugu page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Main NTV Telugu channel (@ntvtelugu). The research's @ntvtelugulive ('NTV Live', UCtzYV2L-m8ew93mZb3qhf5w) is a smaller secondary channel and had no live stream on recheck, so it was not used."
+    },
+    {
+      "number": 37,
+      "name": "TV9 Kannada",
+      "channelId": "UC8dnBi4WUErqYQHZ4PfsLTg",
+      "languages": ["kn"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "TV9 Kannada on YouTube",
+        "url": "https://www.youtube.com/channel/UC8dnBi4WUErqYQHZ4PfsLTg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 2. Handle @tv9kannada; ID from the /@tv9kannada page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 38,
+      "name": "Al Jazeera English",
+      "channelId": "UCNye-wNBqNL5ZzHSJj3l8Bg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "QA",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Al Jazeera English on YouTube",
+        "url": "https://www.youtube.com/channel/UCNye-wNBqNL5ZzHSJj3l8Bg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Al Jazeera English \\| Live",
+      "note": "Source: research section 3. Handle @aljazeeraenglish; ID from the /@aljazeeraenglish page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Funded by the Qatari government; not tagged as state media here. Banned in Israel; other geo-blocks possible. aljazeera.com/live embeds this same YouTube stream."
+    },
+    {
+      "number": 39,
+      "name": "Al Jazeera Arabic",
+      "channelId": "UCfiwzLy-8yKzIbsmZTzxDgw",
+      "languages": ["ar"],
+      "genre": "news",
+      "country": "QA",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Al Jazeera Arabic on YouTube",
+        "url": "https://www.youtube.com/channel/UCfiwzLy-8yKzIbsmZTzxDgw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 3. Handle @aljazeera; ID from the /@aljazeera page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Funded by the Qatari government; not tagged as state media here."
+    },
+    {
+      "number": 40,
+      "name": "DW News",
+      "channelId": "UCknLrEdhRCp1aegoMqRaCZg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "DE",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "DW News on YouTube",
+        "url": "https://www.youtube.com/channel/UCknLrEdhRCp1aegoMqRaCZg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "DW News livestream",
+      "note": "Source: research section 3. Handle @dwnews; ID from the /@dwnews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 41,
+      "name": "France 24 English",
+      "channelId": "UCQfwfsi5VrQ8yKZ-UWmAEFg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "FR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "France 24 English on YouTube",
+        "url": "https://www.youtube.com/channel/UCQfwfsi5VrQ8yKZ-UWmAEFg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "24/7",
+      "note": "Source: research section 3. Handle @France24_en; ID from the /@France24_en page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 42,
+      "name": "France 24 (French)",
+      "channelId": "UCCCPCZNChQdGa9EkATeye4g",
+      "languages": ["fr"],
+      "genre": "news",
+      "country": "FR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "France 24 (French) on YouTube",
+        "url": "https://www.youtube.com/channel/UCCCPCZNChQdGa9EkATeye4g"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "EN DIRECT",
+      "note": "Source: research section 3. Handle @FRANCE24; ID from the /@FRANCE24 page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 43,
+      "name": "Euronews English",
+      "channelId": "UCSrZ3UV4jOidv8ppoVuvW9Q",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "FR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Euronews English on YouTube",
+        "url": "https://www.youtube.com/channel/UCSrZ3UV4jOidv8ppoVuvW9Q"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Euronews English Live",
+      "note": "Source: research section 3. Handle @euronews; ID from the /@euronews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Country set to FR (registered in Lyon); its newsroom has also operated from Brussels. Confirm."
+    },
+    {
+      "number": 44,
+      "name": "Euronews (French)",
+      "channelId": "UCW2QcKZiU8aUGg4yxCIditg",
+      "languages": ["fr"],
+      "genre": "news",
+      "country": "FR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Euronews (French) on YouTube",
+        "url": "https://www.youtube.com/channel/UCW2QcKZiU8aUGg4yxCIditg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "en direct",
+      "note": "Source: research section 3. Handle @euronewsfr; ID from the /@euronewsfr page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Country set to FR (registered in Lyon); confirm."
+    },
+    {
+      "number": 45,
+      "name": "Africanews",
+      "channelId": "UC1_E8NeF5QHY2dtdLRBCCLA",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "CG",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Africanews on YouTube",
+        "url": "https://www.youtube.com/channel/UC1_E8NeF5QHY2dtdLRBCCLA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Africanews english Live",
+      "note": "Source: research section 3. Handle @africanews; ID from the /@africanews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Euronews subsidiary based in Pointe-Noire, Republic of the Congo; country CG. Confirm."
+    },
+    {
+      "number": 46,
+      "name": "ABC News Live",
+      "channelId": "UCBi2mrWuNuyYy4gbM6fU18Q",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "ABC News Live on YouTube",
+        "url": "https://www.youtube.com/channel/UCBi2mrWuNuyYy4gbM6fU18Q"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "ABC News Live",
+      "note": "Source: research section 3. Handle @ABCNews; ID from the /@ABCNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 47,
+      "name": "NBC News NOW",
+      "channelId": "UCeY0bbntWzzVIaj2z3QigXg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NBC News NOW on YouTube",
+        "url": "https://www.youtube.com/channel/UCeY0bbntWzzVIaj2z3QigXg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "NBC News NOW",
+      "note": "Source: research section 3. Handle @NBCNews; ID from the /@NBCNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 48,
+      "name": "CBS News 24/7",
+      "channelId": "UC8p1vwvWtl6T73JiExfWs1g",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "CBS News 24/7 on YouTube",
+        "url": "https://www.youtube.com/channel/UC8p1vwvWtl6T73JiExfWs1g"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "CBS News 24/7",
+      "note": "Source: research section 3. Handle @CBSNews; ID from the /@CBSNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 49,
+      "name": "LiveNOW from FOX",
+      "channelId": "UCJg9wBPyKMNA5sRDnvzmkdg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "LiveNOW from FOX on YouTube",
+        "url": "https://www.youtube.com/channel/UCJg9wBPyKMNA5sRDnvzmkdg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 3. Handle @LiveNOWFOX; ID from the /@LiveNOWFOX page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 50,
+      "name": "Bloomberg Television",
+      "channelId": "UCIALMKvObZNtJ6AmdCLP7Lg",
+      "languages": ["en"],
+      "genre": "business",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Bloomberg Television on YouTube",
+        "url": "https://www.youtube.com/channel/UCIALMKvObZNtJ6AmdCLP7Lg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Bloomberg Business News Live",
+      "note": "Source: research section 3. Handle @markets; ID from the /@markets page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. The YouTube handle is @markets; @BloombergTelevision is not this channel."
+    },
+    {
+      "number": 51,
+      "name": "Sky News",
+      "channelId": "UCoMdktPbSTixAyNGwb-UYkQ",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "GB",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Sky News on YouTube",
+        "url": "https://www.youtube.com/channel/UCoMdktPbSTixAyNGwb-UYkQ"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Watch Sky News live",
+      "note": "Source: research section 3. Handle @SkyNews; ID from the /@SkyNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 52,
+      "name": "NHK World-Japan",
+      "channelId": "UCSPEjw8F2nQDtmUKPFNF7_A",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "JP",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NHK World-Japan on YouTube",
+        "url": "https://www.youtube.com/channel/UCSPEjw8F2nQDtmUKPFNF7_A"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "NHK WORLD-JAPAN News",
+      "note": "Source: research section 3. Handle @NHKWORLDJAPAN; ID from the /@NHKWORLDJAPAN page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 53,
+      "name": "KBS World",
+      "channelId": "UC5BMQOsAB8hKUyHu9KI6yig",
+      "languages": ["ko", "en"],
+      "genre": "general",
+      "country": "KR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "KBS World on YouTube",
+        "url": "https://www.youtube.com/channel/UC5BMQOsAB8hKUyHu9KI6yig"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 3. Handle @KBSWorldTV; ID from the /@KBSWorldTV page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Korean public broadcaster's international channel; also carried on DD Free Dish. Runs several streams (for example 'KBS KOREA On-Air')."
+    },
+    {
+      "number": 54,
+      "name": "TRT World",
+      "channelId": "UC7fWeaHhqgM4Ry-RMpM2YYw",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "TR",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "TRT World on YouTube",
+        "url": "https://www.youtube.com/channel/UC7fWeaHhqgM4Ry-RMpM2YYw"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "Watch TRT World",
+      "note": "Source: research section 3. Handle @TRTWorld; ID from the /@TRTWorld page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. STATE MEDIA (Türkiye, TRT). The schema has no state-media tag; YouTube shows its own funding label."
+    },
+    {
+      "number": 55,
+      "name": "CGTN",
+      "channelId": "UCgrNz-aDmcr2uuto8_DL2jg",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "CN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "CGTN on YouTube",
+        "url": "https://www.youtube.com/channel/UCgrNz-aDmcr2uuto8_DL2jg"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "CGTN LIVE",
+      "note": "Source: research section 3. Handle @CGTN; ID from the /@CGTN page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. STATE MEDIA (China, CCTV). The schema has no state-media tag; YouTube shows its own state-media label."
+    },
+    {
+      "number": 56,
+      "name": "ABC News (Australia)",
+      "channelId": "UCVgO39Bk5sMo66-6o6Spn6Q",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "AU",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "ABC News (Australia) on YouTube",
+        "url": "https://www.youtube.com/channel/UCVgO39Bk5sMo66-6o6Spn6Q"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "ABC NEWS Australia live",
+      "note": "Source: research section 3. Handle @ABCNewsAustralia; ID from the /@ABCNewsAustralia page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 57,
+      "name": "CBC News",
+      "channelId": "UCuFFtHWoLl5fauMMD5Ww2jA",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "CA",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "CBC News on YouTube",
+        "url": "https://www.youtube.com/channel/UCuFFtHWoLl5fauMMD5Ww2jA"
+      },
+      "terms": [],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "preferTitle": "CBC News Live",
+      "note": "Source: research section 3. Handle @CBCNews; ID from the /@CBCNews page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11."
+    },
+    {
+      "number": 58,
+      "name": "NASA",
+      "channelId": "UCLA_DiR1FfKNvjuUpBHmylQ",
+      "languages": ["en"],
+      "genre": "science",
+      "country": "US",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "NASA on YouTube",
+        "url": "https://www.youtube.com/channel/UCLA_DiR1FfKNvjuUpBHmylQ"
+      },
+      "terms": ["https://www.nasa.gov/nasa-brand-center/images-and-media/"],
+      "permission": "not-required",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 3. Handle @NASA; ID from the /@NASA page metadata (canonical URL and externalId agree). Live now and playableInEmbed=true, checked from India on 2026-11-11. Live ISS views plus event streams. NASA media guidelines: credit NASA, do not imply endorsement, logos are excluded."
     }
   ]
 }
