@@ -1,6 +1,15 @@
 # Handoff: product-manager
 
-## v2 finalised (user decisions applied)
+## v2 pivot: environments and YouTube (2026-11-11, current)
+- New file docs/requirements/v2-environments.md is the v2 source of truth. docs/requirements/v2-live-channels.md is marked SUPERSEDED. v1 files untouched.
+- Content: decisions D1 to D9; 12 conflicts (C1 to C12); V2-FR-1 to V2-FR-34; 15 YouTube compliance rules (V2-YT-1 to V2-YT-15); V2-NFR-1 to V2-NFR-9; legal L1 to L8; stories V2-US-1 to V2-US-14; Appendix A is the draft permission email (not sent).
+- Amendments: NFR-7 becomes an allow-list (youtube.com, youtube-nocookie.com, ytimg.com) loaded only after the viewer picks a channel and accepts the notice. FR-2 and FR-3 apply to channel 0, the UI and the 1970s TV surround; video is never filtered. NFR-8 kept for the runtime site; the scheduled Action is build-time only.
+- Dropped: archive channels, private login backend, tuner relay, runtime brightness limiter.
+- Open questions: Q-V2-1 DD/Sansad TV before or after the permission reply; Q-V2-2 who creates the Data API key and the accepted refresh schedule given quota.
+- Requests: architect, CSS3D placement with no overlay, youtube-nocookie host option, Referrer-Policy on the chosen host, quota-safe refresh job, per-environment size caps, supersede ADR 0009 and 0010; ux-ui-designer, eight environments with the player clear, focus mode, error pages, notice, privacy and credits pages; technical-artist, environment art with fake light spill that never flashes; frontend-developer, paste-a-link parsing, error handling for 100, 101/150 and 153; qa-engineer, no-overlap and no-filter checks per environment; devops-engineer, scheduled Action, secret scan, header or meta tag.
+- Risks: eight environments is a lot for one release (cut to four if needed); YouTube terms and Prasar Bharati permission are outside the team's control.
+
+## v2 finalised (earlier plan, superseded)
 - docs/requirements/v2-live-channels.md rewritten as final scope: "Public archive + private backend". Public: channel 0 plus 3 to 5 openly licensed archive channels on a clock schedule. Private: login-only household relay of the user's own tuner (DD Free Dish), never on the public site.
 - Resolved Q-V2-1 to Q-V2-4. Colour/B&W switch (V2-FR-12) amends FR-2 for v2 video only. Runtime limiter accepted; Calm and 2D play only pre-checked clips. Channel 0 is the Occupant.
 - Conflicts C1 to C10 updated: NFR-7 and NFR-8 apply to the public build; the private build is a separate deployment target.

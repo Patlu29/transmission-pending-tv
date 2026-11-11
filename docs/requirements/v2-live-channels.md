@@ -1,6 +1,8 @@
-# v2 requirements: archive channels and private live relay (FINAL SCOPE)
+# v2 requirements: archive channels and private live relay (SUPERSEDED)
 
-Status: scope decided by the user. v1 (haunted-TV ghost story) ships first: QA fixes, delivery and a v1.0 tag. v2 is then built on a branch. This document does not change v1 requirement files.
+> **SUPERSEDED on 2026-11-11** by docs/requirements/v2-environments.md (multi-environment YouTube player). Do not build from this file. Kept for history only.
+
+Status (historical): scope decided by the user. v1 (haunted-TV ghost story) ships first: QA fixes, delivery and a v1.0 tag. v2 is then built on a branch. This document does not change v1 requirement files.
 
 User request (verbatim): "change the scope and we can telecast the public TV channels from satellite connection and user can change the channels."
 
