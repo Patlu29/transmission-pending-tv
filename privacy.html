@@ -7,21 +7,111 @@
     <meta name="theme-color" content="#000000" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/fonts.css" />
+    <link rel="stylesheet" href="/src/ui/privacy.css" />
     <title>Privacy: Transmission Pending</title>
   </head>
   <body>
-    <!--
-      PLACEHOLDER. Owner of the content: frontend-developer (copy from design spec v2 §6.3,
-      approved by the product-manager). Root file and build input: architect (vite.config.ts).
-      The CSP meta tag is injected at build time, as for index.html. No inline styles or scripts:
-      the CSP forbids them; link a same-origin stylesheet or module instead.
-    -->
-    <main>
-      <h1>Privacy</h1>
+    <main class="privacy">
+      <p><a href="./">Back to Transmission Pending</a></p>
+      <h1>Privacy, third parties and accessibility</h1>
+
+      <h2 id="collects">What this site collects</h2>
       <p>
-        This page is being written. It will explain what happens when you play a YouTube channel.
+        Nothing. Transmission Pending sets no cookies, has no accounts, runs no analytics and sends
+        nothing about you to any server we control. It is a static site with no backend.
+      </p>
+
+      <h2 id="remembers">What it remembers</h2>
+      <p>
+        Your choices (room, colour, Calm mode, focus mode and whether you have seen the notice) are
+        kept in your browser&rsquo;s session storage for this visit only. They are cleared when you
+        close the tab. A link you paste is kept in memory only and is not stored or logged.
+      </p>
+
+      <h2 id="youtube">YouTube</h2>
+      <p>
+        When you choose a channel or paste a link and press Continue, this site loads the YouTube
+        player. This site uses YouTube API Services. The video and its sound come from YouTube and
+        the channel&rsquo;s owner, not from this site. YouTube may set cookies or collect data once
+        the player loads. We load it from youtube-nocookie.com, which reduces this but does not
+        remove it. By watching you are bound by the
+        <a href="https://www.youtube.com/t/terms" rel="noopener">YouTube Terms of Service</a>
+        (https://www.youtube.com/t/terms). The Google Privacy Policy is at
+        <a href="http://www.google.com/policies/privacy" rel="noopener"
+          >http://www.google.com/policies/privacy</a
+        >. You can revoke this site&rsquo;s access to your Google data, if any, at
+        <a href="https://security.google.com/settings/security/permissions" rel="noopener"
+          >https://security.google.com/settings/security/permissions</a
+        >.
+      </p>
+
+      <h2 id="third-parties">When your device contacts third parties</h2>
+      <p>
+        Only after you press Continue on the notice. Before that, every request goes to this site.
+        After it:
+      </p>
+      <table>
+        <caption class="sr-only">
+          Third-party origins contacted after Continue
+        </caption>
+        <thead>
+          <tr>
+            <th scope="col">Origin</th>
+            <th scope="col">What for</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>www.youtube.com</td>
+            <td>the player loader script</td>
+          </tr>
+          <tr>
+            <td>www.youtube-nocookie.com</td>
+            <td>the player itself</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2 id="room-sound">Room sound</h2>
+      <p>
+        The optional room sound is made in your browser and downloads nothing. It is off until you
+        turn it on.
+      </p>
+
+      <h2 id="channels">Channels</h2>
+      <p>
+        The channel guide lists channels that publish live video on YouTube. Names are used only to
+        identify the source. This site does not host, copy, record, relay or change any video.
+        State-run channels are labelled. Not affiliated with or endorsed by YouTube, Prasar Bharati,
+        Doordarshan, Sansad TV or any listed channel.
+        <span id="via-embed" hidden
+          >Doordarshan and Sansad TV channels are shown through their YouTube embeds.</span
+        >
+        <span id="nasa" hidden
+          >NASA material is credited to NASA and does not imply its endorsement.</span
+        >
+      </p>
+
+      <h2 id="accessibility">Flashing and accessibility</h2>
+      <p>
+        We make the site to WCAG 2.2 level AA. We cannot change or check the video that YouTube
+        plays, so third-party video is outside our conformance claim: it may be loud or contain
+        flashing. Calm mode starts nothing by itself, freezes the rooms, and asks for captions where
+        the player allows. You can stop any video with Stop at any time. Captions and other controls
+        are in the player.
+      </p>
+
+      <h2 id="contact">Contact and source</h2>
+      <p>
+        The code is public:
+        <a href="https://github.com/Patlu29/transmission-pending-tv" rel="noopener"
+          >https://github.com/Patlu29/transmission-pending-tv</a
+        >.
       </p>
       <p><a href="./">Back to Transmission Pending</a></p>
     </main>
+    <script type="module" src="/src/ui/privacy.ts"></script>
   </body>
 </html>

@@ -25,7 +25,7 @@ import { Haunt2D } from './Ghost2D';
 
 const CROSSFADE_MS = SCREEN_FADE_MS;
 
-function TestCardCanvas({
+export function TestCardCanvas({
   width,
   height,
   card,

@@ -1,12 +1,19 @@
 import { useEffect, useState } from 'react';
+import { useEnvironmentStore } from '@/state/environmentStore';
+import { useChannelStore } from '@/state/channelStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
+import { useUiStore } from '@/state/uiStore';
+import { FooterLinks } from './FooterLinks';
 
-/** Shown while the set is off: tagline, flicker note and the Calm switch (US-11). */
+/** Shown while the set is off: tagline, flicker note and the Calm switch (US-11), plus the v2 doors. */
 export function StartScreen() {
   const status = useIntroStore((s) => s.status);
   const calm = useDisplayStore((s) => s.calmSwitch);
   const os = useDisplayStore((s) => s.osReducedMotion);
+  const env = useEnvironmentStore((s) => s.id);
+  const live = useChannelStore((s) => s.current);
+  const panel = useUiStore((s) => s.panel);
   const noteId = 'start-note';
   const powered = isPoweredStatus(status);
   const [gone, setGone] = useState(false);
@@ -19,10 +26,12 @@ export function StartScreen() {
       setGone(false);
     };
   }, [powered]);
+  // The start screen belongs to the TV room with the set off and nothing chosen.
+  if (env !== 'tv-room' || live) return null;
   if (powered && gone) return null;
   return (
     <section
-      className={`start${powered ? ' start--leaving' : ''}`}
+      className={`start${powered ? ' start--leaving' : ''}${panel ? ' start--behind' : ''}`}
       aria-label="Start"
       inert={powered || undefined}
     >
@@ -43,6 +52,27 @@ export function StartScreen() {
         Mild horror theme. Slow and creepy, with no jump scares. Expect flicker, trembling text, a
         pale figure and a slowly closing camera. Calm mode turns every effect off.
       </p>
+      <p className="start__line">
+        Channels come from YouTube. You will be asked before anything loads.
+      </p>
+      <div className="start__doors">
+        <button
+          type="button"
+          className="key"
+          onClick={() => useUiStore.getState().openPanel('guide')}
+        >
+          Channel guide
+        </button>
+        <button
+          type="button"
+          className="key key--two"
+          onClick={() => useUiStore.getState().openPanel('picker')}
+        >
+          <span>Change the room</span>
+          <span className="key__sub">Try the mountain sky</span>
+        </button>
+      </div>
+      <FooterLinks className="footer-links--start" />
     </section>
   );
 }

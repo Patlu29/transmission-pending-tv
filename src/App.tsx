@@ -9,13 +9,23 @@ import { handleStageKey } from '@/hooks/useStageShortcuts';
 import { startHauntScheduler } from '@/state/hauntScheduler';
 import { useDisplayStore } from '@/state/displayStore';
 import { useIntroStore } from '@/state/introStore';
+import { CreditsDialog } from '@/ui/components/CreditsDialog';
 import { Dock } from '@/ui/components/Dock';
+import { KeyboardHelp } from '@/ui/components/KeyboardHelp';
+import { NoticeDialog } from '@/ui/components/NoticeDialog';
+import { RoomPicker } from '@/ui/components/RoomPicker';
+import { Room2D } from '@/ui/components/Room2D';
+import { GuidePanel } from '@/ui/guide/GuidePanel';
+import { PlayerHost } from '@/ui/player/PlayerHost';
+import { usePlayerLayout } from '@/ui/player/usePlayerLayout';
+import { startRoomSound } from '@/hooks/roomSound';
+import { useColourActive } from '@/state/colourActive';
+import { useChannelStore } from '@/state/channelStore';
 import { HitLayer } from '@/ui/components/HitLayer';
 import { Hud } from '@/ui/components/Hud';
 import { LiveRegion } from '@/ui/components/LiveRegion';
 import { Notices } from '@/ui/components/Notices';
 import { SceneHost } from '@/ui/components/SceneHost';
-import { Screen2D } from '@/ui/components/Screen2D';
 import { ScreenSizer } from '@/ui/components/ScreenSizer';
 import { StartScreen } from '@/ui/components/StartScreen';
 import { Transcript } from '@/ui/components/Transcript';
@@ -38,12 +48,17 @@ export default function App() {
   useEffect(() => startTeletextScreen(), []);
   useEffect(() => startAudioEngine(), []);
   useEffect(() => startHauntScheduler(), []);
+  useEffect(() => startRoomSound(), []);
 
   // CSS reads this to collapse transitions under reduced motion or Calm (tokens.css only covers the media query).
   useEffect(() => {
     document.documentElement.dataset.calm = String(calm);
   }, [calm]);
 
+  const colourActive = useColourActive();
+  const live = useChannelStore((s) => s.current !== null);
+  const { layout: playerLayout } = usePlayerLayout();
+  const focusing = live && playerLayout.kind === 'focus';
   const layout = mode === '3d-set' || (mode === '2d' && wide) ? 'set' : 'screen';
   return (
     <div
@@ -52,6 +67,9 @@ export default function App() {
       data-layout={layout}
       data-status={status}
       data-calm={calm}
+      data-colour={colourActive ? 'on' : 'off'}
+      data-focus={focusing}
+      data-live={live}
     >
       <Notices />
       <div
@@ -62,12 +80,18 @@ export default function App() {
         onKeyDown={handleStageKey}
       >
         <div className="stage__ring" aria-hidden="true" />
-        {mode === '2d' ? <Screen2D /> : <SceneHost onLoaded={onSceneLoaded} />}
+        {mode === '2d' ? <Room2D /> : <SceneHost onLoaded={onSceneLoaded} />}
+        <PlayerHost />
         {mode === '3d-screen' && <HitLayer />}
         <Hud />
         <StartScreen />
         <Dock />
       </div>
+      <GuidePanel />
+      <RoomPicker />
+      <NoticeDialog />
+      <CreditsDialog />
+      <KeyboardHelp />
       <ScreenSizer />
       <Transcript />
       <TranscriptDialog />

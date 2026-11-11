@@ -13,6 +13,7 @@ interface DockKeyProps {
   describedBy?: string;
   expanded?: boolean;
   controls?: string;
+  ariaLabel?: string;
 }
 
 export function DockKey({
@@ -26,6 +27,7 @@ export function DockKey({
   describedBy,
   expanded,
   controls,
+  ariaLabel,
 }: DockKeyProps) {
   return (
     <button
@@ -38,6 +40,7 @@ export function DockKey({
       aria-describedby={describedBy}
       aria-expanded={expanded}
       aria-controls={controls}
+      aria-label={ariaLabel}
       onClick={() => {
         if (!disabled) onPress();
       }}

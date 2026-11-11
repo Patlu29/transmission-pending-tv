@@ -2,7 +2,12 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from '@/App';
 import { useDisplayStore } from '@/state/displayStore';
+import { useChannelStore } from '@/state/channelStore';
+import { useEnvironmentStore } from '@/state/environmentStore';
+import { useGuideStore } from '@/state/guideStore';
 import { useHauntStore } from '@/state/hauntStore';
+import { usePlayerStore } from '@/state/playerStore';
+import { useSettingsStore } from '@/state/settingsStore';
 import { useIntroStore } from '@/state/introStore';
 import { useUiStore } from '@/state/uiStore';
 import '@/styles/tokens.css';
@@ -17,6 +22,11 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
     useDisplayStore,
     useUiStore,
     useHauntStore,
+    useChannelStore,
+    useEnvironmentStore,
+    useGuideStore,
+    usePlayerStore,
+    useSettingsStore,
   };
 }
 

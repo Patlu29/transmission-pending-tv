@@ -195,3 +195,58 @@ Tech lead decision: 89.3 s left no headroom, so the reveal constants are retuned
 
 - **BUG-7:** screen-change fades are now 500 ms (`SCREEN_FADE_MS` in `src/state/timing.ts`) and eased: smoothstep alpha on the canvas, CSS `ease-in-out` on the 2D screen, so a 0.10 to 0.12 cut puts about 0.04 in the worst 100 ms. Overlapping fades (Replay: diary, black frame, first page) each keep their own layer in 2D, and on the canvas the second fade starts from the partly faded picture. The clock timeline is untouched, so the duration test is unaffected.
 - **BUG-4:** the 2D power-off collapse is 700 ms (`COLLAPSE_2D_MS`) with the same keyframes, which scales the worst step from 0.066 to about 0.042 per 100 ms and still reads as line, dot, gone. The 3D collapse and the canvas hold stay at `COLLAPSE_MS` (450 ms). Not frame-analysed here; please re-run QA's collapse and fade checks.
+
+---
+
+## v2 (Phase 4c): environments and the YouTube player
+
+Built on branch `v2`. Not committed. My folders are clean for `eslint`, `tsc` and the unit tests (41 new tests, all pass). `npm run build`, whole-repo `typecheck` and `lint` currently fail only on the scene-developer's and technical-artist's in-progress files (`src/scene/environments/*`, `src/scene/materials/rooms/*`: missing `Scene.tsx` files, unused names, an undefined `OpenAirRoom`). Because the build cannot finish, the stale-`dist` facts tests fail too; they pass after a clean build. I checked the UI in dev with headless Chrome (2D phone, 2D desktop, Calm, 3D `?env=mountain-sky`), including live YouTube playback.
+
+### Stores (for the scene-developer; all plain zustand, `src/state/`)
+
+| Store | Fields and actions | Written by | Read by |
+|---|---|---|---|
+| `environmentStore` | `id: EnvironmentId` (from `?env=`, then session, else `tv-room`), `pose: 'browse' \| 'watch'`, `userFocus`, `loading: {id, progress} \| null`, `ready`; `setEnvironment(id)`, `setPose`, `togglePose`, `setFocus`, `toggleFocus`, `setLoading(p \| null)`, `setReady()` | UI (room, pose, focus); scene (`setLoading`, `setReady`) | scene, UI |
+| `playerStore` | `phase`, `error`, `videoId`, `muted`, `corners`, `scenePlacement`; `reportCorners(corners, viewport?)`, `setPlacement(p)` | scene publishes the screen rectangle; `PlayerHost` and the controller write phase, error, muted | UI |
+| `channelStore` | `current: LiveChannel \| null` (null = channel 0 / idle), `pending`, `started`, `digits`; `request`, `confirmNotice`, `cancelNotice`, `play`, `stop`, `step(±1)`, `typeDigit`, `commitDigits` | UI | scene (`current` null or not), UI |
+| `guideStore` | `status`, `guide`, `sample`; `load()` (fetches `./guide.json`, `parseGuide`; in dev falls back to `.guide-cache/guide.local.json`, then a sample) | UI | UI |
+| `settingsStore` | `colour: 'bw' \| 'colour'`, `roomSound`, `noticeAccepted` | UI | scene, audio |
+| `uiStore` (extended) | `panel: 'guide' \| 'picker' \| 'credits' \| 'keys' \| 'notice' \| null`, `openPanel`, `closePanel`, `openPaste` | UI | UI |
+
+- **What the scene must do:** call `usePlayerStore.getState().reportCorners(corners, viewport)` (projected anchor corners in CSS px, stage coordinates) whenever the projector updates. The UI runs `classifyPlacement`; focus mode, 2D and phones always win. `setPlacement` is accepted too. If the scene publishes nothing, the UI falls back to the focus layout, so the player is never lost.
+- **Colour:** use `useColourActive()` / `getColourActive()` (`src/state/colourActive.ts`) or the pure `isColourActive(colour, env, hasLiveChannel)`. In the TV room it is true only with Colour on and a live channel (the warm tint); other rooms follow the option. The canvas filter is applied by the UI (`data-colour` on `.app`); never filter in a shader.
+- **Room loading:** `setEnvironment` sets `loading`; the scene should keep the old room until the new one is built, then call `setReady()`. In 2D there is no scene, so the UI clears nothing itself: `loading` stays until `setReady()`; the HUD plate is aria-hidden. (A safety timeout is not added.)
+- Test hook: `window.__APP_TEST__` also exposes the five new stores in dev and `--mode test` builds.
+
+### What was built
+
+- `PlayerHost` (`src/ui/player/`): one iframe for the visit, created by us (nocookie host, `referrerpolicy="strict-origin-when-cross-origin"`, `allow="autoplay; fullscreen; encrypted-media; picture-in-picture"`, `playsinline=1`, `mute=1`, `autoplay=1`, `origin`, `cc_load_policy=1` in Calm) and then handed to `YT.Player`. The IFrame API script is injected only on the first play, after the notice. Channel change uses `loadVideoById`; channel 0 and Stop destroy the player; the holder is positioned with plain left, top, width and height; no transform, filter, opacity, mask or blend on it or any ancestor (checked: computed styles of every ancestor are clean). 8 s `onReady` timeout gives the "blocked" card; codes 2, 5, 100, 101/150 and 153 map to in-character cards (`errors.ts`). Hidden tab, browse pose and any panel that would overlap pause and hide the player; it never plays while hidden.
+- Network check (dev, real YouTube): no request to any YouTube or Google origin before Continue; afterwards `www.youtube.com`, `www.youtube-nocookie.com` and YouTube's own subresources. No `i.ytimg.com` request comes from the site's own code (YouTube's player requests its own).
+- Guide (`src/ui/guide/`): teletext-style DOM panel grouped Public service, Parliament, News (Hindi, English), Regional, Business, International news, Science; LIVE, LIVE (check), OFF AIR with reasons; STATE MEDIA from the `stateMedia` field; VIA YOUTUBE EMBED for names starting "DD " or "Sansad" (the schema has no field for it, see requests); filters (Language, Genre, Country, Owner type as native selects, not chips), Find, last-refreshed time, Credits, Privacy, Third parties and Terms links, row 0 "The Occupant" in the TV room only, roving Up/Down, digits, Home/End, `/`, Escape. Disabled entries never appear (they are not in the guide). Guide unavailable shows "THE GUIDE IS NOT ON AIR" with paste still working.
+- Paste-a-link (`parseLink.ts`): watch, youtu.be, /live/, /embed/ only; playlist, channel, handle and list links get the list message; `watch?v=ID&list=...` is accepted as the video (only the id is used). Nothing is stored; the field clears.
+- Room picker: radiogroup, Mountain sky first and larger with "Featured", prefetch on hover and focus, schematics as inline SVG. `?env=` deep link. "Try the mountain sky" on the start screen's "Change the room" key.
+- Notices: first-play notice (modal, once per visit, session-remembered after Continue, Calm line); Calm still card (site-drawn, no YouTube image, Play key, captions requested); Credits dialog; Keyboard help; footer links on the start screen, guide, More sheet and 2D page. `privacy.html` has the revised copy from design spec 6.3 with same-origin CSS (`src/ui/privacy.css`) and a same-origin script (`src/ui/privacy.ts`) that shows the DD/Sansad and NASA sentences only while those entries are enabled.
+- Colour/B&W: `filter: grayscale(1)` on the `<canvas>` only, 600 ms ease (0 in Calm), focus layout adds `brightness(0.6)` on the canvas only.
+- Room sound (`src/hooks/roomSound.ts`): per-room synthesised ambience, off by default, started by the viewer's action, audible only while the video is muted or nothing plays, silent in Calm, 0.8 s time constant, at most about 24 dB below full scale. The v1 channel 0 audio engine is untouched.
+- Focus mode: automatic below 480 x 270 and always on phones and in 2D; toggle key and `F`; header with Exit focus; landscape-phone strip; minimum 240 px tall on phones (360 x 240 at 360 px wide). "Skip to controls" before the iframe, "Back to controls" and Stop in the info row after it.
+- Keyboard map (design spec v2 section 3): digits are channel numbers except in the channel 0 diary; Up/Down change channel (or move the diary cursor); G V E C F L W A S M ?; Escape closes the topmost panel, else moves focus from a dock key to the stage; all inside the stage and dock only, never in a text field.
+- Dock and HUD: Power only in the TV room; Calm always second; Guide, Room, Colour (disabled with visible reason on channel 0), video Sound, Previous and Next channel, Look around and Watch (desktop 3D), Focus, and a More sheet (Stop, Room sound, Keyboard help, footer links). On phones the bar holds Power, Calm, Guide and Room (Skip, Calm, Pause on channel 0 while the story runs).
+- `src/ui/components/Room2D.tsx`: in 2D, v1's CRT screen on channel 0, otherwise a CSS skin per room (a sibling of the player, B&W unless Colour is on) with the idle card and a real footer.
+
+### Decisions, simplifications and things I did not build
+- **No `@types/youtube`:** minimal local types in `controller.ts`. No runtime dependency added.
+- The iframe is created by us and attached to `YT.Player` (so the referrer policy and allow list are on the first request) rather than letting the API create it; the `host` option is therefore expressed in the embed URL.
+- Stop returns to the room with the set off (start screen), not to "set on with the diary or test card" (that needs a new intro state).
+- Picking a channel in the TV room powers the set off (the CRT collapses) if it was on; it does not play the 2.2 s warm-up first (design 1.2 item 4).
+- Guide filters are native selects, not popup chips. The room picker closes on choosing and loading progress shows as a HUD plate, not in the row.
+- `cc_load_policy=1` applies to the first video of a visit; later `loadVideoById` calls in Calm keep the player's own caption setting.
+- Calm tab/key flow and the guide's "VIA YOUTUBE EMBED" use the channel name.
+- Dev only: with no `guide.json`, `.guide-cache/guide.local.json` is used if the dev server can serve it, else a sample with a placeholder video id (never in the production bundle: `import.meta.env.DEV`).
+- Dock changes will affect v1 e2e tests that look for Sound, Read full text or Prev/Next on phones (now in More) and the dock's extra keys; desktop v1 keys are all still present. Tests that count dock buttons will need updating.
+
+### Requests for other agents
+- **architect:** add a `viaEmbed` boolean (or `permission`) to `GuideChannel` so the VIA YOUTUBE EMBED tag does not depend on the name; `tests/unit/environment-contract.test.ts` pulls scene files into the node tsconfig and fails typecheck when scene files are mid-edit (it imports the registry).
+- **scene-developer:** publish the projected corners with `reportCorners` on resize and after pose tweens; call `setLoading` and `setReady` for room loads; read `useColourActive()` for tints; the player layer is above the canvas at `--z-screen-dom` (5), so dock (15) and HUD (10) sit above it: keep props 24 px clear of the rect as specified. `.hud__idle` ("No channel. Open the guide.") is drawn by the UI at the bottom; the room should not draw its own.
+- **technical-artist:** the idle test card in non-TV rooms and the paused card are scene-side; the still card, no-signal cards and 2D skins are DOM and CSS (`src/ui/ui.css`, `Room2D`), colours for the skins live there.
+- **qa-engineer:** run the two-stage network test (before Continue nothing third-party; after, only `www.youtube.com` in the main frame and `www.youtube-nocookie.com` as the child frame); the overlap grid over `.player-holder`; ancestor computed styles; v1 phone dock tests.
+- **tech-lead:** the build is blocked only by scene files; rebuild before `npm test` once they compile.
