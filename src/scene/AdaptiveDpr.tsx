@@ -11,16 +11,18 @@ import { useRef } from 'react';
 const WINDOW_MS = 2000; // sample window
 const MIN_SAMPLES = 3;
 const FPS_FLOOR = 36; // steps down below this (target is 60 desktop, 30 mobile)
+const AMBIENT_FPS_FLOOR = 24; // the ambient loop targets 30
 const STEP = 0.75;
 const GAP_MS = 1500; // longer gaps are a hidden tab or an idle demand loop, not rendering cost
 const STRIKES = 2; // consecutive slow windows before a step
 
-export function AdaptiveDpr() {
+export function AdaptiveDpr({ ambient = false }: { ambient?: boolean }) {
   const setDpr = useThree((s) => s.setDpr);
   const acc = useRef({ ms: 0, n: 0, strikes: 0 });
 
   useFrame((state, delta) => {
-    if (state.get().frameloop !== 'always') return;
+    // Ambient room frames are driven at 30 Hz (AmbientTicker), so their floor is lower.
+    if (!ambient && state.get().frameloop !== 'always') return;
     const a = acc.current;
     const ms = delta * 1000;
     if (ms > GAP_MS) {
@@ -35,11 +37,15 @@ export function AdaptiveDpr() {
     const fps = a.n >= MIN_SAMPLES ? (a.n * 1000) / a.ms : 60;
     a.ms = 0;
     a.n = 0;
-    a.strikes = fps < FPS_FLOOR ? a.strikes + 1 : 0;
+    a.strikes = fps < (ambient ? AMBIENT_FPS_FLOOR : FPS_FLOOR) ? a.strikes + 1 : 0;
     if (a.strikes < STRIKES) return;
     a.strikes = 0;
     const dpr = state.viewport.dpr;
-    if (dpr > 1) setDpr(Math.max(1, dpr * STEP));
+    if (dpr > 1) {
+      setDpr(Math.max(1, dpr * STEP));
+      // Lets the UI drop to its low-end path (solid panels instead of live blur, ADR 0012 section 4).
+      document.documentElement.dataset.dprStepped = 'true';
+    }
   });
 
   return null;

@@ -1,6 +1,7 @@
 import { Canvas } from '@react-three/fiber';
 import { Suspense, useDeferredValue } from 'react';
 import { AdaptiveDpr } from './AdaptiveDpr';
+import { AmbientTicker } from './AmbientTicker';
 import { useDisplayStore, useIntroStore } from './integration/stores';
 import TvRoomScene from './environments/tv-room/Scene.tsx';
 import { EnvironmentHost } from './environments/EnvironmentHost.tsx';
@@ -43,11 +44,10 @@ export default function Experience() {
   // "always" only while the picture animates (warm-up, or playing with full motion).
   // Camera tweens, the CRT collapse and the room-light low-pass request their own
   // frames while they move, so everything else stays on demand.
-  // v2 rooms animate their surroundings continuously (frozen and on demand under Calm).
-  const animating =
-    status === 'warming' ||
-    (status === 'playing' && motion === 'full') ||
-    (live && motion === 'full');
+  // v2 rooms animate their surroundings continuously (frozen and on demand under Calm). That motion is
+  // slow, so it runs on a 30 Hz demand ticker rather than the 60 Hz "always" loop.
+  const animating = status === 'warming' || (status === 'playing' && motion === 'full');
+  const ambient = !animating && live && motion === 'full';
 
   return (
     <div
@@ -71,7 +71,8 @@ export default function Experience() {
         >
           <color attach="background" args={['#000000']} />
           <ContextWatcher />
-          <AdaptiveDpr />
+          <AdaptiveDpr ambient={ambient} />
+          <AmbientTicker active={ambient} />
           <ProgressReporter />
           <ScreenDriver />
           <ErrorBoundary

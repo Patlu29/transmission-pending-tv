@@ -70,7 +70,10 @@ varying vec2 vUv;
 varying float vSeed;
 varying float vLife;
 void main() {
-  vUv = position.xy * 2.0;
+  // The puff never reaches past |y| = 0.907 (see the fragment cut-off), so the quad is trimmed there.
+  // vUv at any world position is unchanged, so the picture is identical with less area to shade.
+  vec2 q = position.xy * vec2(1.0, 0.91);
+  vUv = q * 2.0;
   vSeed = aSizeSeed.z;
   float x = aPos.x;
   float y = aPos.y;
@@ -82,7 +85,7 @@ void main() {
     x += sin(ph * 6.2831853 + aSizeSeed.z * 20.0) * aSizeSeed.x * 0.35;
     vLife = smoothstep(0.0, 0.18, ph) * (1.0 - smoothstep(0.55, 1.0, ph));
   }
-  vec3 c = vec3(x, y, aPos.z) + vec3(position.x * aSizeSeed.x, position.y * aSizeSeed.y, 0.0);
+  vec3 c = vec3(x, y, aPos.z) + vec3(q.x * aSizeSeed.x, q.y * aSizeSeed.y, 0.0);
   gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(c, 1.0);
 }
 `;
@@ -100,6 +103,9 @@ varying float vSeed;
 varying float vLife;
 void main() {
   vec2 p = vUv;
+  // Exact early-out: r >= length(p * vec2(1, 1.55)) - 0.455 (fbm is under 0.94, vnoise under 1), so beyond
+  // 1.405 the density is 0, alpha is 0 and the fragment was discarded anyway. Skips the noise there.
+  if (length(p * vec2(1.0, 1.55)) > 1.405) discard;
   float n = fbm(p * 2.6 + vSeed * 31.0);
   float n2 = vnoise(p * 6.0 + vSeed * 7.0);
   float r = length(p * vec2(1.0, 1.55)) + (n - 0.5) * 0.75 + (n2 - 0.5) * 0.16;
