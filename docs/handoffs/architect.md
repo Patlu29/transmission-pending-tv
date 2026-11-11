@@ -263,3 +263,37 @@ Verification:
 - Data: only TRT World and CGTN have `"stateMedia": true`. That is the only edit made to `guide-sources.json`.
 - Tests: 4 new (103 of 103 pass).
 - **frontend-developer:** show the STATE MEDIA tag when `channel.stateMedia === true` on a `GuideChannel` from `parseGuide`/`guideStore`. Do not parse `note`: notes are curation text and are not published.
+
+---
+
+## v2 2050 retheme: impact assessment (2026-11-11)
+
+### Summary
+Wrote `docs/decisions/0012-theme-2050.md` (Proposed): module fate, facts impact, invalid tests, glass and volumetric performance, and a phased plan. Documents only; no code changed.
+
+### Key points for other agents
+- Reused unchanged:
+  - the teletext frame model, pagination, wrap, effects, hit-testing and the canvas hand-off;
+  - the haunt scheduler and cues;
+  - the facts pipeline;
+  - the modes and their ids;
+  - the camera rig mechanism;
+  - all nine room contracts.
+- Replaced:
+  - CRT shader → holo shader, keeping the same uniform contract;
+  - `TvBody` → `HoloDisplay`;
+  - `KnobLayer` → `ControlRings`, with the same contract;
+  - test card → standby pattern, with the same call shape;
+  - `crt2d.css` → `holo2d.css`;
+  - `GreyEnvironment`, tokens (values only) and fonts.
+- **Monospaced 2050 face recommended:** a proportional face costs about 3 to 5 extra frontend-days (`wrap.ts`, `hit.ts`, `effects.ts`).
+- `intro.tmpl` needs `!allow-digits 2050`; `intro.cues` must be re-anchored to the new copy.
+- **Glass:**
+  - live blur only on small chrome, with a minimum tint so text reaches 4.5:1 against any backdrop;
+  - `data-glass="solid"` on reduced transparency, missing support or a DPR step-down;
+  - nothing frosted or glowing overlaps the player, and no ancestor of the player has `backdrop-filter`.
+- **Volumetrics:** additive cones and halos only; no ray-marching or full-screen post-processing on phones; 2 ms GPU budget.
+- **QA:** the invalid-test list is in ADR 0012 §3. Add red-flash detection to `tests/helpers/flash.ts`.
+
+### Open questions
+- None for the user. The face choice (monospaced or proportional) and whether the Colour/B&W option survives belong to the designer.
