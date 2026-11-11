@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "youtubeTerms": [
+    "https://www.youtube.com/t/terms",
+    "https://developers.google.com/youtube/terms/api-services-terms-of-service",
+    "https://developers.google.com/youtube/terms/developer-policies",
+    "https://developers.google.com/youtube/terms/required-minimum-functionality"
+  ],
+  "channels": [
+    {
+      "number": 1,
+      "name": "DD News",
+      "channelId": "UCKwucPzHZ7zCUIf7If-Wo1g",
+      "languages": ["hi", "en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "DD News on YouTube",
+        "url": "https://www.youtube.com/channel/UCKwucPzHZ7zCUIf7If-Wo1g"
+      },
+      "terms": ["https://prasarbharati.gov.in/terms-conditions/"],
+      "permission": "requested",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: docs/research/embeddable-channels.md section 1. 24x7 live, embeddable."
+    },
+    {
+      "number": 2,
+      "name": "DD India",
+      "channelId": "UCGDQNvybfDDeGTf4GtigXaw",
+      "languages": ["en"],
+      "genre": "news",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "DD India on YouTube",
+        "url": "https://www.youtube.com/channel/UCGDQNvybfDDeGTf4GtigXaw"
+      },
+      "terms": ["https://prasarbharati.gov.in/terms-conditions/"],
+      "permission": "requested",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 1. English international news, 24x7."
+    },
+    {
+      "number": 3,
+      "name": "DD Kisan",
+      "channelId": "UCnDfmcUyhgJp6xC1LmBLfUg",
+      "languages": ["hi"],
+      "genre": "agriculture",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "DD Kisan on YouTube",
+        "url": "https://www.youtube.com/channel/UCnDfmcUyhgJp6xC1LmBLfUg"
+      },
+      "terms": ["https://prasarbharati.gov.in/terms-conditions/"],
+      "permission": "requested",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 1. 24x7."
+    },
+    {
+      "number": 4,
+      "name": "DD Urdu",
+      "channelId": "UCu9Fj9QRAg26ZY9DhF8HSrQ",
+      "languages": ["ur"],
+      "genre": "general",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "DD Urdu on YouTube",
+        "url": "https://www.youtube.com/channel/UCu9Fj9QRAg26ZY9DhF8HSrQ"
+      },
+      "terms": ["https://prasarbharati.gov.in/terms-conditions/"],
+      "permission": "requested",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 1. 24x7."
+    },
+    {
+      "number": 5,
+      "name": "Sansad TV",
+      "channelId": "UCISgnSNwqQ2i8lhCun3KtQg",
+      "languages": ["hi", "en"],
+      "genre": "parliament",
+      "country": "IN",
+      "regionTested": ["IN"],
+      "attribution": {
+        "label": "Sansad TV on YouTube",
+        "url": "https://www.youtube.com/channel/UCISgnSNwqQ2i8lhCun3KtQg"
+      },
+      "terms": [],
+      "permission": "requested",
+      "confidence": "high",
+      "checked": "2026-11-11",
+      "enabled": true,
+      "note": "Source: research section 1. Runs two live streams (Sansad TV 1 and 2); the resolver picks one (preferTitle, then most viewers). Languages assumed Hindi and English; confirm. No broadcaster terms page was found."
+    }
+  ]
+}

@@ -127,3 +127,120 @@ Documents only: no code, config or `docs/architecture.md` changes until v1 is ta
 
 ### v2 build plan
 See the phased table at the end of ADR 0011: phase 0 freeze v1, phase 1 the product manager, phase 2 the architect, phase 3 the ux-ui-designer, phases 4a to 4e (technical-artist, scene-developer, frontend-developer, devops-engineer, then tech lead integration), phase 5 the performance-optimiser, phase 6 the qa-engineer, phase 7 delivery with the user.
+
+---
+
+## v2 Phase 2: architecture, contract, guide scripts, CSP (2026-11-11, branch `v2`)
+
+### Summary
+`docs/architecture.md` gains v2 sections 10 to 16; sections 1 to 9 are marked unchanged and still govern channel 0. I added:
+- the environment contract, a registry and eight registered stubs;
+- the guide pipeline: curated sources, a build-time check, a resolver with a quota ledger and last-good fallback, the `guide.json` schema and a browser validator;
+- 48 unit tests with the YouTube API mocked;
+- the CSP (build-only meta tag) and the referrer meta tag.
+
+Verification:
+- `npm run build`, `lint`, `typecheck` and `test` (99 of 99) all pass, and `format:check` is clean.
+- A strict (`CI=true`) build on a clean scratch clone passes.
+- Under the CSP, `production.spec.ts` passed 6 of 6 and the `power`, `fallback` and `story` specs 39 of 39 (Chromium).
+- v1 facts are unchanged in content: identical stack list, intro copy and fact keys, no lockfile change. Only HEAD-derived facts moved.
+
+### Files changed
+- docs/architecture.md: status header, reading guide, v2 sections 10 to 16
+- src/scene/environments/contract.ts (new): ids, `EnvironmentModule`, `ScreenAnchorSpec` (aspect, widthM, fill, align), budgets, placement constants, `WatchPoseSolver` and `ScreenProjectorApi` interfaces, `classifyPlacement()`
+- src/scene/environments/registry.ts (new; owner scene-developer): lazy import per environment, labels, budgets, `DEFAULT_ENVIRONMENT`
+- src/scene/environments/<8 ids>/index.tsx (new stubs; owners scene-developer and technical-artist): `Scene` returns null; aspect, fill and align from design spec v2 §5
+- src/guide/schema.ts, src/guide/validate.ts (new): `GuideSources`, `ChannelGuide`, `parseGuide`, `validateGuideSources`, `cleanTitle`
+- src/content/guide-sources.json (new): 5 high-confidence channels with recorded IDs (DD News, DD India, DD Kisan, DD Urdu, Sansad TV), all `permission: requested`
+- scripts/guide/check-sources.ts, resolve.ts, resolve-core.ts, youtube.ts (new)
+- scripts/csp.ts (new): CSP directives and referrer policy
+- vite.config.ts: `injectCsp()` build-only plugin. Devops' `sourcemap: false` and `dropGitkeep` reviewed and kept as they are: they are correct, and removing the `.gitkeep` files instead would only work for folders that already hold files.
+- index.html: referrer meta tag
+- package.json: `guide:check`, `guide:resolve`; `build` now runs `guide:check`
+- tsconfig.node.json: `jsx: react-jsx` (tests load the `.tsx` stubs through the registry)
+- .gitignore: `.guide-cache/` (resolver ledger)
+- eslint.config.js: `react-refresh/only-export-components` off for `src/scene/environments/*/index.tsx` (they export a module object)
+- tests/unit/guide-sources.test.ts, guide-validate.test.ts, guide-resolve.test.ts, environment-contract.test.ts (new; written by the architect, handed to qa-engineer)
+
+### Decisions
+- **CSP build-only:** Vite's dev server needs inline scripts and styles for HMR. The CSP is prepended as the first `<head>` element; `charset` is still at byte 523, inside the first 1024.
+- **`'wasm-unsafe-eval'`** allowed in advance for self-hosted Draco, Meshopt and KTX2 decoders. It permits only WebAssembly compilation, not JS eval.
+- **`style-src 'self'`** with no `'unsafe-inline'`: React writes styles through the CSSOM, which CSP allows, and nothing in v1 injects `<style>` elements or style attributes. Verified by the production spec's no-console-error check. Side effect: the `<noscript>` paragraph's inline style is ignored when JavaScript is off (the text still shows).
+- **Age is a warning, not an error:** the scheduled guide build rebuilds an old tag, and a 90-day curation age must never stop guide refreshes. `--fail-stale` exists for `main` pushes.
+- **Ledger counts quota before each call,** because YouTube charges for failed calls too. Quota, auth and bad-request errors stop all further calls in the run.
+- **Guide sources hold only channels whose IDs the research recorded.** I did not guess IDs for the other 54 high-confidence channels.
+- **Environment modules use explicit `.ts`/`.tsx` import extensions,** as v1's `src/state/cues.ts` does, because the unit tests compile them under `nodenext`.
+
+### Assumptions
+- Sansad TV's languages are Hindi and English. The research records the genre but not the language; the entry carries a note.
+- The latest-tag guide workflow will pass `--previous` as the live site's `guide.json` URL, and keep `--ledger` in `actions/cache`.
+
+### Open questions
+- None new for the user; ADR 0011's Q1 (Calm and YouTube) and Q2 (DD and Sansad launch timing) still stand. `enabled` is `true` for all five today; set it to `false` if the answer to Q2 is "wait for permission".
+
+### Requests for other agents (exact instructions)
+
+**scene-developer**
+1. Own `src/scene/environments/registry.ts` and the eight `<id>/index.tsx`. Keep the contract: default export `EnvironmentModule`, exactly one anchor, explicit `.ts`/`.tsx` import extensions.
+2. Write `ScreenAnchor.tsx`: an Object3D with local XY as the screen face, centred, +Z towards the viewer, size `widthM` by `widthM / aspect`. It registers itself in `environmentStore`.
+3. Write `ScreenProjector.ts`, implementing `WatchPoseSolver` and `ScreenProjectorApi`:
+   - The watch pose is the camera translated parallel to the screen plane (no rotation), sized by `screen.fill`, `align` and the height rule in design spec v2 §2.2, and never above `WATCH_MAX_FILL`.
+   - Project corners in the order TL, TR, BR, BL, in CSS px relative to the stage.
+   - Pass them to `classifyPlacement()` and write the result to `playerStore.placement`, on resize and at the end of a pose tween only.
+   - No camera motion while `pose === 'watch'`.
+4. TV room: render v1's existing scene unchanged for channel 0 (do not move v1 files; import them). For YouTube channels, place the anchor on the flat bezel opening (4:3), turn the CRT glass off, and zero the haunt uniforms near the screen.
+5. Wire `?env=` through `environmentStore`, with the `<Canvas>` kept and the scene swapped inside `Suspense`. Prefetch with `ENVIRONMENTS[id].load()` on picker hover or focus.
+
+**technical-artist**
+1. Assets per environment in `public/models/<id>/` and `public/textures/<id>/`, each with a `LICENCES.md` (original or CC0), within the budgets in architecture §12.3. Authored in colour, except the TV room (design spec v2 §5.1).
+2. Self-host any Draco, Meshopt or KTX2 decoder under `public/` and point loaders at it; drei's `useGLTF` defaults to a gstatic CDN, which the CSP and the network rule forbid.
+3. Light spill: a generic flicker, low-passed at 2 Hz or less, never sampled from the player.
+4. TV-room colour-era tints and the bezel channel-change burst (design spec v2 §1.10, on the bezel ring meshes only).
+
+**frontend-developer**
+1. Stores in `src/state/`: `environmentStore` (id, pose, focus, anchor), `channelStore` (current, tuning, pending digits), `playerStore` (placement from `classifyPlacement`), `guideStore` (fetch `./guide.json` lazily, `parseGuide`, "unavailable" state). Visit-only; no storage beyond v1's `sessionStorage` for Calm.
+2. `src/ui/player/PlayerHost`:
+   - one `YT.Player`, created on the first pick with `host: 'https://www.youtube-nocookie.com'`, `origin: location.origin`, `playerVars { autoplay: 1, mute: 1, playsinline: 1 }`, iframe `allow="autoplay; fullscreen; encrypted-media; picture-in-picture"` and `referrerpolicy="strict-origin-when-cross-origin"`;
+   - inject `https://www.youtube.com/iframe_api` only at that moment;
+   - never re-parent the iframe; position it with plain `left`, `top`, `width` and `height`; no 3D transform, filter or opacity on it or any ancestor;
+   - destroy it on channel 0; pause it in the browse pose and in hidden tabs;
+   - error codes and the 8 s `onReady` timeout map to the no-signal states (ADR 0011 §4).
+3. Stacking: stage, then `<canvas>` (the Colour/B&W filter goes here only), then the player layer above it. The dock, notices and info row stay outside the player rectangle.
+4. Paste-a-link: accept `youtube.com/watch?v=`, `youtu.be/`, `youtube.com/live/` and `youtube.com/embed/` only, and extract `^[A-Za-z0-9_-]{11}$`. Everything else is rejected with the design-spec message.
+5. If you add `@types/youtube`, make it a devDependency and say so in your handoff. No runtime dependency.
+6. Keyboard contexts and digits as in design spec v2 §3; v1's diary digits apply only in the diary context.
+
+**devops-engineer**
+1. `.github/workflows/guide.yml`:
+   - `schedule: '*/30 * * * *'`, plus `workflow_dispatch` and a `workflow_run` after deploy. Never on `pull_request`.
+   - Check out the latest `v*` tag with `fetch-depth: 0`, then `npm ci`, then `CI=true npm run build`.
+   - Restore `.guide-cache/` with `actions/cache` (a rolling key with a restore-keys prefix), then run:
+     ```text
+     YOUTUBE_API_KEY=${{ secrets.YOUTUBE_API_KEY }} npm run guide:resolve -- --out dist/guide.json --release <tag> --previous https://<pages-url>/guide.json --ledger .guide-cache/ledger.json
+     ```
+   - Fail the job if `grep -rF "$YOUTUBE_API_KEY" dist` matches.
+   - Then `upload-pages-artifact` and `deploy-pages` in the shared `pages` concurrency group.
+   - Exit code 1 means a configuration error: fail the job. Exit code 0 with "degraded" in the log is still a deploy.
+2. `ci.yml`: add `npm run guide:check -- --fail-stale` on pushes to `main` only. `build` already runs the plain check.
+3. `docs/deployment.md`: create the Google Cloud project and key (restricted to YouTube Data API v3), add the `YOUTUBE_API_KEY` secret, and explain re-enabling the schedule after 60 days of inactivity.
+
+**qa-engineer**
+1. Take ownership of the four new unit test files.
+2. **Required production-spec change:** with the CSP alone, `production.spec.ts` still passes, because v1 makes no third-party requests and v2 makes none before a pick. Once the player exists, replace "every request is same-origin" with the two-stage test (ADR 0011 §6, architecture §14):
+   - before a pick, every request from every frame is same-origin;
+   - after a pick, main-frame requests go to self or `https://www.youtube.com` only, and the only child frame is on `https://www.youtube-nocookie.com`; do not assert the player frame's own requests;
+   - no cookies or storage on our origin at any time;
+   - no CSP violations (Chromium logs them as console errors, which the existing check already catches).
+3. Add:
+   - a test that the built `index.html` has the CSP meta tag as its first `<head>` element, and that the dev server has none;
+   - the no-overlay checks (`elementsFromPoint` grid over the player rectangle; ancestor computed styles);
+   - the one-iframe and minimum-size checks;
+   - Firefox with Enhanced Tracking Protection strict, when a host allows.
+
+**tech lead**
+- Look up channel IDs for the other high-confidence channels (`npm run guide:resolve -- --lookup @handle` with a key, 1 unit each, or the channel's About page). Add them to `guide-sources.json` with `checked` dates; the product manager reviews terms.
+- When `privacy.html` exists, ask the architect to add it as a Vite input (architecture §14).
+- Rebuild after committing: handoff notes are fact sources.
+
+**ux-ui-designer**
+- Confirm the TV room's `fill` (0.55, `align: 'left'`) and the 4:3 bezel opening, which are now in the stub. Keep design spec v2 §5 and the stubs in sync; the stubs cite the spec.

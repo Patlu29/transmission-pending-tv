@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
+import { CONTENT_SECURITY_POLICY } from './scripts/csp.ts';
 
 const generatedDir = fileURLToPath(new URL('./src/generated/', import.meta.url));
 
@@ -66,9 +67,29 @@ function dropGitkeep(): Plugin {
   };
 }
 
+/**
+ * v2 (ADR 0011 §6): the CSP goes into built pages only, as the first element of <head>.
+ * The dev server is left without it because Vite's HMR uses inline scripts and <style> tags.
+ */
+function injectCsp(): Plugin {
+  return {
+    name: 'transmission-pending:csp',
+    apply: 'build',
+    transformIndexHtml() {
+      return [
+        {
+          tag: 'meta',
+          attrs: { 'http-equiv': 'Content-Security-Policy', content: CONTENT_SECURITY_POLICY },
+          injectTo: 'head-prepend',
+        },
+      ];
+    },
+  };
+}
+
 export default defineConfig({
   base: resolveBase(),
-  plugins: [react(), emitFactsArtefacts(), dropGitkeep()],
+  plugins: [react(), emitFactsArtefacts(), dropGitkeep(), injectCsp()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),

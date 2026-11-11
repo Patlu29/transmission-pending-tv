@@ -13,6 +13,8 @@
     "verbatimModuleSyntax": true,
     "moduleDetection": "force",
     "noEmit": true,
+    /* v2: tests load the environment .tsx stubs through the registry */
+    "jsx": "react-jsx",
 
     "paths": {
       "@/*": ["./src/*"]

@@ -1,6 +1,16 @@
 # Architecture: Transmission Pending
 
-Owner: architect. Status: proposed for Phase 2 approval (2026-11-10).
+Owner: architect. Status: v1 approved (2026-11-10) and shipped as `v1.0`. v2 sections 10 to 16 added 2026-11-11 (branch `v2`, ADR 0011).
+
+**How to read this document in v2:**
+- Sections 1 to 9 describe v1 and are **unchanged**. They still govern channel 0 (the Occupant) and the TV room.
+- Where v2 amends a v1 rule, the v1 text stays and the amendment is in sections 10 to 16. The amended points are:
+  - section 4.4: a second screen source, the YouTube DOM player;
+  - section 4.5: the Colour option is a canvas filter;
+  - section 6: environment chunks;
+  - section 8: privacy, a CSP is now enforced;
+  - NFR-7: no third-party request before a channel is picked.
+- ADR 0009 and ADR 0010 are superseded and describe nothing that exists.
 
 ## 1. Summary
 
@@ -315,3 +325,171 @@ The E2E test compares every `[data-fact]` element on the rendered page, in each 
 | Tone mapping or textures introduce colour | §4.5 rules plus QA pixel sampling |
 | TypeScript held at 6.0 while 7 is current | Revisit when typescript-eslint supports TS 7 (ADR 0001) |
 | `npm audit`: 10 moderate findings, all one `minimatch` advisory inside ESLint tooling | Dev-only, not in the bundle; the suggested "fix" is a downgrade. Re-check at each phase |
+
+
+---
+
+# v2: the environment player (ADR 0011)
+
+## 10. v2 summary
+v2 turns the site into a player for official YouTube embeds, shown inside one of eight 3D viewing environments. Channel 0 stays the Occupant (v1, unchanged). Channels 1 upward come from a curated guide, resolved by a scheduled GitHub Action into a same-origin `guide.json`, or from a pasted YouTube link. There is still **no backend** (ADR 0002 stands). No new runtime npm dependency is added; the YouTube IFrame API is loaded from YouTube after the first pick.
+
+| Concern | v2 choice | Where |
+|---|---|---|
+| Player | One `YT.Player` for the visit, host `www.youtube-nocookie.com` | `src/ui/player/` (frontend-developer) |
+| Compositing | DOM iframe **above** the canvas, positioned from the screen anchor's projected corners, only in a static face-on watch pose. No `CSS3DRenderer`, no drei `Html`, no depth hole | ADR 0011 section 1; `src/scene/environments/contract.ts` |
+| Environments | 8 lazy chunks behind one contract and a registry | `src/scene/environments/` |
+| Guide | Curated `src/content/guide-sources.json`, resolved by `scripts/guide/resolve.ts` in a scheduled Action into `dist/guide.json` | section 13 |
+| Colour/B&W | `filter: grayscale(1)` on the `<canvas>` element only; default B&W | section 12 |
+| Privacy | No third-party request before a pick; CSP and referrer meta tags | section 14 |
+
+## 11. v2 folder structure and ownership (additions to section 3)
+
+```text
+src/scene/environments/
+  contract.ts                  architect: types, placement constants, classifyPlacement()
+  registry.ts                  scene-developer (scaffolded by the architect): id -> lazy import
+  ScreenAnchor.tsx             scene-developer (to write): registers the anchor Object3D
+  ScreenProjector.ts           scene-developer (to write): WatchPoseSolver, ScreenProjectorApi
+  <id>/index.tsx               scene-developer (scene) and technical-artist (materials, assets); stubs today
+src/guide/
+  schema.ts, validate.ts       architect: guide contract and validators (browser and Node)
+src/ui/player/, src/ui/guide/  frontend-developer (to write)
+src/state/ (new stores)        frontend-developer: environmentStore, channelStore, playerStore, guideStore
+src/content/guide-sources.json tech lead (entries), product-manager (terms review), architect (schema)
+scripts/guide/                 architect: check-sources.ts, resolve.ts, resolve-core.ts, youtube.ts
+scripts/csp.ts                 architect: CSP and referrer policy
+public/models/<env>/, public/textures/<env>/   technical-artist, LICENCES.md per folder
+.github/workflows/guide.yml    devops-engineer (to write)
+tests/unit/guide-*.test.ts, environment-contract.test.ts   written by the architect, owned by qa-engineer
+```
+
+**Environment ids:** `tv-room`, `cinema`, `drive-in`, `open-air`, `bedroom`, `chai-stall`, `train`, `space-deck`. They are selected with `?env=<id>`, a query string rather than a route, so ADR 0007's relative base still holds.
+
+## 12. v2 runtime architecture
+
+### 12.1 Data flow
+
+```text
+guide.json (same origin, lazy) --parseGuide--> guideStore --.
+pasted link --frontend parser (video id only)---------------+--> channelStore (current, tuning)
+                                                            |          |
+environmentStore (id, pose: browse|watch, focus) <----------'          v
+        |                                                     PlayerHost (one YT.Player)
+        v                                                              ^
+lazy environment chunk --> <ScreenAnchor> --> ScreenProjector --> classifyPlacement() --> playerStore.placement
+                                               (on resize and when a pose tween ends; never per frame)
+```
+
+### 12.2 Player placement rules (implemented once, in `classifyPlacement`)
+
+| Condition | Placement |
+|---|---|
+| 2D mode, or the user chose Focus, or a phone-class viewport | `focus` (player in DOM flow, environment dimmed behind) |
+| Browse pose | `hidden` (player paused) |
+| Projected quad not axis-aligned within 1 CSS px | `hidden` |
+| Any part outside the viewport | `hidden` |
+| Rectangle under 480 x 270 CSS px | `focus` |
+| Otherwise | `inline` at the rectangle |
+
+Guarantees:
+- The player layer is stacked above the canvas.
+- No ancestor of the iframe has `filter`, `opacity` below 1, `mix-blend-mode`, `mask`, `clip-path` or a 3D transform.
+- The iframe is never re-parented.
+- Channel 0 destroys the player.
+
+### 12.3 Environments
+- Each `<id>/index.tsx` default-exports an `EnvironmentModule`: `id`, `Scene`, and `screen` (`aspect`, `widthM`, `fill`, `align` from design spec v2 section 5). The TV room also sets `hostsChannel0`.
+- Static metadata (label, budget, loader) lives in `registry.ts`, so pickers never load chunks.
+- Scenes receive `{ calm, pose, colour, channel }`, render exactly one anchor, and place nothing between the watch-pose camera and the screen.
+- The TV room keeps v1's code path for channel 0. For YouTube channels its anchor is the flat bezel opening (4:3), the CRT glass is off, and haunting stays off the screen.
+
+**Budget per environment** (declared in the registry, checked in CI by the performance-optimiser's scripts):
+
+| | Mobile | Desktop |
+|---|---|---|
+| JS (gzip, excluding the shared core) | 60 kB | 60 kB |
+| Assets on first entry | 1.5 MB | 2 MB |
+| Draw calls | 50 | 100 |
+| Triangles | 150,000 | 500,000 |
+| Largest texture | 1024² | 2048² |
+
+The TV room is measured against v1's budget.
+
+### 12.4 Colour/B&W (amends section 4.5 for v2)
+- `filter: grayscale(1)` on the `<canvas>` element, on by default. Each channel is the same weighted sum, so R = G = B exactly in B&W.
+- The player, info row, dock and all site text stay as they are and remain greyscale by design.
+- Channel 0 always stays B&W (v1). In focus layout the canvas filter may add `brightness(0.6)` (design spec v2 section 2.4), on the canvas only.
+
+## 13. The channel guide pipeline
+
+### 13.1 Inputs and checks
+- `src/content/guide-sources.json` (schema `GuideSources` in `src/guide/schema.ts`) holds the curated, high-confidence channels: channel ID, languages, genre, country, region tested, attribution, terms, `permission` (`not-required`, `requested`, `granted`), `confidence`, `checked` date, `enabled`, and an optional `preferTitle`.
+- `npm run guide:check` (`scripts/guide/check-sources.ts`) runs inside `npm run build`.
+  - **Errors stop the build:** bad channel ID, duplicate number or ID, channel 0, low confidence, non-https or credentialled URLs, an invalid regex, a future date.
+  - **Age over 90 days** is only a warning, so the scheduled rebuild of an old tag never breaks. `--fail-stale` turns it into an error, for use on pushes to `main`.
+
+### 13.2 Resolver (`npm run guide:resolve`, run by `.github/workflows/guide.yml`)
+
+```text
+YOUTUBE_API_KEY=<secret> node scripts/guide/resolve.ts \
+  --out dist/guide.json --release <tag> \
+  [--previous https://<site>/guide.json] [--ledger <cache>/ledger.json] [--sources src/content/guide-sources.json]
+```
+
+- **Exit 0:** the guide was written, possibly degraded (stale or unresolved entries; see the log).
+- **Exit 1:** configuration error (no key, invalid sources, bad arguments). Nothing is written.
+- **Order of calls:**
+  1. Re-validate the previous guide's IDs with `videos.list`: 1 unit per 50 IDs.
+  2. For channels with nothing usable, read the uploads playlist with `playlistItems.list` (1 unit each), then validate.
+  3. Only then `search.list eventType=live`: 100 units, at most 40 a day.
+- **Ledger:** keyed by Pacific day; refuses any call over 8,000 units a day.
+- **Usable** means: same channel, `liveBroadcastContent=live`, started and not ended, public, `status.embeddable`, not age-restricted. Among several, `preferTitle` wins, then most viewers, then the earliest start.
+- **Failure:** a quota or auth error stops further calls for the run. The last good entry is kept as `stale` for up to 30 days, then the channel becomes `unresolved`.
+- **Self-checks before writing:** the output must not contain the key, and must pass `parseGuide`.
+- `--lookup @handle` resolves a handle to a channel ID (1 unit), for curation.
+
+### 13.3 Output and browser use
+- `dist/guide.json` (schema `ChannelGuide`) is about 5 kB gzip. It is fetched lazily when the guide first opens and parsed with `parseGuide`, which drops malformed entries and cleans titles.
+- Local builds have no guide; the UI shows "guide unavailable" plus paste-a-link.
+
+### 13.4 Interaction with the facts pipeline and strict CI
+- `guide.json` is never committed, never in `src/generated/`, never read by `scripts/facts/`, and excluded from NFR-9 and `facts:check`.
+- The guide workflow rebuilds the latest `v*` tag strictly. That build is deterministic, so its app files and facts equal the release.
+- No runtime dependency was added and `STACK_PACKAGES` is unchanged. Checked on 2026-11-11: the stack list, the intro copy and the fact keys are identical to before v2 Phase 2; only HEAD-derived facts moved.
+
+## 14. Privacy, CSP and network (amends section 8 and NFR-7 for v2)
+- **Referrer:** `<meta name="referrer" content="strict-origin-when-cross-origin">` is static in `index.html`. The iframe also gets `referrerpolicy="strict-origin-when-cross-origin"` (frontend).
+- **CSP:** `scripts/csp.ts` is the single source. A build-only Vite plugin (`injectCsp` in `vite.config.ts`) prepends it as a `<meta http-equiv>` to every built page. The dev server has none, because HMR needs inline scripts and styles.
+
+  ```text
+  default-src 'self'; script-src 'self' 'wasm-unsafe-eval' https://www.youtube.com;
+  frame-src https://www.youtube-nocookie.com; connect-src 'self'; img-src 'self' data: blob:;
+  media-src 'self' blob:; font-src 'self'; style-src 'self'; worker-src 'self' blob:;
+  object-src 'none'; base-uri 'self'; form-action 'none'
+  ```
+
+  `'wasm-unsafe-eval'` is for self-hosted Draco, Meshopt and KTX2 decoders. Decoders must never load from a CDN; for example, drei's `useGLTF` default Draco path is gstatic, so pass a local path.
+- **Verified under the CSP** on 2026-11-11 (strict clean-clone build, Chromium): `production.spec.ts` 6 of 6 passed, including "no console errors"; `power`, `fallback` and `story` specs 39 of 39 passed.
+- **Network rule (replaces v1 NFR-7 for v2):** no third-party request of any kind before a channel is picked. After a pick, the main frame may request only `https://www.youtube.com`, and the only child frame is `https://www.youtube-nocookie.com`. Our origin never stores cookies or anything else.
+- **`privacy.html`** (design spec v2 section 6.3) will be a second Vite HTML input. Add it to `build.rolldownOptions.input` when the page exists; the CSP plugin applies to every built page.
+
+## 15. v2 bundle impact
+
+| Item | Target | Today (2026-11-11) |
+|---|---|---|
+| Initial JS | v1 plus 10 kB gzip or less | 99.38 kB (v1 99.31 kB; the difference is the embedded facts). Nothing new is imported yet |
+| Shared 3D core plus TV room | v1 (284 kB gzip) | 284.06 kB, unchanged |
+| Each other environment | 60 kB gzip plus 1.5 or 2 MB of assets, on choosing it | Stubs, not imported yet |
+| `guide.json` | about 5 kB gzip, lazy | Not built locally |
+| YouTube scripts | Outside our budget, after the first pick | none |
+
+## 16. v2 risks
+
+| Risk | Mitigation |
+|---|---|
+| Only 5 curated channels have recorded IDs (the research lists 54 more high-confidence channels by name only) | Look the IDs up with `guide:resolve --lookup @handle` (1 unit each) or from each channel's About page, then add entries. Never guess IDs |
+| GitHub disables scheduled workflows after 60 days with no commits | The UI shows `stale` and `checkedAt`; the runbook explains how to re-enable |
+| YouTube changes its embed rules (as with the 2025 referrer requirement) | Error mapping (ADR 0011 section 4); `guide.json` drops non-embeddable entries |
+| Third-party video can flash | Disclosure and the partial-conformance statement (ADR 0011 section 5) |
+| A meta CSP cannot set `frame-ancestors` | Accepted for a static site (ADR 0011 section 6) |

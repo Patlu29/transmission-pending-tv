@@ -37,6 +37,12 @@ export default defineConfig([
     },
   },
   {
+    // v2 (ADR 0011 §2): an environment module's default export is an EnvironmentModule object,
+    // not a component, so fast refresh cannot apply; a full reload on edit is acceptable there.
+    files: ['src/scene/environments/*/index.tsx'],
+    rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
     // FR-11: the facts test must recompute facts independently, so tests may
     // import the schema types (src/facts/schema.ts) but never the collector.
     files: ['tests/**/*.{ts,tsx}'],

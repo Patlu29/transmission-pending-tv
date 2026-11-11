@@ -12,3 +12,5 @@ src/generated/
 
 # Agent exploration screenshots and scripts
 .scratch/
+# v2: guide resolver quota ledger (scripts/guide/resolve.ts --ledger); never committed
+.guide-cache/
