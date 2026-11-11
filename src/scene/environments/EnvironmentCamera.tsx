@@ -19,8 +19,7 @@ import {
   solveWatch,
   type WatchSolution,
 } from './ScreenProjector.ts';
-import { keepOutUniform, viewportUniform } from './shared/keepOut.ts';
-import { applyKeepOut, clearKeepOut } from './shared/roomUniforms.ts';
+import { applyKeepOut, clearKeepOut, getActiveUniforms } from './shared/roomUniforms.ts';
 import { useChannelStore, useEnvironmentStore } from './seam.ts';
 import { usePlayerStore } from './seam.ts';
 import { setWatchFrame } from './watchFrame.ts';
@@ -75,9 +74,11 @@ export function EnvironmentCamera({
 }: {
   envId: EnvironmentId;
   /** Lateral extent of the room object in anchor-local metres (tv-room's set). */
-  extent?: { minX: number; maxX: number };
+  extent?: { minX: number; maxX: number; minY?: number; maxY?: number };
 }) {
-  const camera = useThree((s) => s.camera) as PerspectiveCamera;
+  const getThree = useThree((s) => s.get);
+  /** Always the CURRENT default camera: a previous rig's camera is swapped out when it unmounts. */
+  const cam = () => getThree().camera as PerspectiveCamera;
   const gl = useThree((s) => s.gl);
   const scene = useThree((s) => s.scene);
   const size = useThree((s) => s.size);
@@ -139,6 +140,12 @@ export function EnvironmentCamera({
   const solve = () => {
     const a = getAnchor();
     if (!a) return false;
+    // Rooms are built for a 32 degree vertical fov (the technical-artist's horizon angles assume it), with
+    // near and far scaled to the screen: near about 0.01 x widthM, far at least 60 x widthM.
+    cam().fov = 32;
+    cam().near = 0.01 * a.spec.widthM;
+    cam().far = Math.max(60 * a.spec.widthM, 200);
+    cam().updateProjectionMatrix();
     a.object.updateWorldMatrix(true, false);
     const A = new Vector3().setFromMatrixPosition(a.object.matrixWorld);
     const n = new Vector3(0, 0, 1).transformDirection(a.object.matrixWorld).normalize();
@@ -147,7 +154,7 @@ export function EnvironmentCamera({
       { position: A.toArray(), normal: n.toArray() },
       a.spec,
       { width: sizeRef.current.w, height: sizeRef.current.h },
-      camera.fov,
+      cam().fov,
       { phone: phone(), extent },
     );
     frame.current = { A, n, right, up, sol, shiftVec: new Vector3(...sol.shift) };
@@ -156,7 +163,7 @@ export function EnvironmentCamera({
       right,
       up,
       normal: n,
-      fovDeg: camera.fov,
+      fovDeg: cam().fov,
       aspect: sizeRef.current.w / sizeRef.current.h,
       width: sizeRef.current.w,
       height: sizeRef.current.h,
@@ -170,9 +177,9 @@ export function EnvironmentCamera({
 
   const applyCamera = (pos: Vector3, target: Vector3) => {
     hasLook.current = true;
-    camera.position.copy(pos);
-    camera.lookAt(target);
-    camera.updateMatrixWorld(true);
+    cam().position.copy(pos);
+    cam().lookAt(target);
+    cam().updateMatrixWorld(true);
   };
 
   /** Pose is static and face-on: project, classify, publish, set keep-out, run the halo check. */
@@ -182,7 +189,7 @@ export function EnvironmentCamera({
     if (!f || !a) return;
     const viewport = { width: sizeRef.current.w, height: sizeRef.current.h };
     const env = useEnvironmentStore.getState();
-    const corners = atWatchCam.current ? projectCorners(a.object, a.spec, camera, viewport) : null;
+    const corners = atWatchCam.current ? projectCorners(a.object, a.spec, cam(), viewport) : null;
     const placement = classifyPlacement(corners, viewport, {
       pose: env.pose,
       phone: phone(),
@@ -208,7 +215,7 @@ export function EnvironmentCamera({
     const r = lastRect.current;
     if (atWatchCam.current && r) {
       applyKeepOut(r);
-      const rep = enforceClearHalo(scene, camera, a.object, r, viewport);
+      const rep = enforceClearHalo(scene, cam(), a.object, r, viewport);
       haloHidden.current = rep.hidden;
     } else {
       clearKeepOut();
@@ -261,12 +268,12 @@ export function EnvironmentCamera({
       fromPos = s.pos;
       fromTarget = s.target;
     } else {
-      fromPos = camera.position.clone();
+      fromPos = cam().position.clone();
       if (!hasLook.current) {
         // Coming from another rig (v1's): continue from where its camera is looking.
         lookTarget.current
-          .copy(camera.position)
-          .addScaledVector(camera.getWorldDirection(new Vector3()), 3);
+          .copy(cam().position)
+          .addScaledVector(cam().getWorldDirection(new Vector3()), 3);
         hasLook.current = true;
       }
       fromTarget = lookTarget.current.clone();
@@ -312,7 +319,6 @@ export function EnvironmentCamera({
 
   // Resize: debounced 150 ms, never while a tween runs (it re-solves at its end).
   useEffect(() => {
-    viewportUniform.value.set(size.width, size.height, gl.getPixelRatio());
     const id = setTimeout(() => {
       if (tween.current) return;
       if (!frame.current) return;
@@ -418,11 +424,11 @@ export function EnvironmentCamera({
         rect: lastRect.current,
         placementKind: localPlacement.current.kind,
         reported: usePlayerStore.getState().corners,
-        keepOut: keepOutUniform.value.toArray(),
+        keepOut: getActiveUniforms()?.uKeepOut.value.toArray() ?? null,
         haloHidden: [...haloHidden.current],
         distance: frame.current?.sol.distance ?? null,
         camera: {
-          position: camera.position.toArray(),
+          position: cam().position.toArray(),
           target: lookTarget.current.toArray(),
         },
         params: { ...cur.current },
@@ -435,7 +441,9 @@ export function EnvironmentCamera({
       clearKeepOut();
       usePlayerStore.getState().reportCorners(null);
     };
-  }, [envId, camera, gl]);
+    // cam reads the current camera from R3F; it never changes identity meaningfully
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [envId, gl]);
 
   useFrame((_, delta) => {
     const f = frame.current;

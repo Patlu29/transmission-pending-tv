@@ -1,17 +1,26 @@
 /**
- * One shared RoomUniforms set (the technical-artist's `createRoomUniforms`) for the whole scene:
- * `uKeepOut` is the projected player rect plus the 24 px halo (set by the projector), `uView` is
- * (stage width, stage height, device pixel ratio). Rooms built by the technical-artist take this set as
- * their `uniforms` prop, and this scene's own sprite shaders read the same objects.
+ * The scene's room uniforms. Each room scene creates ONE `createRoomUniforms()` (see `useRoomBindings`) and
+ * registers it here; the projector then writes the player rect plus the 24 px halo into its `uKeepOut`
+ * through `setKeepOut` on every update (and null in browse and while tweening).
  */
-import { createRoomUniforms, setKeepOut } from '../../materials/rooms/roomKit.ts';
+import { setKeepOut, type RoomUniforms } from '../../materials/rooms/roomKit.ts';
 
-export const sharedRoomUniforms = createRoomUniforms();
+let active: RoomUniforms | null = null;
+let lastRect: { x: number; y: number; width: number; height: number } | null = null;
+
+export function setActiveUniforms(u: RoomUniforms | null): void {
+  active = u;
+  if (u) setKeepOut(u, lastRect);
+}
+
+export const getActiveUniforms = () => active;
 
 export function applyKeepOut(rect: { x: number; y: number; width: number; height: number }): void {
-  setKeepOut(sharedRoomUniforms, rect, 24);
+  lastRect = rect;
+  if (active) setKeepOut(active, rect, 24);
 }
 
 export function clearKeepOut(): void {
-  setKeepOut(sharedRoomUniforms, null);
+  lastRect = null;
+  if (active) setKeepOut(active, null);
 }

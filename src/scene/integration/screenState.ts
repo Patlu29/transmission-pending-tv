@@ -22,8 +22,6 @@ export interface ScreenState {
   noiseHz: number;
   /** CRT uBar: 0 on the diary index (status ended), else 1. */
   bar: number;
-  /** True while a live channel drives the room light itself (LiveSpill); ScreenDriver then leaves meanLuminance alone. */
-  liveOverride: boolean;
   /** True under reduced motion or Calm. */
   reduced: boolean;
   /** Estimated mean relative luminance of the picture (0..0.5), before the 2 Hz low-pass. */
@@ -37,7 +35,6 @@ export const screenState: ScreenState = {
   collapse: 0,
   brightness: 1,
   warmMs: -1,
-  liveOverride: false,
   noiseHz: 24,
   bar: 1,
   reduced: false,

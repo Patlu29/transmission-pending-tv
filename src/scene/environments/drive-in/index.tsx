@@ -9,7 +9,7 @@ import { lazyScene } from '../lazyScene.ts';
 const environment: EnvironmentModule = {
   id: 'drive-in',
   Scene: lazyScene('drive-in'),
-  screen: { aspect: 16 / 9, widthM: 14, fill: 0.66, align: 'centre' },
+  screen: { aspect: 16 / 9, widthM: 14, fill: 0.66, align: 'centre', vAlign: 'upper' },
 };
 
 export default environment;

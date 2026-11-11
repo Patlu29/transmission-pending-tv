@@ -143,3 +143,25 @@ Registry, nine room modules, `ScreenAnchor`, the watch-pose solver and projector
 - technical-artist: deliver cinema, drive-in, open-air and chai-stall rooms in the same `<XRoom calm colour pose widthM watchDistance uniforms quality/>` form (anchor space, built around the watch camera); the scene mounts them with `useRoomBindings`. Also the dark rectangle under the mountain-sky frame; TV-room tints and bezel burst.
 - frontend-developer: `introStore` should expose whether the diary is on its last page (for the channel knob). `tests/unit/environment-contract.test.ts` is satisfied by the light facades; room `Scene.tsx` files must stay out of its import graph.
 - architect: none (the facade pattern avoids changing `tsconfig.node.json`).
+
+## v2 integration pass (technical-artist's nine rooms)
+
+### What changed
+- All eight non-TV rooms now mount the technical-artist's `*Room` through one shared `shared/RoomScene.tsx` (anchor at the origin, room as a sibling, `widthM` from the spec). My four placeholder rooms and their helper kit (Block, SpriteField, Sky, ViewPlaced, SpillLight, clock, keepOut GLSL) are deleted. Facades match the exported `*_SCREEN` values, including drive-in `vAlign: 'upper'` and mountain-sky `widthM` 12.
+- Uniforms: each room scene creates one `createRoomUniforms()` (`useRoomBindings`) and registers it (`shared/roomUniforms.ts`). The projector calls `setKeepOut(uniforms, playerRect)` on every settle and resize (only the player rect, never the info row or dock) and clears it (null) in browse and while tweening. `watchDistance` is the solver's distance; `quality="low"` on phones.
+- Camera: for rooms the fov is 32 degrees (the room art's horizon angles assume it), `near` = 0.01 x widthM, `far` = max(60 x widthM, 200). The controller always reads the current R3F camera (`getState().camera`): after a channel 0 to live switch in the TV room it had been holding v1's removed camera, which left the glass projecting at the default 75 degrees (rect 296 px wide, "too small"). Fixed.
+- TV room, live channels: dome hidden and flat black backing (the anchor face), no CRT material so no haunt uniforms exist on the glass, `TvBody tint={colourActive ? 1 : 0}` (channel 0 never tints), `TvRoomExtras` with `colourActive` and `burst` from `useChannelBurst` (300 ms sine envelope on a live channel change, at most once per 1000 ms, none in Calm). The watch solver now also fits the set's height: at most 0.9 of the viewport (feet included), centred vertically; at 1440x900 the glass is 540x405 (inline), the whole set in frame.
+- Mountain sky dark block: the cause was the technical-artist's cloud rows fading to zero inside the keep-out over a dark sea floor (they have fixed it: clouds fade to 55 per cent at most, floor cloud-coloured, rect height clamped). I confirmed the fixed room at 1440x900: it reads as a summit over a cloud sea with the portal frame, brackets and pillar. My changes that helped: a 32 degree fov and a per-scene uniform set.
+- `isLastDiaryPage()` (seam.ts) is still the placeholder: `introStore` has no last-diary-page flag yet. One-line swap once it exists.
+
+### Deviation
+- `dim` is passed as 1, not 0.6: the UI already applies `brightness(0.6)` to the canvas in focus layout (`ui.css`), and the room's own dim overlay would double it to 0.36. If the UI drops its CSS brightness, set `dim={0.6}` in `RoomScene` for focus.
+
+### Checks
+- `npm run lint`, `typecheck`, `build`, `test` (144) pass.
+- Screenshots in `.scratch/`: `v2-int-<room>-1440x900.png` and `-390x844.png` for all nine rooms, `v2-int-mountain-sky-1024x600.png`, and `v2-int-tv-room-live-1440x900.png` (a pasted channel set through `__APP_TEST__.useChannelStore`). All eight non-TV rooms settle with no props hidden by the halo check at 1440x900 (phones report focus, reason phone).
+- The TV room on channel 0 is v1 and never settles through the projector (v1 rig), as designed.
+
+### Remaining
+- Real iframe playback in a live TV room was not run through the scene; the rect and keep-out were checked in the test hook and screenshot.
+- Look around (browse) orbit was not exercised in this pass.

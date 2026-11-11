@@ -20,7 +20,7 @@ export function TvSet() {
  * anchor's flat black 4:3 face sits in the bezel opening at the glass plane, so no CRT effect
  * (scanlines, curvature, glow, haunt) ever touches the player rect.
  */
-export function TvSetLive() {
+export function TvSetLive({ tint = 0 }: { tint?: number }) {
   const nodes = useRef<TvNodes | null>(null);
   useEffect(() => {
     const dome = nodes.current?.screen;
@@ -30,7 +30,7 @@ export function TvSetLive() {
     };
   }, []);
   return (
-    <TvBody nodesRef={nodes}>
+    <TvBody nodesRef={nodes} tint={tint}>
       <meshBasicMaterial color="#000000" />
     </TvBody>
   );

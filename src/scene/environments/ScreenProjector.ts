@@ -30,7 +30,7 @@ export interface SolveOptions {
    * 'right' the solver centres this extent in the viewport, and shrinks the screen until the extent
    * fits within 95 per cent of the viewport width.
    */
-  extent?: { minX: number; maxX: number };
+  extent?: { minX: number; maxX: number; minY?: number; maxY?: number };
 }
 
 export interface WatchSolution {
@@ -86,6 +86,11 @@ export function solveWatch(
     const setWidthPx = (wr / screen.widthM) * (ext.maxX - ext.minX);
     const limit = 0.95 * vw;
     if (setWidthPx > limit) wr *= limit / setWidthPx;
+    if (ext.minY !== undefined && ext.maxY !== undefined) {
+      // The whole set must also fit vertically (feet and dock included): at most 0.9 of the height.
+      const setHeightPx = (wr / screen.widthM) * (ext.maxY - ext.minY);
+      if (setHeightPx > 0.9 * vh) wr *= (0.9 * vh) / setHeightPx;
+    }
   }
   const hr = wr / screen.aspect;
 
@@ -107,6 +112,8 @@ export function solveWatch(
   }
   let cy: number;
   if (options.phone) cy = (screen.vAlign === 'upper' ? 0.34 : 0.68) * vh;
+  else if (ext && ext.minY !== undefined && ext.maxY !== undefined)
+    cy = vh / 2 + ((ext.minY + ext.maxY) / 2) * ppm;
   else cy = (screen.vAlign === 'upper' ? 0.41 : 0.5) * vh;
 
   // 4. Camera on the normal axis through T, T shifted in the plane so A lands at (cx, cy).
