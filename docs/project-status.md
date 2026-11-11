@@ -10,6 +10,11 @@
   - Scope change (2026-11-10): the intro becomes a horror ghost story, "Haunted TV tells its build". All four animation types (haunted text, ghost forming from static, haunted set, camera creep). Creepy, no jump scares. Facts stay real.
   - Font decision (2026-11-10): VT323 replaces Bedstead (licence caveat). Ghost stays nameless ("the Occupant").
   - Repository on GitHub account Patlu29, public, name decided with product manager and architect.
+- **v2 decisions (2026-11-11), live channels:**
+  - Sequencing: finish v1 first (QA fixes, delivery, tag v1.0), then build v2 on a branch.
+  - Shape: public site = channel 0 (the Occupant's story) + openly licensed archive channels; plus a private, login-only backend for the user's household that relays the user's own SAT>IP / PC tuner (DD Free Dish, India) for personal viewing. Live channels are never streamed from the public site.
+  - Colour: both. A Colour/B&W switch on the set, default B&W.
+  - Flash: runtime brightness-change limiter accepted; Calm and 2D modes play pre-checked clips only.
 - **Open questions:** hosting target (devops will propose; GitHub Pages fits the public repo)
 - **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
 - **Performance decisions (tech lead):** first-view JS of 380.8 kB gzip accepted (over the 350 kB architecture target, well inside NFR-3's 5 MB); adaptive DPR step-down accepted. Real-device FPS is unmeasured (headless SwiftShader only).
