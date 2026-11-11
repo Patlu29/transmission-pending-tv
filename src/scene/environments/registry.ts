@@ -61,6 +61,12 @@ export const ENVIRONMENTS: Readonly<Record<EnvironmentId, EnvironmentEntry>> = {
     budget: DEFAULT_BUDGET,
     load: () => import('./space-deck/index.tsx'),
   },
+  'mountain-sky': {
+    id: 'mountain-sky',
+    label: 'Mountain sky',
+    budget: DEFAULT_BUDGET,
+    load: () => import('./mountain-sky/index.tsx'),
+  },
 };
 
 /** Picker order. The TV room (channel 0's home) is first and is the default. */

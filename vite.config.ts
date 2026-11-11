@@ -97,6 +97,13 @@ export default defineConfig({
   },
   build: {
     target: 'es2023',
+    // v2: two HTML pages. The CSP plugin and dropGitkeep apply to both (architecture §14).
+    rolldownOptions: {
+      input: {
+        main: fileURLToPath(new URL('./index.html', import.meta.url)),
+        privacy: fileURLToPath(new URL('./privacy.html', import.meta.url)),
+      },
+    },
     // BUG-6: no source maps in the published bundle (they were 6 MB and exposed the source).
     sourcemap: false,
   },

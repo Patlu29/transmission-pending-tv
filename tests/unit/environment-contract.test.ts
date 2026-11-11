@@ -58,7 +58,7 @@ describe('classifyPlacement', () => {
       reason: 'browse',
     });
   });
-  it('lists the eight approved environments with the TV room first', () => {
+  it('lists the nine approved environments with the TV room first', () => {
     expect(ENVIRONMENT_IDS).toEqual([
       'tv-room',
       'cinema',
@@ -68,6 +68,7 @@ describe('classifyPlacement', () => {
       'chai-stall',
       'train',
       'space-deck',
+      'mountain-sky',
     ]);
   });
 });

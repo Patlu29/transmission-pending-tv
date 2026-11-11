@@ -244,3 +244,13 @@ Verification:
 
 **ux-ui-designer**
 - Confirm the TV room's `fill` (0.55, `align: 'left'`) and the 4:3 bezel opening, which are now in the stub. Keep design spec v2 §5 and the stubs in sync; the stubs cite the spec.
+
+### v2 Phase 2 addendum (2026-11-11): Mountain sky and privacy page
+- Added a 9th environment, `mountain-sky` (the headline room), to `ENVIRONMENT_IDS`, the registry (label "Mountain sky", default budget, lazy chunk) and a stub. Provisional anchor: 16:9, `fill` 0.72, `align: 'centre'`, plus a new optional `vAlign: 'upper'` in `ScreenAnchorSpec`, which sits the rect high in the view.
+- `privacy.html` (placeholder, root) is now the second Vite input (`build.rolldownOptions.input`). The CSP is injected into both built pages.
+- Updated `tests/unit/environment-contract.test.ts` (9 ids) and architecture §10, §11, §12.3 and §14.
+- User answers recorded: Q1, Calm plays YouTube after a once-per-visit flash warning; Q2, DD and Sansad stay `enabled: false` until the user confirms the permission email was sent (the research agent edits `guide-sources.json`).
+- Requests:
+  - ux-ui-designer: finalise `fill`, `align` and `vAlign` for `mountain-sky` in design spec v2 §5.
+  - scene-developer: honour `vAlign` in `WatchPoseSolver`, and keep clouds, peaks and birds out of the camera-to-screen volume.
+  - frontend-developer: write `privacy.html` with no inline style or script. Implement Q1: the once-per-visit flash warning before YouTube plays in Calm.

@@ -20,6 +20,7 @@ export const ENVIRONMENT_IDS = [
   'chai-stall',
   'train',
   'space-deck',
+  'mountain-sky',
 ] as const;
 
 export type EnvironmentId = (typeof ENVIRONMENT_IDS)[number];
@@ -57,6 +58,8 @@ export interface ScreenAnchorSpec {
   fill: number;
   /** Horizontal placement of the rect in the watch pose (design spec v2 §5; tv-room and car differ). */
   align: 'centre' | 'left' | 'right';
+  /** Vertical placement in the watch pose. Default 'centre'; 'upper' sits the rect high (mountain-sky). */
+  vAlign?: 'centre' | 'upper';
 }
 
 /** Declared budget, checked by CI against the built chunk and the environment's asset folders. */

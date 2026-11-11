@@ -332,13 +332,13 @@ The E2E test compares every `[data-fact]` element on the rendered page, in each 
 # v2: the environment player (ADR 0011)
 
 ## 10. v2 summary
-v2 turns the site into a player for official YouTube embeds, shown inside one of eight 3D viewing environments. Channel 0 stays the Occupant (v1, unchanged). Channels 1 upward come from a curated guide, resolved by a scheduled GitHub Action into a same-origin `guide.json`, or from a pasted YouTube link. There is still **no backend** (ADR 0002 stands). No new runtime npm dependency is added; the YouTube IFrame API is loaded from YouTube after the first pick.
+v2 turns the site into a player for official YouTube embeds, shown inside one of nine 3D viewing environments (Mountain sky is the headline room). Channel 0 stays the Occupant (v1, unchanged). Channels 1 upward come from a curated guide, resolved by a scheduled GitHub Action into a same-origin `guide.json`, or from a pasted YouTube link. There is still **no backend** (ADR 0002 stands). No new runtime npm dependency is added; the YouTube IFrame API is loaded from YouTube after the first pick.
 
 | Concern | v2 choice | Where |
 |---|---|---|
 | Player | One `YT.Player` for the visit, host `www.youtube-nocookie.com` | `src/ui/player/` (frontend-developer) |
 | Compositing | DOM iframe **above** the canvas, positioned from the screen anchor's projected corners, only in a static face-on watch pose. No `CSS3DRenderer`, no drei `Html`, no depth hole | ADR 0011 section 1; `src/scene/environments/contract.ts` |
-| Environments | 8 lazy chunks behind one contract and a registry | `src/scene/environments/` |
+| Environments | 9 lazy chunks behind one contract and a registry | `src/scene/environments/` |
 | Guide | Curated `src/content/guide-sources.json`, resolved by `scripts/guide/resolve.ts` in a scheduled Action into `dist/guide.json` | section 13 |
 | Colour/B&W | `filter: grayscale(1)` on the `<canvas>` element only; default B&W | section 12 |
 | Privacy | No third-party request before a pick; CSP and referrer meta tags | section 14 |
@@ -364,7 +364,7 @@ public/models/<env>/, public/textures/<env>/   technical-artist, LICENCES.md per
 tests/unit/guide-*.test.ts, environment-contract.test.ts   written by the architect, owned by qa-engineer
 ```
 
-**Environment ids:** `tv-room`, `cinema`, `drive-in`, `open-air`, `bedroom`, `chai-stall`, `train`, `space-deck`. They are selected with `?env=<id>`, a query string rather than a route, so ADR 0007's relative base still holds.
+**Environment ids:** `tv-room`, `cinema`, `drive-in`, `open-air`, `bedroom`, `chai-stall`, `train`, `space-deck`, `mountain-sky` (added 2026-11-11: a summit above a sea of clouds, with a giant flat 16:9 screen floating head-on in the sky; provisional anchor `fill` 0.72, `align: 'centre'`, `vAlign: 'upper'`, final values in design spec v2 §5). They are selected with `?env=<id>`, a query string rather than a route, so ADR 0007's relative base still holds.
 
 ## 12. v2 runtime architecture
 
@@ -399,7 +399,7 @@ Guarantees:
 - Channel 0 destroys the player.
 
 ### 12.3 Environments
-- Each `<id>/index.tsx` default-exports an `EnvironmentModule`: `id`, `Scene`, and `screen` (`aspect`, `widthM`, `fill`, `align` from design spec v2 section 5). The TV room also sets `hostsChannel0`.
+- Each `<id>/index.tsx` default-exports an `EnvironmentModule`: `id`, `Scene`, and `screen` (`aspect`, `widthM`, `fill`, `align` and optional `vAlign` from design spec v2 section 5). The TV room also sets `hostsChannel0`.
 - Static metadata (label, budget, loader) lives in `registry.ts`, so pickers never load chunks.
 - Scenes receive `{ calm, pose, colour, channel }`, render exactly one anchor, and place nothing between the watch-pose camera and the screen.
 - The TV room keeps v1's code path for channel 0. For YouTube channels its anchor is the flat bezel opening (4:3), the CRT glass is off, and haunting stays off the screen.
@@ -472,7 +472,7 @@ YOUTUBE_API_KEY=<secret> node scripts/guide/resolve.ts \
   `'wasm-unsafe-eval'` is for self-hosted Draco, Meshopt and KTX2 decoders. Decoders must never load from a CDN; for example, drei's `useGLTF` default Draco path is gstatic, so pass a local path.
 - **Verified under the CSP** on 2026-11-11 (strict clean-clone build, Chromium): `production.spec.ts` 6 of 6 passed, including "no console errors"; `power`, `fallback` and `story` specs 39 of 39 passed.
 - **Network rule (replaces v1 NFR-7 for v2):** no third-party request of any kind before a channel is picked. After a pick, the main frame may request only `https://www.youtube.com`, and the only child frame is `https://www.youtube-nocookie.com`. Our origin never stores cookies or anything else.
-- **`privacy.html`** (design spec v2 section 6.3) will be a second Vite HTML input. Add it to `build.rolldownOptions.input` when the page exists; the CSP plugin applies to every built page.
+- **`privacy.html`** (design spec v2 section 6.3) is the second Vite HTML input (`build.rolldownOptions.input`: `main` and `privacy`). It is a placeholder today; the frontend-developer writes the content. The CSP plugin and `dropGitkeep` apply to both pages. Like `index.html`, it carries the static referrer meta tag, and it may use no inline styles or scripts.
 
 ## 15. v2 bundle impact
 
