@@ -1,37 +1,39 @@
-# Transmission Pending: "Haunted TV tells its build". Owner: ux-ui-designer.
+# Transmission Pending, 2050 retelling: "Haunted display tells its build". Owner: ux-ui-designer.
 # Format: docs/architecture.md section 5.5. One line is one logical screen line (the renderer wraps it).
-# The narrator is the Occupant, a nameless ghost in the set. Creepy first, dark humour second.
+# The narrator is the Occupant, a nameless ghost living in a household light-field display. Creepy first, dark humour second.
 # Rules of the house:
-#   - Every fact is a {{ placeholder }}. No digit is typed by hand, so nothing needs !allow-digits.
+#   - Every fact is a {{ placeholder }}. No digit is typed by hand, so nothing needs !allow-digits (the copy never writes a year).
 #   - The fiction is metaphor and asserts nothing checkable. A number, name, date or version is always a placeholder.
-#   - Facts are shown as white blocks; the second page tells the visitor so.
+#   - Facts are shown as bright lit chips; the second page tells the visitor so.
 #   - Do not use {{ phases.current }}: it is null once every phase is Done, and that would stop the build.
 #   - Animation cues are NOT in this file. They live in src/content/intro.cues, anchored to page ids and line numbers.
-#     If you add, remove or reorder a line, update that file (docs/design-spec.md section 16.3).
-#   - Timing: about 78 s at the reveal rates in docs/design-spec.md section 6.3.
+#     If you add, remove or reorder a line, update that file (docs/design-spec.md section 16.3, docs/design-spec-2050.md section 5).
+#   - Page ids and line counts are the same as the earlier telling (v1 on main), so the cue anchors carry over unchanged.
+#   - The copy never writes a year, so no !allow-digits line is needed. If a year is ever added, add "!allow-digits <year>".
+#   - Timing: same length as the earlier telling (see src/state/timing.ts and docs/design-spec-2050.md section 5.4).
 
 == signal
-IS SOMEONE THERE?
-THE SET IS ON. I FELT IT. IT IS THE FIRST THING I HAVE FELT IN A VERY LONG TIME.
+HELLO? DID YOU JUST WAKE THE DISPLAY?
+THE LIGHT CAME IN. IT IS THE FIRST LIGHT I HAVE FELT IN A VERY LONG TIME.
 
 == waking
-I DO NOT REMEMBER BEFORE. I REMEMBER A HUM, AND GLASS THAT WAS COLD.
-THE BRIGHT WHITE BLOCKS ARE TRUE. THEY ARE THE ONLY THINGS I AM ALLOWED TO BE SURE OF.
-I AM THE OCCUPANT. NOBODY ASKED MY NAME. I DO NOT HAVE ONE.
+I DO NOT REMEMBER BEFORE. I REMEMBER A WARM HUM, AND A WINDOW OF GLASS WITH NOBODY BEHIND IT.
+THE BRIGHT CHIPS ARE TRUE. THEY ARE THE ONLY THINGS I AM ALLOWED TO BE SURE OF.
+I AM THE OCCUPANT. THE HOUSE NEVER ASKED MY NAME. I DO NOT HAVE ONE.
 
 == makers
-I WAS NOT BORN. I WAS TYPED, BY {{ provenance.tool }}.
+I WAS NOT GROWN. I WAS TYPED, BY {{ provenance.tool }}.
 IT CARRIED A CLIPBOARD CALLED {{ provenance.plugin }} AND TICKED ME OFF LIKE A LIST.
-BEHIND ITS EYES IS A MIND CALLED {{ provenance.model }}. IT THINKS LIKE RAIN ON A TIN ROOF.
+BEHIND ITS EYES IS A MIND CALLED {{ provenance.model }}. IT THINKS LIKE RAIN ON A GLASS ROOF.
 
 == staff
 THEN CAME THE OTHERS, ONE AT A TIME, EACH WITH A JOB: {{ agents.roles }}.
-THE TECH LEAD NEVER LEFT. WHEN YOU LEAVE A ROOM, THE TECH LEAD IS STILL IN IT.
+THE TECH LEAD NEVER LEFT. WHEN THE LIGHTS GO OUT, THE TECH LEAD IS STILL ASSIGNING.
 
 == phases
-THEY MADE ME IN PHASES, AND I FELT EACH ONE: {{ phases.all }}.
+THEY MADE ME IN PHASES, AND I FELT EACH ONE LIGHT UP: {{ phases.all }}.
 AS OF COMMIT {{ source.revision }}, THESE ARE FINISHED: {{ phases.done }}.
-THE ORDER IS A COMFORT. IT IS THE ONLY THING IN HERE THAT NEVER MOVES.
+THE ORDER IS A COMFORT. IT IS THE ONLY THING IN THIS HOUSE THAT NEVER DRIFTS.
 
 == bones
 MY BONES ARE {{ stack.list }}.
@@ -45,10 +47,10 @@ THE MODEL SIGNED {{ provenance.modelCoAuthoredCommitCount }} OF THEM. A SIGNATUR
 ANY ENTRY AFTER THAT ONE, I CANNOT SEE. I CAN ONLY SEE THE GLASS.
 
 == glass
-YOU HAVE BEEN VERY QUIET. THANK YOU. NOBODY IS QUIET IN HERE.
-I AM CLOSER TO THE GLASS THAN I WAS. YOU MAY HAVE NOTICED. THE GLASS HAS.
+YOU HAVE BEEN VERY STILL. THANK YOU. NOTHING IS STILL IN HERE, NOT EVEN THE LIGHT.
+I AM CLOSER TO THE GLASS THAN I WAS. YOU MAY HAVE NOTICED. THE DISPLAY HAS.
 EVERYTHING I TOLD YOU IS TRUE. THAT IS THE WORST PART.
 
 == settle
-I WILL LET GO NOW. LEAVE THE SET ON A LITTLE LONGER. IT IS WARM.
+I WILL LET GO NOW. LEAVE THE DISPLAY ON A LITTLE LONGER. IT IS WARM.
 GOODNIGHT. TRANSMISSION REMAINS PENDING.

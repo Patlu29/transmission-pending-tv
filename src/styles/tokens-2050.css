@@ -1,0 +1,363 @@
+/*
+ * Transmission Pending, 2050 retheme ("holographic glass"): design tokens. Owner: ux-ui-designer.
+ * Branch v2 only. Spec: docs/design-spec-2050.md. NOT imported yet: the frontend-developer swaps
+ * this file in for tokens.css in one change (it keeps every v1 custom property name, with new values,
+ * so existing CSS keeps working, and adds the new --glass-*, --glow-*, --lumen-* groups).
+ * Colour is allowed (the v1 greyscale rule FR-2 is retired for the site's own art).
+ * Rules that still hold: text 4.5:1 on its own plate in the WORST CASE backdrop; focus ring visible on
+ * light and dark; nothing here is ever applied to the YouTube player or an ancestor of it.
+ * Contrast figures use approximate sRGB relative luminance; QA verifies by pixel sampling.
+ */
+:root {
+  color-scheme: dark;
+
+  /* Ink ramp (cool near-blacks to near-whites). Names kept from v1; values are tinted. */
+  --grey-0: #000000;
+  --grey-50: #05070d;
+  --grey-100: #0a0f1a;
+  --grey-150: #0e1524;
+  --grey-200: #162033;
+  --grey-300: #2a3850;
+  --grey-400: #4a5b78;
+  --grey-500: #6f84a6;
+  --grey-600: #8fa2c0;
+  --grey-700: #b0bfd6;
+  --grey-800: #c4d0e4;
+  --grey-850: #d6e0f0;
+  --grey-900: #e6eefc;
+  --grey-1000: #f6f9ff;
+
+  /* Lumen accents (the calm light of the display) */
+  --lumen: #8fe3ff; /* primary accent: 5.2:1 as text on worst-case glass */
+  --lumen-bright: #bfefff; /* lit pills and fact chips */
+  --lumen-deep: #3aa6d6;
+  --haze: #b9a4ff; /* secondary accent: violet haze */
+  --rose: #ff9fb0; /* soft error accent (borders and icons only, never body text) */
+  --ember: #ffc58a; /* warnings, warm room light */
+  --mint: #8ff0c8; /* success */
+  --iridescent: linear-gradient(120deg, #8fe3ff 0%, #b9a4ff 50%, #ffb8dc 100%); /* borders and the hero card only */
+
+  /* Semantic colour: page and UI chrome */
+  --color-bg: var(--grey-50);
+  --color-room: var(--grey-100);
+  --color-surface: var(--grey-150);
+  --color-surface-raised: var(--grey-200);
+  --color-border: rgba(255, 255, 255, 0.5); /* control boundaries: 4.2:1 on worst-case glass, meets 3:1 */
+  --color-border-subtle: rgba(255, 255, 255, 0.2); /* panel edges, decoration only */
+  --color-text: #eef4ff; /* 6.7:1 on worst-case glass */
+  --color-text-muted: #cbd6ea; /* 5.1:1 on worst-case glass; there is no lower text tier */
+  --color-text-subtle: #cbd6ea; /* alias of muted: v1 name kept, value raised for glass */
+  --color-text-on-light: #05070d;
+  --color-accent: var(--lumen);
+  --color-control-bg: var(--lumen-bright);
+  --color-control-text: #05070d; /* 16:1 on --color-control-bg */
+  --color-control-bg-hover: #dff7ff;
+  --color-control-bg-active: #8fe3ff;
+  --color-control-bg-disabled: rgba(255, 255, 255, 0.14);
+  --color-control-text-disabled: #b4c2dc; /* 4.5:1 on its glass; also carries a text reason */
+  --color-focus: #ffffff; /* paired with the halo so it shows on light and dark */
+  --color-focus-halo: #05070d;
+  --color-scrim: rgba(5, 7, 13, 0.72);
+  --color-error-edge: var(--rose);
+  --color-ok-edge: var(--mint);
+  --color-warn-edge: var(--ember);
+
+  /* Glass. Three levels (ADR 0012 section 4): text-bearing glass is ALWAYS one of the first three.
+     1. SMALL chrome (dock, HUD tags): live blur of 12px or less, no nesting.
+     2. LARGE surfaces (guide, picker, dialogs, cards): tinted glass, NO live blur.
+     3. NEAR-PLAYER plates (within 24px of the player rect, e.g. the info row): solid and flat, no blur, no glow, no shadow bleed. */
+  --glass-small-fill: rgba(8, 12, 22, 0.84); /* alpha 0.84 with brightness 0.7 keeps text AA over a backdrop up to luminance 0.55 */
+  --glass-small-blur: 12px;
+  --glass-backdrop-brightness: 0.7;
+  --glass-backdrop-saturate: 1.3;
+  --glass-small-filter: blur(var(--glass-small-blur)) brightness(var(--glass-backdrop-brightness)) saturate(var(--glass-backdrop-saturate));
+  --glass-large-fill: linear-gradient(160deg, rgba(20, 30, 50, 0.93), rgba(8, 12, 22, 0.95)); /* tinted, no blur; text AA over any backdrop up to 0.85 */
+  --glass-large-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)'/%3E%3C/svg%3E"); /* static 5 per cent grain tile over the tint, for the frosted look without blur */
+  --glass-solid-fill: #0e1524; /* near-player plates and the Solid panels option */
+  --glass-panel-fill: var(--glass-small-fill); /* v1-style alias kept for small chrome */
+  --glass-panel-filter: var(--glass-small-filter);
+  --glass-deco-fill: rgba(220, 235, 255, 0.06); /* decoration only, never carries text */
+  --glass-deco-blur: 0px;
+  --glass-chip-fill: rgba(143, 227, 255, 0.14); /* canvas-drawn chips only (their backdrop is known) */
+  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
+  --glass-edge: 1px solid var(--color-border-subtle);
+
+  /* Glow (soft volumetric light). Ceiling: alpha 0.35, never a large-area flash. */
+  --glow-lumen: 0 0 24px rgba(143, 227, 255, 0.35);
+  --glow-haze: 0 0 24px rgba(185, 164, 255, 0.3);
+  --glow-rim: 0 0 0 1px rgba(191, 239, 255, 0.5), 0 0 18px rgba(143, 227, 255, 0.3);
+  --glow-text: 0 0 8px rgba(143, 227, 255, 0.35);
+  --glow-alpha-max: 0.35;
+  --glow-near-player: none; /* no glow, blur or shadow bleed on any DOM element within 24px of the player rect */
+
+  /* Light-field screen palette (replaces the eight teletext greys). Tones are 0 (ink) to 7 (white). */
+  --tt-0: #060a14; /* screen background */
+  --tt-1: #162033;
+  --tt-2: #2a3a56;
+  --tt-3: #5a7aa0; /* rules and graphics: 4.5:1 on --tt-0 */
+  --tt-4: #a8c4e4;
+  --tt-5: #cfe3f7; /* default copy text */
+  --tt-6: #e6f3ff;
+  --tt-7: #ffffff;
+  --screen-bg: var(--tt-0);
+  --screen-text: var(--tt-5); /* 14:1 on --screen-bg */
+  --screen-text-strong: var(--tt-7);
+  --screen-fact-bg: var(--lumen-bright); /* a verified fact is a lit chip */
+  --screen-fact-text: #060a14; /* 15:1 on the chip */
+  --screen-header-bg: #17304a; /* header chip: keep this dark or darker; header text 9:1 */
+  --screen-header-text: #eaf8ff;
+  --screen-rule: var(--tt-3);
+  --screen-glow: rgba(143, 227, 255, 0.22);
+  --screen-ghost: #cfeaff; /* the Occupant's tone (haze fringe: --haze) */
+  --screen-smear: rgba(143, 227, 255, 0.45); /* bleed streaks, peak alpha */
+
+  /* Device materials (reference values for the technical-artist; names kept from v1) */
+  --tv-wood-dark: #1a2030; /* plinth graphite */
+  --tv-wood-mid: #2a3446; /* plinth mid */
+  --tv-wood-light: #46546e;
+  --tv-bezel: #e8eaf0; /* pearl ceramic frame */
+  --tv-trim: #c9d3e4; /* satin edge */
+  --tv-knob: #1a2030; /* puck body, graphite */
+  --tv-knob-mark: #8fe3ff; /* ring light */
+  --tv-grille: #0a0f1a;
+  --tv-glass-tint: #070b16; /* smoked glass when off */
+
+  /* Typography */
+  --font-teletext: 'Space Mono', 'Courier New', ui-monospace, monospace; /* screen text on the cell grid; advance about 0.612 em */
+  --font-display: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
+  --font-ui: 'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; /* body text, guide rows, notices, info row: l, 1, I and 0, O are distinct */
+  --font-screen: var(--font-teletext); /* neutral alias; the old name is kept only so existing code compiles */
+  --font-weight-regular: 400;
+  --font-weight-strong: 600;
+  --text-xs: 0.875rem; /* 14px: UI hint text only, never on the screen */
+  --text-sm: 1rem; /* 16px: minimum for anything that carries meaning */
+  --text-md: 1.125rem;
+  --text-lg: 1.375rem;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --leading-tight: 1.15;
+  --leading-normal: 1.55;
+  --tracking-label: 0.06em;
+
+  /* Light-field text grid (unchanged maths from v1; Space Mono's advance is about 0.612) */
+  --tt-min-font-px: 16;
+  --tt-cell-aspect: 0.612;
+  --tt-row-pitch: 1.1;
+  --tt-safe-area: 0.92;
+  --tt-cols-wide: 40;
+  --tt-cols-medium: 32;
+  --tt-cols-narrow: 26;
+  --tt-cols-tiny: 20;
+
+  /* Spacing (4 px scale) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --target-min: 44px;
+  --dock-size: 64px;
+  --bezel-thin: 8px;
+
+  /* Shape and depth (rounded glass) */
+  --radius-none: 0;
+  --radius-sm: 12px; /* keys */
+  --radius-md: 18px; /* chips, rows */
+  --radius-lg: 28px; /* panels, dialogs */
+  --radius-pill: 999px;
+  --radius-screen: 28px; /* the pane's corner radius */
+  --border-width: 1px;
+  --border-width-strong: 2px;
+  --focus-ring-width: 3px;
+  --focus-ring-offset: 2px;
+  --shadow-panel: var(--glass-shadow);
+  --shadow-key: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  --shadow-screen-inset: inset 0 0 40px 8px rgba(5, 7, 13, 0.7);
+  --shadow-bezel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 0 24px 2px rgba(0, 0, 0, 0.6);
+
+  /* Layers */
+  --z-canvas: 0;
+  --z-screen-dom: 5;
+  --z-hud: 10;
+  --z-dock: 15;
+  --z-panel: 20;
+  --z-modal: 30;
+  --z-toast: 40;
+
+  /* Motion (UI only; the display's own timings are in docs/design-spec-2050.md section 3.3) */
+  --duration-fast: 140ms;
+  --duration-normal: 280ms;
+  --duration-slow: 640ms;
+  --duration-camera: 1200ms;
+  --duration-camera-reset: 700ms;
+  --duration-bloom: 2200ms; /* light-field bloom-in (v1 warm-up length kept so timers carry over) */
+  --duration-fold: 550ms; /* fold-away (v1 collapse length kept) */
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-glass: cubic-bezier(0.16, 1, 0.3, 1); /* panels arriving */
+  --ease-soft: cubic-bezier(0.65, 0, 0.35, 1); /* in-out for light and camera */
+  --ease-camera: cubic-bezier(0.45, 0, 0.2, 1);
+
+  /* Display effect defaults (2D mode; the 3D shader mirrors them as uniforms) */
+  --crt-scanline-opacity: 0; /* no scanlines in 2050; this name is kept only so existing CSS compiles (rename in a later cleanup) */
+  --crt-scanline-pitch: 3px;
+  --crt-noise-opacity: 0.06; /* light-field grain, at least 2 px */
+  --crt-vignette-strength: 0.5;
+
+  /* Haunting ceilings (docs/design-spec.md section 16.7 limits stand; 2050 additions in design-spec-2050 section 4) */
+  --haunt-tremble-max-em: 0.08;
+  --haunt-ghost-peak-lum: 0.3;
+  --haunt-ghost-text-lum: 0.07;
+  --haunt-room-dim-max: 0.65;
+  --haunt-creep-max: 0.22;
+  --haunt-min-step-ms: 2000;
+  --haunt-text-redraw-hz: 30;
+  --duration-haunt-text: 1500ms;
+  --haunt-fringe-max-px: 1.5; /* chromatic offset of drifting glyphs */
+  --haunt-glitch-min-dip: 0.55; /* a glitching chrome plate never goes below this opacity */
+  --haunt-glitch-max-hz: 1.5;
+
+  /* v2 layout tokens (docs/design-spec-v2.md section 9) */
+  --player-min-w: 480px;
+  --player-min-h: 270px;
+  --player-floor: 200px;
+  --player-phone-min-h: 240px;
+  --info-row-h: 40px;
+  --info-row-gap: var(--space-2);
+  --rect-halo: 24px;
+  --panel-w: 560px;
+  --header-h-focus: 48px;
+  --duration-room-dissolve: 300ms;
+  --duration-colour: 600ms;
+  --duration-channel-cue: 300ms;
+  --spill-amp-1: 0.08;
+  --spill-amp-2: 0.05;
+  --spill-hz-1: 0.6;
+  --spill-hz-2: 1.3;
+  --focus-backdrop-brightness: 0.6; /* canvas dimmed in focus layout; no blur (ADR 0012: live blur only on small chrome) */
+}
+
+/* Monochrome: the Colour switch turned off (default is Colour on). It greys the site's OWN colour (the canvas
+   gets one grayscale filter; these variables grey the chrome and channel 0). It never touches the YouTube player. */
+:root[data-colour='mono'] {
+  --lumen: #e6e6e6;
+  --lumen-bright: #f0f0f0;
+  --lumen-deep: #9a9a9a;
+  --haze: #cfcfcf;
+  --rose: #d0d0d0;
+  --ember: #d8d8d8;
+  --mint: #d8d8d8;
+  --iridescent: linear-gradient(120deg, #e6e6e6, #bdbdbd 50%, #f0f0f0);
+  --glow-lumen: 0 0 24px rgba(240, 240, 240, 0.3);
+  --glow-haze: 0 0 24px rgba(220, 220, 220, 0.25);
+  --glow-rim: 0 0 0 1px rgba(240, 240, 240, 0.5), 0 0 18px rgba(230, 230, 230, 0.25);
+  --glow-text: 0 0 8px rgba(240, 240, 240, 0.3);
+  --screen-fact-bg: #eaeaea;
+  --screen-header-bg: #2a2a2a;
+  --screen-ghost: #e0e0e0;
+  --screen-smear: rgba(230, 230, 230, 0.45);
+  --screen-glow: rgba(230, 230, 230, 0.2);
+  --color-control-bg: #ececec;
+  --color-control-bg-hover: #ffffff;
+  --color-control-bg-active: #bdbdbd;
+}
+
+/* Solid panels: set as <html data-glass="solid"> by the frontend when prefers-reduced-transparency applies,
+   backdrop-filter is unsupported, AdaptiveDpr has stepped down, or the viewer chose "Solid panels".
+   The media queries below are a CSS-only backstop for the same result. */
+:root[data-glass='solid'] {
+  --glass-small-fill: #0e1524;
+  --glass-small-filter: none;
+  --glass-large-fill: #0e1524;
+  --glass-large-grain: none;
+  --glass-panel-fill: #0e1524;
+  --glass-panel-filter: none;
+  --glass-deco-fill: #162033;
+  --glass-chip-fill: #1d3550;
+  --color-scrim: rgba(5, 7, 13, 0.92);
+  --color-border-subtle: rgba(255, 255, 255, 0.35);
+  --glow-alpha-max: 0.2;
+}
+
+/* No backdrop-filter support: use a near-opaque fill so contrast is the same. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-small-fill: rgba(8, 12, 22, 0.96);
+    --glass-small-filter: none;
+    --glass-panel-fill: rgba(8, 12, 22, 0.96);
+    --glass-panel-filter: none;
+  }
+}
+
+/* Reduced transparency: solid surfaces, no blur, no translucent plates. */
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-small-fill: #0e1524;
+    --glass-small-filter: none;
+    --glass-large-fill: #0e1524;
+    --glass-large-grain: none;
+    --glass-panel-fill: #0e1524;
+    --glass-panel-filter: none;
+    --glass-deco-fill: #162033;
+    --glass-chip-fill: #1d3550;
+    --color-scrim: rgba(5, 7, 13, 0.92);
+    --color-border-subtle: rgba(255, 255, 255, 0.35);
+    --glow-alpha-max: 0.2;
+  }
+}
+
+/* Increased contrast: opaque plates, strong borders, no glow, thicker focus. */
+@media (prefers-contrast: more) {
+  :root {
+    --glass-small-fill: #05070d;
+    --glass-small-filter: none;
+    --glass-large-fill: #05070d;
+    --glass-large-grain: none;
+    --glass-solid-fill: #05070d;
+    --glass-panel-fill: #05070d;
+    --glass-panel-filter: none;
+    --glass-deco-fill: #0a0f1a;
+    --color-border: #ffffff;
+    --color-border-subtle: rgba(255, 255, 255, 0.6);
+    --border-width: 2px;
+    --color-text: #ffffff;
+    --color-text-muted: #e6eefc;
+    --color-text-subtle: #e6eefc;
+    --color-scrim: rgba(0, 0, 0, 0.94);
+    --screen-text: #ffffff;
+    --screen-rule: #a8c4e4;
+    --glow-lumen: none;
+    --glow-haze: none;
+    --glow-rim: 0 0 0 2px #ffffff;
+    --glow-text: none;
+    --focus-ring-width: 4px;
+  }
+}
+
+/* Reduced motion: no UI transitions, no camera tween, frozen light-field grain. */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-fast: 0ms;
+    --duration-normal: 0ms;
+    --duration-slow: 0ms;
+    --duration-camera: 0ms;
+    --duration-camera-reset: 0ms;
+    --duration-bloom: 0ms;
+    --duration-fold: 0ms;
+    --duration-room-dissolve: 0ms;
+    --duration-colour: 0ms;
+    --duration-channel-cue: 0ms;
+    --crt-noise-opacity: 0.04;
+  }
+}
+
+/* Forced colours (Windows high contrast): the system draws focus and borders. */
+@media (forced-colors: active) {
+  :root {
+    --focus-ring-width: 3px;
+  }
+}

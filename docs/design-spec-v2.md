@@ -1,5 +1,7 @@
 # Design spec v2: environments and YouTube channels
 
+**2050 retheme (2026-11-11):** the TV-room look (section 5.1, including the colour-era tint), the look of every UI component, the meaning of the Colour/B&W switch (1.8) and the 2D skins are superseded by `docs/design-spec-2050.md`. Information architecture, flows, layouts, the keyboard map, rooms 5.2 to 5.9, compliance rules and accessibility mapping here still apply. In this file, read "TV room" as the Holo room and "CRT" or "bezel ring" effects as the pane's edge light.
+
 Owner: ux-ui-designer. Status: draft for user approval (2026-11-11), branch `v2`. Read with `docs/design-spec.md` (v1, unchanged; section numbers below such as "v1 7.1" refer to it), `docs/requirements/v2-environments.md` (V2-FR, V2-YT), `docs/decisions/0011-environment-player.md` (ADR 0011), and the two research notes.
 
 Terms: "player rect" is the axis-aligned CSS rectangle where the one YouTube iframe sits. "Anchor" is the flat 3D rectangle that the player rect is projected from (`ScreenAnchor`). "Surround" is everything the scene draws around the player rect. "Room" is the user-facing word for an environment. "Info row" is the DOM strip directly under the player rect. "Channel 0" is the Occupant's story.

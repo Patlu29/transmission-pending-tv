@@ -1,15 +1,29 @@
-# Animation cues for src/content/intro.tmpl. Owner: ux-ui-designer. Grammar and limits: docs/design-spec.md section 16.3.
+# Animation cues for src/content/intro.tmpl, 2050 retelling. Owner: ux-ui-designer.
+# Grammar and limits: docs/design-spec.md section 16.3. The 2050 meaning of each cue: docs/design-spec-2050.md section 5.
 # One cue per line:  <anchor> <cue> [key=value ...]
 # Anchor: <page-id>            when the first line of the page starts to reveal
 #         <page-id>-<n>        when line n of the page starts to reveal (n from 1; same id as IntroLine.id)
 #         <anchor>@end         when that line (or the whole page) has finished revealing
 #         <anchor>+<seconds>   offset after the anchor, for example diary-2+1.5
 # Cues are ignored under Calm and reduced motion. Seconds, not digits in copy, so this file may contain numbers.
+#
+# The cue names are unchanged so the parser and scheduler keep working. 2050 meanings:
+#   hum        projector hum swell (audio) plus a slow breathing of the pane's edge light (at most 0.3 Hz, 6 per cent)
+#   ghost      the Occupant forms out of holographic noise;  ghost-near  it drifts towards the glass
+#   tremble    glyph drift: letters drift on parallax layers with a thin colour fringe
+#   rewrite    glyph re-resolve: a word blurs into light and re-resolves as another word, then back
+#   bleed      light smear: threads of light fall from the line into the blank row below
+#   roll       display slip: the picture slips up by one wrap, with its depth layers lagging
+#   knob       the dial rings on the base puck turn by themselves (which=channel or volume)
+#   dim        the room light dims;  shadow  the Occupant's shadow shows on the frosted wall;  creep  slow camera push-in
+# Proposed new cue (not yet supported by the parser, so kept as a comment): glitch amp=<0..1> dur=<s>
+#   the display's own UI chrome (HUD plates, the header chip, fastext chips; never the dock keys) dips in opacity
+#   and returns, at most 1.5 Hz, never below 0.55. Uncomment the glitch lines once the frontend adds the cue.
 
 # signal: calm cold open, almost nothing
 signal              hum         to=0.15 over=8
 
-# waking: the static thickens, a shape starts to cohere
+# waking: the noise thickens, a shape starts to cohere
 waking              ghost       to=0.12 over=6
 waking-3@end        tremble     amp=0.04 dur=3
 
@@ -17,12 +31,13 @@ waking-3@end        tremble     amp=0.04 dur=3
 makers              creep       to=0.15 over=10
 makers-3@end        rewrite     word=6 to=HOST hold=1.2 dur=3
 
-# staff: the room gets darker; the tech lead line bleeds; a knob turns itself
+# staff: the room gets darker; the tech lead line smears; a dial ring turns itself
 staff               dim         to=0.2 over=8
 staff-2@end         bleed       dur=4 rows=1
-staff-2@end+3       knob       which=channel deg=25 over=3
+staff-2@end+3       knob        which=channel deg=25 over=3
+# staff-2@end+7     glitch      amp=0.4 dur=1.4
 
-# phases: the picture rolls once, at the end of the page
+# phases: the picture slips once, at the end of the page
 phases-3@end        tremble     amp=0.05 dur=2.5
 phases-3@end+3      roll        dur=2.4
 
@@ -32,7 +47,7 @@ bones               ghost-near  to=0.2 over=10
 bones               creep       to=0.4 over=12
 bones-2@end         rewrite     word=17 to=CELL hold=1.4 dur=3.2
 
-# diary: the longest page, the figure comes forward, the wall shadow appears
+# diary: the longest page, the figure comes forward, the shadow shows on the wall
 diary               dim         to=0.5 over=8
 diary               shadow      to=0.5 over=10
 diary               ghost       to=0.8 over=10
@@ -41,6 +56,7 @@ diary               hum         to=0.5 over=12
 diary-1@end         knob        which=volume deg=-30 over=3
 diary-3@end         bleed       dur=6 rows=1
 diary-5@end         rewrite     word=14 to=YOU hold=1.4 dur=3.2
+# diary-5@end+6     glitch      amp=0.6 dur=1.4
 
 # glass: closest approach
 glass               ghost-near  to=0.9 over=8
