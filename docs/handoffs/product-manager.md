@@ -1,5 +1,15 @@
 # Handoff: product-manager
 
+## Change 2026-11-11: 2050 retheme (v2 branch only)
+- New file docs/requirements/v2-theme-2050.md (change document with changelog). v1 files and v2-environments.md were not edited; the new file states it overrides their look and feel on the v2 branch. ps.md stays as the original brief and the override is recorded in the document.
+- Unchanged: FR-9 to FR-14 (facts), flash safety (FR-19, FR-30), Calm, accessibility, content note, facts pipeline and all YouTube rules.
+- Changed (new wording given): G1, overview, FR-1 to FR-7, FR-15, FR-23, FR-25, FR-27, FR-28, FR-31, NFR-6, NFR-13; retired FR-X2 and assumption 1; v2 D4, D5, D6, V2-FR-13, 14, 15, 20, 25, 30, C3, C7, US-5, 6, 14, 15, assumptions 3 and 4, Appendix A; V2-FR-36 retired.
+- New: T50-1 to T50-14 (palette, worst-case contrast on frosted glass, open-licence futuristic type, legibility over volumetric light, Colour/Monochrome switch, prefers-reduced-transparency plus a manual Solid panels option, backdrop-filter fallback, no effects over the player, flash safety, 2050 story, no stale 1970s references) and T50-US-1 to 4.
+- Colour/B&W decision: keep the switch as Colour on/off, default Colour; off is Monochrome and reuses the v1 greyscale pixel test; video never filtered.
+- Important interaction: frosted glass must never sit over or blur the YouTube player (T50-9, V2-YT-1, V2-YT-2).
+- Open questions: Q-T50-1 keep the name "Transmission Pending" (default keep); Q-T50-2 keep the Colour/Monochrome switch (default keep, colour on).
+- Request to the user: the permission email in v2-environments Appendix A still says "1970s television room"; the 2050 document gives replacement wording, to be applied before it is sent.
+
 ## Change 2026-11-11: v2 design approved (Mountain sky and review of design-spec-v2 copy)
 - v2-environments.md updated with a changelog: ninth room Mountain sky (V2-FR-35), all nine rooms kept (cut-to-four fallback superseded), TV colour-era tint for live channels (V2-FR-36), optional room sound (V2-FR-37), 24 px keep-out (V2-FR-38), site-drawn Calm card with no YouTube thumbnails (V2-FR-29), playlist links rejected (V2-FR-7), DD and Sansad TV disabled until the user confirms the email is sent (V2-FR-11, Q-V2-1 resolved), US-15 added.
 - Review of docs/design-spec-v2.md (Q-D6). I did not edit that file; the owner is the ux-ui-designer. Requested changes:
