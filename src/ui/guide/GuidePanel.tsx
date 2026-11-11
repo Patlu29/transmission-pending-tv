@@ -321,7 +321,7 @@ export function GuidePanel() {
                       aria-current={current === null ? 'true' : undefined}
                       onClick={() => {
                         useUiStore.getState().closePanel('guide');
-                        useChannelStore.getState().stop();
+                        useChannelStore.getState().playStory();
                       }}
                     >
                       <span className="guide-row__num">0</span>

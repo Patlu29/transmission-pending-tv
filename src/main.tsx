@@ -13,6 +13,7 @@ import { useUiStore } from '@/state/uiStore';
 import '@/styles/tokens.css';
 import '@/styles/fonts.css';
 import '@/scene/materials/crt2d/crt2d.css';
+import '@/scene/materials/rooms/skins2d.css';
 import '@/ui/ui.css';
 
 // Test hook (dev and test builds only): lets QA read store state without reading pixels.

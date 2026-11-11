@@ -64,6 +64,7 @@ export function startIntroClock(): () => void {
     if (s.paused) return;
 
     if (s.status === 'warming') {
+      if (s.holdCard) return; // idle test card after Stop: waits for Power or Next
       elapsed += dt;
       if (elapsed >= (calm ? CALM_CARD_MS : WARMUP_MS + CARD_HOLD_MS)) s.startIntro();
       return;

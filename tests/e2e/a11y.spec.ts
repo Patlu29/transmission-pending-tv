@@ -1,5 +1,6 @@
 import { recompute } from '../helpers/recompute.ts';
 import {
+  dockKey,
   expect,
   loadIntro,
   openApp,
@@ -79,10 +80,14 @@ for (const mode of ['2d', '3d-screen'] as Mode[]) {
       test.skip(browserName === 'webkit', 'macOS Safari skips buttons when tabbing by default');
       await openApp(page, mode);
       // Power takes initial focus once ready; start from the top of the document.
+      // Compact layouts keep the less-used keys in the "More" sheet: open it so every control is in the cycle.
+      const more = page.locator('[data-key=more]');
+      if ((await more.count()) > 0 && (await more.getAttribute('aria-expanded')) !== 'true')
+        await more.click();
       await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
       const order: string[] = [];
       const focusStyles: boolean[] = [];
-      for (let i = 0; i < 14; i++) {
+      for (let i = 0; i < 30; i++) {
         await page.keyboard.press('Tab');
         const info = await page.evaluate(() => {
           const el = document.activeElement as HTMLElement;
@@ -160,7 +165,8 @@ for (const mode of ['2d', '3d-screen'] as Mode[]) {
       page,
     }) => {
       await openApp(page, mode);
-      const opener = page.locator('.dock [data-key=text]');
+      // On phones "Read full text" lives in the More sheet; dockKey opens it when needed.
+      const opener = await dockKey(page, 'text');
       await opener.focus();
       await page.keyboard.press('Enter');
       const dialog = page.getByRole('dialog', { name: 'Intro text' });

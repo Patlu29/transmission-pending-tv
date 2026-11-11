@@ -250,3 +250,17 @@ Built on branch `v2`. Not committed. My folders are clean for `eslint`, `tsc` an
 - **technical-artist:** the idle test card in non-TV rooms and the paused card are scene-side; the still card, no-signal cards and 2D skins are DOM and CSS (`src/ui/ui.css`, `Room2D`), colours for the skins live there.
 - **qa-engineer:** run the two-stage network test (before Continue nothing third-party; after, only `www.youtube.com` in the main frame and `www.youtube-nocookie.com` as the child frame); the overlap grid over `.player-holder`; ancestor computed styles; v1 phone dock tests.
 - **tech-lead:** the build is blocked only by scene files; rebuild before `npm test` once they compile.
+
+## v2 integration pass
+
+- **`isLastDiaryPage()`** is exported from `src/state/introStore.ts` (non-reactive, for event handlers): true when the channel 0 diary shows its last commit page. The scene-developer replaces the placeholder in `src/scene/environments/seam.ts` with it.
+- **2D skins:** `src/scene/materials/rooms/skins2d.css` is imported in `main.tsx`; `Room2D` uses `room2d room2d--<id>` on the skin element and applies the same `grayscale(1)` filter when Colour is off. The filter is on the skin only, a sibling of the player, never an ancestor of it. My own skin colours are removed.
+- **Room sound** (`src/hooks/roomSound.ts`) covers all nine rooms (`AMBIENCE` table): tv-room hum at 50 Hz, mountain-sky wind (slow band-passed noise swelling at 0.07 Hz), cinema room tone, drive-in night air, open-air breeze, bedroom rain, chai-stall murmur, train rumble, space-deck drone. Off by default, only while the video is muted or nothing plays, silent in Calm, envelopes about 2.4 s.
+- **Stop (design-spec v2 1.12):** in the TV room, Stop now puts the set back on what it was showing when the live channel replaced it: the diary index if the story had ended, else the idle test card (`introStore.holdCard`, so the clock does not start the story). If the set was off, it stays off. Other rooms show the idle card, and focus moves to the Guide key. The Power key and the guide's "The Occupant (the story)" row use the new `channelStore.playStory()` to leave a live channel and start the story.
+- **E2E changes (v1 intent kept: every control stays reachable):**
+  - `a11y.spec.ts`: the Tab-order test opens the More sheet first on compact layouts and walks 30 stops (the start screen and dock gained keys and footer links); the "Read full text" test finds the key with `dockKey` (More sheet on phones).
+  - `calm.spec.ts`: the auto-advance key is found with `dockKey`.
+  - The More sheet stays open for keys that open a dialog or toggle a setting, and Escape inside a dialog no longer closes the sheet, so focus returns to the opener.
+  - `.dock__reason` is now only the "Tuning in" line (the colour note uses `.dock__note`), so the existing selector still matches one element.
+  - Chromium a11y, mobile, power and calm all pass (59 tests). Screenshot baselines (visual spec) were not re-run: the dock gained keys, so QA should regenerate them.
+- Build, typecheck and all 144 unit tests pass. `lint` reports only three errors in `src/scene/environments/EnvironmentCamera.tsx` (the scene-developer's, "cannot modify local variables after render").

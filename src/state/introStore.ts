@@ -45,6 +45,8 @@ interface IntroState {
   statusSince: number;
   /** How the intro ended: Skip eases the haunting out in 1.2 s, a natural end in 3 s. */
   endReason: 'natural' | 'skip' | null;
+  /** The set is on showing the test card and waits: Stop on a live channel in the TV room (design-spec v2 1.12). */
+  holdCard: boolean;
   /** Calm auto-advance (opt-in, default off). */
   autoAdvance: boolean;
 
@@ -58,6 +60,8 @@ interface IntroState {
   noSuchPageAt: number | null;
 
   markReady(): void;
+  /** Stop on a live channel, TV room: the set comes back on at the diary index or the test card, not the story. */
+  resumeIdle(kind: 'diary' | 'card'): void;
   power(): void;
   skip(): void;
   replay(): void;
@@ -107,6 +111,7 @@ const fresh = {
   pageEntry: '',
   noSuchPageAt: null as number | null,
   endReason: null as 'natural' | 'skip' | null,
+  holdCard: false,
 };
 
 export const useIntroStore = create<IntroState>()((set, get) => {
@@ -144,10 +149,17 @@ export const useIntroStore = create<IntroState>()((set, get) => {
     epoch: 0,
     statusSince: 0,
     autoAdvance: false,
+    holdCard: false,
     endReason: null,
 
     markReady: () => {
       if (get().status === 'loading') set({ status: 'ready', statusSince: now() });
+    },
+
+    resumeIdle(kind) {
+      if (get().status !== 'ready' && get().status !== 'off') return;
+      if (kind === 'diary') transition('ended', { ...fresh, endReason: 'natural' });
+      else transition('warming', { ...fresh, holdCard: true });
     },
 
     power() {
@@ -273,3 +285,15 @@ export const useIntroStore = create<IntroState>()((set, get) => {
     clearBlank: () => set({ blank: false }),
   };
 });
+
+/**
+ * True when the channel 0 diary is showing its last page, so the TV room's channel knob moves on to
+ * channel 1 instead of paging (design-spec v2 section 3, item 3). Not reactive: read it in an event handler.
+ */
+export function isLastDiaryPage(): boolean {
+  const { status, diary } = useIntroStore.getState();
+  if (status !== 'ended') return false;
+  const layout = diaryLayout();
+  if (diary.kind === 'commit') return diary.index >= layout.entryCount - 1;
+  return false;
+}

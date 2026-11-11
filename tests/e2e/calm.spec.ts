@@ -1,4 +1,5 @@
 import {
+  dockKey,
   expect,
   openApp,
   openFake,
@@ -161,7 +162,8 @@ test.describe('Calm mode (US-9, US-22, FR-17, FR-31)', () => {
     expect(anim).toBe('none');
     await powerOn(page);
     await runUntil(page, (s) => s.status === 'playing', { stepMs: 100, limitMs: 5000 });
-    const auto = page.locator('.dock [data-key=auto]');
+    // On narrow layouts the auto-advance key sits in the More sheet; dockKey opens it.
+    const auto = await dockKey(page, 'auto');
     await expect(auto).toHaveText('Auto-advance: Off');
     await auto.click();
     const a = await snapshot(page);

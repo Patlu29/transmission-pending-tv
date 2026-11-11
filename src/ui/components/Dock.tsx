@@ -90,8 +90,8 @@ export function Dock() {
       label: powered ? 'Switch off' : 'Switch on',
       onPress: () => {
         // Switching on from a live channel returns to channel 0 (the story).
-        if (live) useChannelStore.getState().stop();
-        intro().power();
+        if (live) useChannelStore.getState().playStory();
+        else intro().power();
       },
       disabled: loading,
       busy: loading,
@@ -315,7 +315,8 @@ export function Dock() {
   useEffect(() => {
     if (!moreOpen) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
+      // A dialog handles its own Escape; the sheet must stay so focus can return to its opener.
+      if (e.key === 'Escape' && !document.querySelector('dialog[open]')) {
         setMoreOpen(false);
         ref.current?.querySelector<HTMLElement>('[data-key="more"]')?.focus();
       }
@@ -333,7 +334,8 @@ export function Dock() {
       ariaLabel={k.ariaLabel}
       onPress={() => {
         k.onPress();
-        if (inSheet) setMoreOpen(false);
+        // Keys that open a dialog or toggle a setting keep the sheet open, so focus has somewhere to return to.
+        if (inSheet && !['text', 'keys', 'roomsound'].includes(k.id)) setMoreOpen(false);
       }}
       disabled={k.disabled}
       pressed={k.pressed}
@@ -350,7 +352,7 @@ export function Dock() {
         </p>
       )}
       {channel0 && (
-        <p className="dock__reason dock__reason--colour" id={colourReasonId}>
+        <p className="dock__note" id={colourReasonId}>
           Channel 0 is always black and white
         </p>
       )}

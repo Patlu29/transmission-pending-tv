@@ -1440,60 +1440,24 @@ body {
   display: none;
 }
 
-.dock__reason--colour {
+.dock__note {
+  margin: 0;
+  padding: var(--space-1) var(--space-3);
+  background: var(--color-surface);
+  color: var(--color-text);
   font-size: var(--text-xs);
 }
 
 /* ---------- 2D room skins: decoration only, a sibling of the player. B&W unless Colour is on. ---------- */
 .skin2d {
-  --skin-a: var(--grey-100);
-  --skin-b: var(--grey-200);
   position: absolute;
   inset: 0;
-  background: linear-gradient(to bottom, var(--skin-a), var(--skin-b));
   filter: grayscale(1);
   transition: filter var(--duration-colour) var(--ease-standard);
 }
 
 .app[data-colour='on'] .skin2d {
   filter: none;
-}
-
-.skin2d[data-room='tv-room'] {
-  --skin-a: #2a2118;
-  --skin-b: #4a3828;
-}
-.skin2d[data-room='cinema'] {
-  --skin-a: #0a0708;
-  --skin-b: #3a1218;
-}
-.skin2d[data-room='drive-in'] {
-  --skin-a: #080c16;
-  --skin-b: #1a1f30;
-}
-.skin2d[data-room='open-air'] {
-  --skin-a: #0a1030;
-  --skin-b: #1b2a52;
-}
-.skin2d[data-room='bedroom'] {
-  --skin-a: #14143a;
-  --skin-b: #2a2455;
-}
-.skin2d[data-room='chai-stall'] {
-  --skin-a: #3a2418;
-  --skin-b: #1c2c4a;
-}
-.skin2d[data-room='train'] {
-  --skin-a: #2a3444;
-  --skin-b: #7a5a44;
-}
-.skin2d[data-room='space-deck'] {
-  --skin-a: #000000;
-  --skin-b: #0a1226;
-}
-.skin2d[data-room='mountain-sky'] {
-  --skin-a: #141c44;
-  --skin-b: #e8a888;
 }
 
 .skin2d__idle {

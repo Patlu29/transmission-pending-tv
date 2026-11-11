@@ -20,7 +20,11 @@ export function Room2D() {
   if (env === 'tv-room' && !live) return <Screen2D />;
   const idle = focusRect({ width: viewport.w, height: viewport.h }).rect;
   return (
-    <div className="skin2d" data-room={env} aria-hidden={live ? 'true' : undefined}>
+    <div
+      className={`skin2d room2d room2d--${env}`}
+      data-room={env}
+      aria-hidden={live ? 'true' : undefined}
+    >
       {!live && (
         <div
           className="skin2d__idle"

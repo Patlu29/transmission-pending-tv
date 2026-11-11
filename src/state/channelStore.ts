@@ -24,6 +24,8 @@ interface ChannelState {
   current: LiveChannel | null;
   /** A pick waiting for the first-play notice. */
   pending: LiveChannel | null;
+  /** What the TV room set was showing when a live channel replaced it, so Stop can put it back. */
+  resume: 'diary' | 'card' | null;
   /** False in Calm until the viewer presses Play on the still card. */
   started: boolean;
   /** Digits typed for a channel number (1.5 s timeout). */
@@ -34,6 +36,8 @@ interface ChannelState {
   cancelNotice(): void;
   /** Press Play on the Calm still card. */
   play(): void;
+  /** Channel 0 from the guide: leave the live channel and start the story. */
+  playStory(): void;
   /** Stop: clear the channel and return to the room (or channel 0 in the TV room). */
   stop(): void;
   /** Step to the next or previous LIVE guide channel, wrapping. */
@@ -52,12 +56,17 @@ function announce(message: string) {
 
 /** Starts the pick: in the TV room, a powered set is switched off first (the CRT collapses). */
 function commit(channel: LiveChannel, set: (p: Partial<ChannelState>) => void) {
+  let resume: ChannelState['resume'] = null;
   const calm = useDisplayStore.getState().reducedMotion;
   if (useEnvironmentStore.getState().id === 'tv-room') {
     const intro = useIntroStore.getState();
-    if (isPoweredStatus(intro.status)) intro.power();
+    if (isPoweredStatus(intro.status)) {
+      resume = intro.status === 'ended' ? 'diary' : 'card';
+      intro.power();
+    }
   }
-  set({ current: channel, pending: null, started: !calm });
+  // Changing channel between live channels keeps what to restore.
+  set({ current: channel, pending: null, started: !calm, ...(resume ? { resume } : {}) });
   const where = channel.number === null ? 'your link' : `channel ${channel.number}`;
   announce(`${where}, ${channel.name}, live`);
 }
@@ -66,6 +75,7 @@ export const useChannelStore = create<ChannelState>()((set, get) => ({
   current: null,
   pending: null,
   started: false,
+  resume: null,
   digits: '',
 
   request(channel) {
@@ -91,9 +101,20 @@ export const useChannelStore = create<ChannelState>()((set, get) => ({
 
   play: () => set({ started: true }),
 
+  playStory() {
+    set({ current: null, pending: null, started: false, resume: null });
+    const intro = useIntroStore.getState();
+    if (useEnvironmentStore.getState().id === 'tv-room' && !isPoweredStatus(intro.status))
+      intro.power();
+  },
+
   stop() {
     if (!get().current) return;
-    set({ current: null, pending: null, started: false });
+    const { resume } = get();
+    set({ current: null, pending: null, started: false, resume: null });
+    // TV room: the set comes back on at the diary index if the story had ended, else the test card.
+    if (resume && useEnvironmentStore.getState().id === 'tv-room')
+      useIntroStore.getState().resumeIdle(resume);
     announce('Stopped. Back in the room.');
     useUiStore.getState().requestFocus('guide');
   },
