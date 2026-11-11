@@ -33,6 +33,7 @@ Phase 3 delivered the design spec, greyscale tokens, a favicon and the font plan
 ## Open questions
 - Resolved (integration pass, 2026-11-10), both with the defaults: no ghost figure under Calm, and the wall decal ("Occupant's shadow") is kept at alpha 0.10 or less.
 - Integration pass: design-spec updated to match round 2 as built. Roll lasts 2.4 to 3 s and is never applied to the test card. VT323 advance is 0.4 em, so cell sizing comes from `measureText` (section 14). Ghost text cap is effectively `uGhostTextCap` x 0.5, with body text at 5:1 or better. Bleed streaks are 0.25 cell wide. Timing figures in 6.3 and 16.2 now point at `src/state/timing.ts`.
+- QA round 1: recorded the tech lead's decisions in design-spec. BUG-1: the 56 per cent figure is the whole set (cabinet plus knob panel), centred, with D and the camera target from the set's bounding box (4.1, 4.2); creep must never clip the set (4.2, 16.6.4). The 3d-set glass is therefore smaller, so the grid uses 32 or 26 columns at about 1290 px wide and under (3.2, 5.2 note). BUG-3: the under-0.10 tile-step limit stands, with a dissolve of 300 ms or less where a page or screen change would exceed it (7.1, 6.3). BUG-4: 2D warm-up and collapse stay within 0.05 (7.1). BUG-5: story time is real elapsed time and only gaps of about 1 s or more count as a pause (6.3).
 
 ## Requests for other agents
 

@@ -108,7 +108,7 @@ The mode is re-evaluated at load, and on resize or orientation change only while
 
 - Canvas fills the viewport at `--z-canvas`; DOM sits above with `pointer-events: none`, and each control sets `auto`.
 - The centre of the viewport is clear. HUD at the top edge, dock centred 24 px above the bottom edge (`--space-6`).
-- The set's projected screen width: `Wscreen = min(0.56 x vw, 0.82 x vh)`, at the watch pose (section 4.2). At 1024 x 600 this is 492 px; W = 453 px, so 40 columns.
+- The whole set (cabinet including the knob panel) is framed at `Wset = min(0.56 x vw, 0.82 x vh)` wide at the watch pose, centred horizontally (section 4.2; QA round 1, BUG-1). The glass is the share of the cabinet width given by `TV_LAYOUT` (about 0.58), so the glass is about `0.58 x Wset`, and the grid's W is 0.92 of that. The earlier figures in this section (glass at 56 per cent of the width) are superseded: for example, at 1440 x 900 the glass is about 470 px and W about 430 px (40 columns); at 1024 x 600 the glass is about 330 px and W about 305 px (26 columns, about 19.6 px glyphs). The frontend derives W from the glass's actual projected width, not from these figures.
 - Dock keys are real DOM buttons, so the experience works without picking 3D objects. The 3D power knob is a second route to the same action.
 - Dock keys: height `--target-min` (44 px) or more, width fits label plus `--space-4` padding each side.
 
@@ -169,7 +169,7 @@ On `3d-screen`, if the dock holds more than four keys, the extras collapse into 
 
 ### 4.1 Rig
 
-Perspective camera, vertical FOV 32 degrees, target at the screen centre. Orbit-style rig (drei `CameraControls` or `OrbitControls`), pan disabled, damping 0.08. Distances below are expressed relative to the "watch distance" D (the distance at which `Wscreen = min(0.56 x vw, 0.82 x vh)`), so they stay correct on every window size. Recompute D on resize (debounced 150 ms) while no tween runs.
+Perspective camera, vertical FOV 32 degrees. Orbit-style rig (drei `CameraControls` or `OrbitControls`), pan disabled, damping 0.08. Distances below are expressed relative to the "watch distance" D, the distance at which the whole set's bounding box (cabinet including the knob panel, not the glass) is `Wset = min(0.56 x vw, 0.82 x vh)` wide, so they stay correct on every window size. The camera target is the centre of the set's bounding box, so the set is centred horizontally in the frame (this is no longer the glass centre, because the set is not symmetric about its glass). Recompute D on resize (debounced 150 ms) while no tween runs.
 
 ### 4.2 Poses
 
@@ -177,6 +177,8 @@ Perspective camera, vertical FOV 32 degrees, target at the screen centre. Orbit-
 |---|---|---|---|---|
 | Idle (set OFF) | +14 deg (towards the visitor's right) | +5 deg | 1.45 x D | Load, `loading`, `ready` |
 | Watch | 0 deg | 0 deg | 1.0 x D | From Power press; `ended` |
+
+Decision (tech lead, QA round 1, BUG-1): "the set at about 56 per cent of the viewport width" means the whole set, the cabinet including the knob panel, centred horizontally. D and the camera target come from the set's bounding box, not the glass. The Idle pose uses the same box. Camera creep (16.6.4) must never clip the set: at maximum creep the whole set's bounding box stays inside the viewport, so `creepMax` is also limited by the set's width and height (`creepMax = min(0.22, the largest value that keeps the set's projected box within 0.95 of the viewport width and 0.95 of its height)`), in addition to the screen-height rule already in 16.6.4. The knobs must remain visible at every creep value. The dock keys sit below the set and must not cover the set at Watch (the set's bottom edge is at least `--dock-size` + `--space-6` above the viewport bottom).
 
 ### 4.3 Interactions
 
@@ -241,6 +243,8 @@ Worked examples:
 
 The 360 px portrait case is 316, below 320, so it uses 26 columns at 20 px: glyphs are comfortably over 16 px. Round W down to a whole pixel before choosing the band.
 
+Note (QA round 1): the two 3d-set rows above assumed the glass alone at 56 per cent of the width. With the whole set at 56 per cent (4.2), the 3d-set glass is smaller (see 3.2), so 3d-set at about 1290 px wide and under uses 32 or 26 columns instead of 40. The bands and the 16 CSS px floor are unchanged; only the inputs moved.
+
 ### 5.3 Page layout
 
 | Row | Content |
@@ -300,7 +304,9 @@ Reveal rules (the frontend exports these constants; QA computes duration from `i
 
 The values are not repeated here because the frontend retunes them (target for the ghost story: 65 to 75 s of intro, never outside FR-8's 45 to 90 s). `src/state/timing.ts` is the source of truth, and `estimateIntroDurationMs` there gives the baseline without effect holds. Measured with the first constants in round 2: 89.3 s with 17 commits and 7 agents, because the facts grow the text (each role, stack entry or commit-count digit adds characters) and effect holds add up to 6 s per page. Rule: after any change to the copy, the role list or the constants, re-measure the full run and keep it inside 45 to 90 s. Page timings are the cue schedule's basis (section 16.3), so changing a constant moves every cue automatically because cues are anchored to lines, not to seconds.
 
-Page change: a hard cut (page cleared and the next one starts at row 1). No static burst unless the Could feature in 7.4 is built. Header tag updates with the cut.
+Clock: story time is real elapsed time. Only a gap of about 1 s or more between frames counts as a pause (hidden tab, device sleep) and is not added to story time; shorter gaps, including slow frames on weak devices, are counted in full, so the warm-up stays within FR-5 and the story within FR-8 even at a few frames per second (QA round 1, BUG-5).
+
+Page change: a hard cut (page cleared and the next one starts at row 1), except where the step would reach the tile limit in 7.1, which uses a dissolve of 300 ms or less. No static burst unless the Could feature in 7.4 is built. Header tag updates with the cut.
 
 Pause: freezes reveal and the page timer; the block cursor stops blinking and shows solid.
 
@@ -339,6 +345,8 @@ When the last page's hold plus `END_HOLD_MS` completes, or on Skip:
 
 1. No element or region changes between two states more than 3 times in any one second. Counted by the QA frame check (screen area and full frame).
 2. Any change of relative luminance across more than 25 per cent of a 10-degree visual field (use 341 x 256 CSS px as the area at a typical viewing distance, so about 87,000 px) must stay below a 10 per cent swing of relative luminance when the darker state is under 0.80. Design margin: keep the swing below 5 per cent of relative luminance per 100 ms for large areas (more than 87,000 px or 25 per cent of the screen, whichever is smaller).
+   - Decision (tech lead, QA round 1, BUG-3): the under-0.10 tile-step limit stands, measured on 341 x 256 CSS px tiles at 10 Hz. A page or screen change that would step a tile by 0.10 or more (for example a dense screen with several inverse fact blocks giving way to a nearly empty one) must use a dissolve or luminance ramp of 300 ms or less instead of a hard cut. This refines the "hard cut" in 6.3: the cut stays a cut where the step is under the limit, and becomes a short dissolve where it is not. The frontend-developer implements it; QA's flash test enforces the 0.10 limit.
+   - Decision (BUG-4): the 2D warm-up and collapse stay within the 0.05 design margin per 100 ms. If the start overlay's text and Calm switch disappearing is what causes the first step, fade them over the opening of the picture rather than removing them at once.
 3. Mean screen luminance never exceeds 0.50 (relative) and never steps up by more than 0.15 inside 500 ms, except as the monotonic ramps in 6.1.
 4. No red-based flash rule applies (greyscale), but the general limits above stay in force.
 5. No full-area white frame, ever. The brightest large area is the test card's white bars, which total under 8 per cent of its area.
