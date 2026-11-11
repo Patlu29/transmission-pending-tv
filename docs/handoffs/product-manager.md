@@ -1,6 +1,14 @@
 # Handoff: product-manager
 
-## v2 planning (live channels, draft)
+## v2 finalised (user decisions applied)
+- docs/requirements/v2-live-channels.md rewritten as final scope: "Public archive + private backend". Public: channel 0 plus 3 to 5 openly licensed archive channels on a clock schedule. Private: login-only household relay of the user's own tuner (DD Free Dish), never on the public site.
+- Resolved Q-V2-1 to Q-V2-4. Colour/B&W switch (V2-FR-12) amends FR-2 for v2 video only. Runtime limiter accepted; Calm and 2D play only pre-checked clips. Channel 0 is the Occupant.
+- Conflicts C1 to C10 updated: NFR-7 and NFR-8 apply to the public build; the private build is a separate deployment target.
+- New: V2-FR-1 to V2-FR-38, V2-NFR-1 to V2-NFR-8, L1 to L6, stories V2-US-1 to V2-US-11.
+- Remaining open questions: Q-V2-5 archive footage themes (user approves each clip), Q-V2-6 private hosting and VPN.
+- Requests: architect, relay, auth, limiter, clock-schedule design, CI check that the public bundle holds no relay trace; devops-engineer, secret scan and two deployment targets; technical-artist, colour switch look and per-clip flash check.
+
+## v2 planning (live channels, earlier draft, superseded)
 - New file: docs/requirements/v2-live-channels.md. v1 requirement files were not touched.
 - Content: goals, fit with v1 (Occupant's story as channel 0), 10 listed conflicts with v1 requirements (C1 to C10), legal constraints (L1 to L7), V2-FR-1 to V2-FR-20, V2-NFR-1 to V2-NFR-7, stories V2-US-1 to V2-US-8, story map.
 - Blocking open questions: Q-V2-1 signal source, Q-V2-2 public site or local build, Q-V2-3 region, Q-V2-4 greyscale video.

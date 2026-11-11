@@ -1,143 +1,166 @@
-# 0009: Feasibility of live TV channels with channel changing (v2)
+# 0009: Channels for v2: public archive channels and a private satellite relay
 
 ## Status
-Proposed (2026-11-11). Feasibility study only; nothing is built. It needs user answers (end of this ADR) and v2 requirements from the product manager before it can be accepted. If accepted, it amends ADR 0002 (no backend), ADR 0005 (one screen source) and the v1 requirements NFR-7 (no runtime third-party requests), NFR-13 and FR-X3 (no real broadcaster marks), as noted per option.
+Accepted (2026-11-11). It replaces the Proposed feasibility version of the same date.
+
+It amends three earlier decisions:
+- ADR 0002 (no backend): adds a separate private deployment target, specified in ADR 0010. The public site stays static.
+- ADR 0005 (one screen source): adds a second source, video, through a pre-pass.
+- v1 FR-2 (everything greyscale): colour is allowed only inside the video picture, and only when the visitor turns the Colour switch on.
 
 ## Context
-User request for v2: "telecast the public TV channels from satellite connection and user can change the channels". v1 (the haunted-TV ghost story) is built and in QA, and must not be disturbed.
+User request for v2: "telecast the public TV channels from satellite connection and user can change the channels".
 
-What v1 gives us today (from the handoffs, `docs/architecture.md` and `docs/performance-report.md`):
+The user's decisions (final, 2026-11-11):
 
-| Area | Current state | Relevance to v2 |
+| Topic | Decision |
+|---|---|
+| Sequencing | v1 ships first: QA fixes, delivery and a `v1.0` tag. v2 is then built on a branch |
+| Shape | "Public archive + private backend" (option D of the feasibility study). (a) The public static site gets channel 0 (the Occupant, unchanged) plus 3 to 5 openly licensed archive channels played out on a clock schedule. (b) A private, login-only backend for the household, on the user's own always-on machine next to their existing SAT>IP box or PC tuner, relays DD Free Dish free-to-air channels as HLS for personal viewing. It is reachable only on the home network or over a private VPN, and is never exposed to the public internet |
+| Separation | The public build contains no relay code paths. The private build is a separate deployment target |
+| Colour | A Colour/B&W switch, default B&W. Only the video can be colour, through the pre-pass; the chrome stays greyscale |
+| Flash | The runtime limiter is accepted. Calm and 2D modes play pre-checked clips only |
+| Channel 0 | The Occupant |
+
+What v1 provides (from the handoffs, `docs/architecture.md` and `docs/performance-report.md`):
+- **Screen:** one teletext `CanvasTexture` drives `uMap` of the CRT `ShaderMaterial`. The shader reads `uMap` as luminance, writes `vec3(lum)`, and samples mip levels for glow (`uGlowLod`) and for the ghost text mask (LOD 3.5).
+- **2D mode:** `Screen2D` with `crt2d.css`, and no shader.
+- **Stores:** `displayStore`, `introStore`, `hauntStore` (whose `knobCue` already turns `knob-channel`).
+- **Budgets:** initial JS 96.8 kB gzip; first view about 1.4 MB.
+- **Flash rules:** design spec section 7.
+- **Facts:** strict CI build, with an intro that uses `stack.list` and `agents.roles`.
+
+## Decision
+
+### 1. Two deployment targets from one repo
+
+| | Public site | Private relay (ADR 0010) |
 |---|---|---|
-| Hosting | Static bundle, no backend (ADR 0002), relative `base: './'` (ADR 0007), public repo `Patlu29/transmission-pending-tv`; GitHub Pages is the likely host | Pages is HTTPS-only and cannot run a server |
-| Screen | One teletext canvas wrapped in a `CanvasTexture` and fed to the CRT `ShaderMaterial` as `uMap` (ADR 0005) | A `VideoTexture` can take the same slot |
-| Shader | `crt.frag.glsl` reads `uMap` as luminance (`dot(rgb, LUMA)`) and writes `vec3(lum)`, so its output is grey by construction. It also samples `uMap` at a mip level for glow (`uGlowLod`) and at LOD 3.5 for the ghost text mask | Video is desaturated for free. A raw `VideoTexture` has no mipmaps, so glow and the text mask would behave differently |
-| 2D mode | `Screen2D` with `crt2d.css` (scanlines, vignette, static); no shader | Needs its own greyscale and flash answer |
-| Stores | `displayStore` (mode, `reducedMotion`, `audio`, `screenCanvas` and `screenVersion`), `introStore` (story playback, diary, page digits), `hauntStore` (written only by the scheduler, including `knobCue` for `channel` and `volume`) | Channel state needs a new store, and the knob and digit inputs are already taken |
-| TV body | Has a `knob-channel` node with picking | Natural channel-change control |
-| Flash | Design spec section 7: no more than 3 flashes per second; large-area swing under 10 per cent relative luminance; design margin 5 per cent per 100 ms over about 87,000 px | Live footage is not authored by us, so it can break these limits |
-| Audio | Off by default; an `AudioContext` is created only on unmute (FR-22) | Video sound must follow the same rule |
-| Budgets | Initial JS 96.8 kB gzip; first view about 1.4 MB (3D) and 0.38 MB (2D) | Video must not count against the first view |
-| Facts | Strict CI build; the intro uses `stack.list`, `git.commitCount` and others | A new dependency must not silently change the v1 intro |
+| Built by | `npm run build` (no `VITE_RELAY`) | `VITE_RELAY=1` build, packaged with `server/` |
+| Hosted on | The static host (GitHub Pages expected), relative base (ADR 0007) | The household's always-on machine, behind Tailscale HTTPS |
+| Channels | 0 (the Occupant) and 1 to 5 (archive) | 0 to 5 as public, plus live channels from 10 upward |
+| Backend | None | Fastify relay fronting Tvheadend and MediaMTX |
+| Relay code | Absent, and CI proves it (ADR 0010) | Present |
 
-## Options compared
+Live channels start at 10, so archive channel numbers stay the same in both builds.
 
-Costs are indicative 2026 street prices in USD, not verified; the user should price them locally. Effort is in agent-days, excluding user time.
+### 2. Archive channels (public and private)
+- **Sources:** 3 to 5 channels of footage with a verified open licence: CC0, Public Domain Mark, or CC BY with attribution, for example items from the Internet Archive. Each clip has evidence recorded (source URL, licence URL, date checked, jurisdiction note). No footage that shows broadcaster idents or logos (FR-X3 stays in force).
+- **Encoding:** H.264 Main in MP4 with `faststart`, 640 x 480 (4:3) or source aspect, about 400 kbps. Colour is kept when the source has it (the switch decides what is shown). Audio is optional: AAC 64 kbps mono, or none for silent films. About 0.18 GB per hour.
+- **Playout:** wall-clock scheduling. `position = (now - epoch) mod loopLength` per channel, so every visitor sees the same "broadcast" with no backend. A channel change seeks to that position. GitHub Pages answers byte-range requests (checked: `206`, `accept-ranges: bytes`), so plain MP4 seeking works and the public site needs no HLS library.
+- **Lineup:** `src/content/channels.json` (technical-artist, with labels from the ux-ui-designer). It holds number, label, clip file, sha256, size, duration, licence, evidence URL, attribution, captions or description file, and the flash-analysis result.
+- **Accessibility:** each clip has a text description (WCAG 1.2.1), or WebVTT captions if it has speech (1.2.2). Both are shown in the DOM transcript.
 
-| | (A) Real satellite on the user's network | (B) Official broadcaster internet streams | (C) Openly licensed archive "channels" | (D) Hybrid: C by default, A as an opt-in local input |
-|---|---|---|---|---|
-| **Signal path** | Dish and LNB, then a DVB-S/S2 tuner (a SAT>IP server, or a USB tuner on a small PC running Tvheadend), then a relay that turns MPEG-TS into HLS or fMP4, then hls.js in the browser | The broadcaster's published HLS URL, played with hls.js (Safari plays HLS natively), or the broadcaster's own embed player | Public-domain or CC-licensed footage (for example from the Internet Archive), re-encoded to small greyscale H.264 MP4 and served from our own origin; a wall-clock schedule makes it feel "on air" | C as channels 2 to n on the public site; A shown only when the user configures a local relay address |
-| **Hardware and cost** | Dish and LNB (if none) USD 50 to 200; SAT>IP box USD 100 to 300, or USB DVB-S2 tuner USD 50 to 150 plus a mini PC with a hardware H.264 encoder (for example Intel Quick Sync) USD 150 to 300. A Raspberry Pi 5 has no hardware H.264 encoder, so it cannot transcode MPEG-2 channels in real time reliably. Optional domain for HTTPS about USD 15 a year | None | None. Media stays within GitHub Pages limits (1 GB site; about 100 GB a month bandwidth, soft) | As C, plus A's hardware only for users who want it |
-| **Backend need** | Yes, but on the user's hardware, not on the host: Tvheadend (or the SAT>IP box) plus ffmpeg or a media server (for example MediaMTX) to transcode MPEG-2 video and MP2 or AC-3 audio to H.264 and AAC, package HLS, and send CORS headers | No, unless the stream lacks CORS headers. A CORS proxy would make us a redistributor (rejected) | No | No for the public site; A's relay for opt-in users |
-| **Hosting impact** | Pages is HTTPS: a page there cannot load `http://192.168.x.x` media (mixed content is blocked), and Chrome's Local Network Access asks permission before a public site reaches a private address. Either the relay gets real HTTPS (own domain or a tunnel) plus that permission, or a "local edition" of `dist/` is served from the relay box (ADR 0007's relative base makes that a copy, not a rebuild). It only works on that network unless the stream is exposed publicly | Static site unchanged, but every view makes runtime requests to third-party origins: breaks NFR-7 as written | Static site unchanged; media on the same origin. Large binaries need Git LFS plus an Actions-based Pages deploy (Pages does not serve LFS files from a branch), or a separate first-party media bucket | As C; the A path is unchanged |
-| **Legal or rights exposure** | Receiving free-to-air channels for personal viewing is usually lawful. Streaming them beyond the home is retransmission, which needs rights in nearly every jurisdiction. Decrypting encrypted services is unlawful. Live channels show broadcaster logos and idents, which conflicts with FR-X3 and NFR-13 | Set by each broadcaster's terms. Many allow only their own player, forbid altering the picture (greyscale and CRT effects are alterations), geo-block, or use DRM. Aggregated "free IPTV" lists have unclear rights: do not use. Needs written permission or terms checked per channel | Low, if every item has a verified licence (CC0, Public Domain Mark, CC BY with attribution). Public-domain status varies by country, so record the evidence per item. Avoid footage containing broadcaster idents (FR-X3) | Low for the public site (C). A stays personal-use, on the user's network |
-| **Latency** | Glass to glass: standard HLS 6 to 15 s, low-latency HLS 2 to 5 s, WebRTC under 1 s. Channel change 2 to 6 s (retune, lock, keyframe, first segment) | 10 to 40 s behind broadcast; channel change 1 to 5 s | Not live (scheduled playout). Channel change 0.5 to 1.5 s (seek to the nearest keyframe) | Per path |
-| **Flash control** | Unknown content: runtime limiter only (see Rendering) | Unknown content: runtime limiter only, and DRM streams cannot be processed at all | Known content: analysed offline at build time, plus the runtime limiter. Strongest guarantee | C strong; A as A |
-| **Captions (WCAG 2.2 AA, NFR-6)** | 1.2.4 needs live captions. DVB subtitles are often bitmaps or missing, so AA conformance is unlikely | Depends on the stream (WebVTT sometimes present) | Achievable: pick silent films (intertitles) and give each a text description (1.2.1), or add WebVTT captions we write | C conformant; A flagged as non-conformant opt-in |
-| **New dependencies** | `hls.js` 1.7.4 (released 2026-10-28), lazy-loaded; maybe `mpegts.js` 1.8.2 instead of server-side HLS packaging | `hls.js` | None: `<video>` plays MP4 H.264 in every target browser | As C; `hls.js` only in the lazy local-input chunk |
-| **Effort** | 8 to 12 agent-days plus a user hardware and setup weekend; ongoing support for one home network | 3 to 5 agent-days, plus open-ended rights work; fragile, because URLs and terms change without notice | 5 to 7 agent-days, plus curation time | 7 to 9 agent-days for C plus the local-input hook; full A is later work |
+### 3. Media hosting: Git LFS with an Actions deploy to Pages
 
-## Rendering (applies to every option)
+| | Git LFS plus Actions Pages deploy (chosen) | Media bucket on a separate origin |
+|---|---|---|
+| Origin | Same as the site, so there is no CORS setup, no NFR-7 change and the relative base works | Second origin: CORS rules needed for WebGL, and a NFR-7 amendment plus disclosure |
+| Versioning | Media is pinned to the commit, consistent with "as of commit" | Outside git; needs content-addressed names to stay reproducible |
+| Limits (GitHub docs, checked 2026-11-11) | GitHub Free: LFS 10 GiB storage and 10 GiB bandwidth a month. Pages: published site at most 1 GB, soft 100 GB a month, deploys time out after 10 minutes | Effectively none at this size |
+| Cost | USD 0 a month within the budget below | Provider fees plus a custom domain (about USD 10 to 15 a year); not needed now |
 
-### Video into the CRT shader
-- Create a hidden `<video>` element (`playsinline`, `muted`, `crossOrigin="anonymous"`), kept in the DOM, and wrap it in `THREE.VideoTexture` (three 0.187 updates it through `requestVideoFrameCallback`).
-- **Add a pre-pass rather than feeding video straight into `uMap`.** Video goes into a small luminance render target at source resolution (for example 640 x 480, `R8`, mipmaps on), and `uMap` points at that target's texture. This gives:
-  1. Greyscale at the source, so the shader's luminance read stays exact.
-  2. Mipmaps, so `uGlowLod` and the LOD 3.5 ghost text mask keep working unchanged.
-  3. A place for the flash limiter (below).
-  4. A place to composite an on-screen channel number from the teletext canvas.
-- **Desaturation.** The pre-pass and the shader both reduce to luminance, so FR-2 holds by construction in 3D. In 2D, use CSS `filter: grayscale(1)` on the `<video>`. Each output channel is the same weighted sum, so R = G = B (QA re-samples as today).
-- **CORS.** WebGL refuses cross-origin video without CORS: the media and every HLS segment need `Access-Control-Allow-Origin`. Same-origin media (option C) avoids the issue.
-- **DRM.** Encrypted (EME) video cannot be uploaded to WebGL at all, and on some platforms CSS filters are not applied to it. DRM channels can never go through the CRT shader or be desaturated reliably, so they are out of scope.
-- **Frame loop.** Video needs continuous frames while a video channel is on. Cap rendering at the video frame rate (25 or 30 FPS), keep `AdaptiveDpr`, and pause when the tab is hidden.
-- **Haunt effects.** The ghost, roll and haunt vignette must be zeroed on video channels. The haunt scheduler only runs during the story on channel 1.
+- **Budget:** archive media at most **600 MB in total**, which is about 3.3 hours across all channels (for example 5 x 40-minute loops). That leaves the Pages 1 GB site limit with room for the app and new versions. Every pushed version of an LFS file counts towards storage, so re-encodes must be deliberate: at most 5 full catalogue versions within 10 GiB.
+- **Bandwidth control:**
+  - CI caches LFS objects (`actions/cache`, keyed on the LFS object ids), so a deploy normally downloads nothing.
+  - Developers clone with `GIT_LFS_SKIP_SMUDGE=1` unless they work on media.
+  - Visitors download from Pages, not LFS, so their viewing never touches the LFS quota.
+- **Fail loudly:** with no payment method on file, exceeding the LFS bandwidth quota disables LFS for the month, and checkouts get pointer files. The build checks every clip's size and sha256 against the lineup and refuses LFS pointer text, so a pointer is never published as an `.mp4`.
+- **Cost recorded:** USD 0 a month at the planned size. Revisit, and move to a bucket under a domain we own, if the catalogue grows past 600 MB or Pages traffic nears 100 GB a month (about 2,500 ten-minute viewing sessions).
 
-### Flash limiter (WCAG 2.3.1)
-- **Feasible, and cheap.** In the pre-pass, keep the previous displayed luminance in a ping-pong render target and clamp each texel's change per frame: `out = prev + clamp(cur - prev, -r * dt, +r * dt)`, using real frame time. Choose the rate `r` so a 10 per cent relative-luminance swing takes at least about 0.35 s. Then a flash (a rise and a fall) needs at least 0.7 s, which caps the output well under 3 flashes per second for every pixel, so also for every region. The design-spec margin (5 per cent per 100 ms over large areas) is met as a by-product. Cost: two extra fetches at 640 x 480, negligible next to the CRT pass.
-- **Visible cost.** Hard cuts become soft fades of about 0.3 s, and fast bright motion leaves short trails. On a "1970s CRT" this reads as phosphor persistence, so it suits the look, but the ux-ui-designer should approve it.
-- **How strong the guarantee is.** It is a mathematical bound on the luminance the screen shader outputs, which is stronger than a heuristic detector. It is **not** a certified test (such as a Harding or PEAT pass) and does not cover:
-  - the 3D room light driven by screen luminance (already low-passed at 2 Hz, so it should be bounded too, but it must be measured);
-  - the 2D path, where the `<video>` element is shown by the browser and our shader never runs;
-  - spatial-pattern risk (high-contrast stripes), which 2.3.1 does not cover but broadcast guidelines do;
-  - pauses: after a dropped or paused stretch, the limiter must continue from its last state and must not jump.
-- **Recommended policy:**
-  - In 3D, live sources (A and B) play only through the limiter.
-  - In 2D, only content cleared offline (C) may play. Live sources show a "no signal" card.
-  - Under Calm, video does not auto-start; the visitor presses Play, and the limiter rate is halved.
-  - C clips are also analysed at build time: a per-frame luminance pass with ffmpeg over a block grid, and any failure stops the build.
+### 4. Rendering
 
-### Autoplay and sound
-- Start playback inside the Power or channel-change click handler (user activation), not with the `autoplay` attribute. All target browsers then allow it, including iOS Low Power Mode, which blocks even muted autoplay.
-- Video is **muted by default**. The existing Sound key (`displayStore.audio`) unmutes the video and the synthesised hum together, as FR-22 requires.
-- Chrome may pause muted media that is off-screen. Keep the video element attached, sized 1 px with zero opacity, not `display: none`, and re-call `play()` on `visibilitychange`.
+**Video pre-pass (technical-artist).** A hidden `<video>` (`playsinline`, `muted`, kept in the DOM at 1 px with zero opacity, never `display: none`) feeds a `THREE.VideoTexture`. One pre-pass renders it into a small ping-pong render target at source resolution (about 640 x 480, RGBA8, mipmaps on), and the CRT material's `uMap` points at that output. The pre-pass:
+1. applies the Colour/B&W choice (B&W writes luminance to all three channels);
+2. runs the flash limiter;
+3. composites the on-screen channel number from the teletext canvas;
+4. provides the mipmaps that `uGlowLod` and the ghost text mask need.
 
-### Channel state (new store; frontend-developer)
-A new `channelStore` leaves `introStore`, `displayStore` and `hauntStore` unchanged:
+**CRT shader change (technical-artist).**
+- A new uniform `uColour` (0 or 1): `picRGB = mix(vec3(pic), rgb, uColour)`, and the existing effects (grain, glow, bar, vignette) stay grey and additive.
+- `uColour` is forced to 0 whenever the screen shows the teletext canvas (channel 0, guide, test card, "no signal"), and the ghost, roll and haunt vignette are forced to 0 on video.
+- Bezel, room, dock and every UI element stay greyscale in all states.
+
+**Greyscale test (qa-engineer).** In B&W (the default) the whole frame stays R = G = B within 2 levels, exactly as v1. With Colour on, the same holds everywhere outside the screen picture.
+
+**2D mode.** The archive `<video>` is shown directly with `crt2d.css`, plus CSS `filter: grayscale(1)` unless Colour is on. Every output channel is then the same weighted sum, so B&W is exact. Live channels are not available in 2D (see Flash).
+
+**Frame loop.** Render continuously only while a video channel plays, capped at the video frame rate (25 or 30 FPS). Keep `AdaptiveDpr`. Pause when the tab is hidden. V2-NFR-2's order applies: drop video resolution before removing effects.
+
+**Same-origin media.** Archive clips are on the site's own origin; live HLS is on the relay's own origin. WebGL therefore never meets cross-origin video, and no DRM content exists in either build.
+
+### 5. Flash safety (WCAG 2.3.1)
+- **Limiter (accepted).** For each texel, in linear RGB, the limiter clamps the change per frame: `out = prev + clamp(cur - prev, -r * dt, +r * dt)`.
+  - It uses real frame time and carries its state across dropped or paused frames, never jumping.
+  - Each channel is limited separately, so the bound covers relative luminance (a weighted sum of the channels) and the saturated-red rule that colour mode brings in.
+  - `r` is chosen so a 10 per cent relative-luminance swing takes at least 0.35 s. Any flash pair then takes at least 0.7 s, which keeps every pixel, and so every region, under 3 flashes a second and inside the design-spec margin.
+  - On a channel change the limiter is reset to the static frame, so the picture fades in under the same limit.
+- **Guarantee statement for v2 documents:** "a computed upper bound on the screen's output, not a certified flash test". It does not cover:
+  - the room light (already 2 Hz low-passed; QA measures it with video);
+  - the 2D `<video>` path;
+  - spatial patterns.
+- **Policy (accepted):**
+  - Live channels play only in 3D modes, through the limiter.
+  - Calm mode and 2D mode play pre-checked archive clips only, and under Calm only after the visitor presses "tune in" (V2-FR-11). A live channel in Calm or 2D shows a "no signal" page with the reason and a one-action way back.
+  - Archive clips are analysed offline when curated: ffmpeg frame luminance and red-ratio over the 87,000 px block grid of the design spec, section 7. The result is recorded against the clip's sha256. CI checks that the record matches the file, and re-runs the analysis only for clips whose sha256 changed.
+- **Look:** cuts become soft fades of about 0.3 s, and fast bright motion leaves short trails, read as phosphor persistence. The ux-ui-designer sets `r` within the bound.
+
+### 6. Autoplay and sound
+- Playback starts inside the Power or channel-change click handler (user activation), not with the `autoplay` attribute. This works in every target browser, including iOS Low Power Mode.
+- Video is muted by default. The existing Sound key (`displayStore.audio`) unmutes video and the synthesised hum together (FR-22, V2-FR-7).
+- `play()` is called again on `visibilitychange`, because Chrome may pause muted media it considers off-screen.
+
+### 7. State (frontend-developer)
 
 ```ts
-channels: ChannelDef[]            // from the generated lineup (see Facts)
-current: number                   // 1 = the v1 haunted story, unchanged
-tuning: 'locked' | 'tuning' | 'no-signal' | 'error' | 'blocked'   // blocked = policy (2D, Calm, DRM)
-pendingDigits: string             // channel-number entry
-setChannel(n), channelUp(), channelDown(), typeChannelDigit(d)
+// src/state/channelStore.ts (new)
+channels: ChannelDef[]      // archive lineup from src/generated; live entries added at run time (private build only)
+current: number             // 0 = the Occupant; default on power-on (V2-FR-4)
+tuning: 'locked' | 'tuning' | 'no-signal' | 'blocked' | 'busy' | 'signed-out' | 'error'
+                            // blocked: Calm, 2D or policy; busy: no free tuner; signed-out: relay session expired
+pendingDigits: string
+setChannel(n), channelUp(), channelDown(), typeChannelDigit(d), backToZero()
 ```
 
-- `displayStore` gains `screenSource: 'teletext' | 'video'`. The scene swaps `uMap` between the teletext texture and the video pre-pass when it changes.
-- Leaving channel 1 calls the existing `power`/`skip` paths and pauses the story. Returning resumes, or replays, as the ux-ui-designer decides.
-- The tuning wait shows the FR-23 static burst (250 ms, flash-rule compliant), then the test card with `TUNING...` until the first decoded frame (`loadeddata`), then the picture.
+- `displayStore` gains:
+  - `screenSource: 'teletext' | 'video'`. The scene swaps `uMap` between the teletext texture and the pre-pass output when it changes.
+  - `colour: 'bw' | 'colour'`, default `'bw'`, kept for the visit only, with no storage.
+- `introStore` and `hauntStore` keep their shapes. Leaving channel 0 pauses the story; returning resumes or replays it, as the ux-ui-designer decides.
+- During a channel change the screen shows the FR-23 static burst (within the flash rules), then the test card with `TUNING...` until `loadeddata`, then the picture.
 
-Input conflicts to resolve in design:
-- Digits already enter teletext page numbers (P100 diary), so channel entry needs its own mode or key (for example `C` then digits, or PageUp and PageDown).
-- `hauntStore.knobCue` turns the `knob-channel` during the story. That turn must stay cosmetic, and channel changes stay locked while the story plays on channel 1.
+Input rules:
+- Channel digits must not collide with P100 page digits (the ux-ui-designer chooses a channel-entry key or mode).
+- Channel changes are locked while the story plays on channel 0.
+- The haunt `knobCue` on `knob-channel` stays cosmetic.
 
-### Fact pipeline and strict CI
-- **The v1 intro stays byte-for-byte the same** unless we choose otherwise:
-  - Do not add `hls.js` to `STACK_PACKAGES`; `stack.list` is in the intro.
-  - Do not upgrade the seven listed packages on the v2 branch without accepting an intro change.
-  - `git.commitCount` changes with every commit by design ("as of commit").
-- **New, build-validated lineup** (`src/content/channels.json`, ux-ui-designer and tech lead):
-  - Each entry has a number, name, kind (`story`, `archive`, `local`), source, licence (allow-list: CC0, Public Domain Mark, CC BY), evidence URL, attribution, file checksum, duration and flash-analysis result.
-  - `scripts/facts/` (architect) validates the lineup the same way it validates the template, and emits `src/generated/channels.ts`.
-  - Strict CI stops on a missing licence, a failed or missing flash analysis, a checksum mismatch, or a `local` channel with a hard-coded private address.
-- **No network at build.** Strict CI must stay reproducible (NFR-9), so it never fetches streams or archive items. Media is fetched once, checksummed and committed (LFS) or uploaded to the first-party bucket. CI only verifies checksums.
-- **New facts** (for example the channel count, or total archive minutes) come from the lineup and use the same `{{ }}` rules. They appear only if v2 copy uses them.
-- **First-view budget:** the channel UI and the video pre-pass are a lazy chunk loaded on the first channel change, so v1's 96.8 kB initial JS and 5 MB first view are unchanged.
+### 8. Fact pipeline and strict CI
+- **Channel 0 stays truthful, and its template does not change.**
+  - `hls.js` (private build only) is never added to `STACK_PACKAGES`.
+  - `server/` is a separate npm project with its own lockfile, not a workspace, so root stack facts are untouched.
+  - `agents.roles` will truthfully gain "backend developer" once that agent writes a handoff; v1's duration model already allows for 10 roles (71.1 s worst case).
+- **Lineup validator** (`scripts/facts/`, architect):
+  - Checks every archive entry against an allowed licence list, with evidence fields present.
+  - Checks file size and sha256, and refuses an LFS pointer.
+  - Checks a flash record exists, matches the sha256 and is a pass.
+  - Checks a description or captions file exists.
+  - Emits `src/generated/channels.ts`. In strict mode any failure stops the build.
+  - Any new facts (for example the channel count) follow the existing `{{ }}` rules.
+- **No network at build** (NFR-9): CI never fetches clips or streams; it only verifies them.
+- **Budget:** the channel UI and video pre-pass are a lazy chunk loaded on the first channel change. v1's initial JS and first view are unchanged, and no media is requested before the visitor tunes (V2-NFR-3).
 
-## Recommendation
-**Option D, delivered in phases, starting with C.**
+### 9. Options considered
 
-- C gives the user what is actually achievable on a public static site: a 1970s set whose channel knob really changes channels, showing real black-and-white broadcast-era footage, legally, with a strong flash guarantee, and with no backend or running cost.
-- A is the only way to get the literal "from satellite connection". It is feasible, but only on the user's own network and for personal viewing. It needs hardware, a relay and HTTPS work, and it cannot meet the captions requirement. So it should be an opt-in local input, not the public product.
-- B is not recommended. Its rights and CORS position must be re-checked per channel, DRM blocks the shader, and the URLs break without notice. Revisit only if the user has written permission from a specific broadcaster.
-
-| Phase | Work | Agents |
-|---|---|---|
-| 0. Freeze v1 | Tag the QA-passed v1 commit and build v2 on a branch. All v1 tests stay green in v2 CI | tech lead, qa-engineer |
-| 1. Requirements | v2 requirements and stories: lineup size, schedule, captions and description policy, flash policy, channel inputs, amendments to NFR-7, FR-X3, NFR-13 and ADR 0002 | product-manager (with these user answers) |
-| 2. Architecture | Accept this ADR; amend ADR 0005 (two screen sources) and add a lineup schema and validator to `scripts/facts/`; LFS or media-bucket decision with devops | architect, devops-engineer |
-| 3. Design | Channel input model (knob, keys, touch, digits without the P100 clash), OSD, tuning states, story-to-channel transitions, limiter look sign-off | ux-ui-designer |
-| 4a. Content | Curate 3 to 5 archive items, verify licences, encode greyscale 480p H.264 (about 300 to 500 kbps), write descriptions or captions, run the offline flash analysis | technical-artist (encode and analysis), ux-ui-designer (descriptions), user (licence sign-off) |
-| 4b. Build | `channelStore`, input wiring, scheduled playout, Sound integration | frontend-developer |
-| 4c. Build | Video pre-pass (luminance, mipmaps, limiter, OSD composite), `uMap` switching, haunt zeroing on video | technical-artist (pass and shader), scene-developer (texture lifecycle, frame cap, knob) |
-| 5. Performance | Video plus pre-pass on a real mid-range phone (30 FPS), memory, battery | performance-optimiser |
-| 6. QA | Greyscale sampling on video frames, flash frame analysis with deliberately flashing test clips through the limiter, autoplay on iOS and Android, v1 regression | qa-engineer |
-| 7. Delivery | LFS-aware Actions deploy or media bucket, range-request and caching headers | devops-engineer |
-| 8. Optional: local satellite input (A) | Relay recipe (Tvheadend, ffmpeg or MediaMTX, HTTPS, CORS), a `local` lineup entry configured at run time, Local Network Access handling, a "local edition" build. User sets up the hardware | architect (recipe), devops-engineer, frontend-developer, user |
+| Option | Outcome |
+|---|---|
+| (A) Real satellite path | Adopted, but private only, as the relay backend (ADR 0010). It can never be public: retransmission rights, broadcaster marks, and live captions not achievable |
+| (B) Broadcaster internet streams | Rejected: per-channel terms usually forbid altering the picture; frequent DRM, CORS and geo-blocking; URLs that break without notice |
+| (C) Openly licensed archive | Adopted for both builds |
+| (D) Hybrid | Adopted as the shape above |
 
 ## Consequences
-- If accepted: the site stays static on the public host. A user-run relay appears only in option A, and only on the user's network. ADR 0002 gains that exception.
-- The screen gets a second source and a pre-pass. The CRT shader itself barely changes.
-- New legal duties: licence evidence per clip, and no broadcaster marks.
-- Media storage moves the deploy to Actions with LFS (or a bucket), which devops must set up.
-- The flash guarantee for video is a computed bound, not a certification. It must be stated that way in v2 docs.
-
-## Questions only the user can answer
-1. **Literal satellite or the feeling of it?** Is "from satellite connection" a hard requirement (option A, hardware on your network, works only there), or is a convincing set of channels on the public site enough (option C)?
-2. **If satellite:** do you have a dish, and which satellite or service do you receive? Your commit timestamps are +05:30, so if you are in India, DD Free Dish is the free-to-air platform to check. Will you buy and run a tuner box and a small always-on PC, and is personal, home-network-only viewing acceptable?
-3. **Public exposure:** do you accept that live satellite channels must never be streamed from the public site (retransmission rights), and that the public site would show archive channels only?
-4. **Broadcaster streams (B):** do you have, or want to seek, written permission from a specific broadcaster? Without it, B is excluded.
-5. **Rules v1 set:** may v2 relax "no runtime third-party requests" (NFR-7) and "no real broadcaster marks" (FR-X3, NFR-13)? Live channels cannot meet the second.
-6. **Accessibility:** is an opt-in local live input acceptable even though it cannot meet WCAG 2.2 AA live captions, provided the public channels do?
-7. **Look and safety:** do you accept the flash limiter's soft cuts and motion trails on video, and that 2D mode and Calm mode play only pre-checked archive content (Calm only on request)?
-8. **Content and budget:** how many channels, and how many minutes of footage are you willing to host? Are you willing to approve licence evidence per clip yourself?
+- The public site stays static, free and same-origin. Archive channels make the channel knob real for every visitor without legal exposure.
+- The satellite feature exists only inside the household, through a separately deployed relay (ADR 0010). The public bundle provably contains none of it.
+- The CRT shader gains a colour path and a pre-pass. Greyscale remains the default and is enforced everywhere outside the video picture.
+- Deploys move to an Actions workflow with LFS and a cache. Media size is capped at 600 MB, and over-quota situations fail the build instead of publishing pointers.
+- The flash guarantee for live video is a computed bound and is documented as such. Calm and 2D never show live content.
+- v1 is untouched until it is tagged. v2 work happens on a branch, with the v1 test suite kept green.
