@@ -16,7 +16,7 @@ export const PICKER_ORDER: EnvironmentId[] = [
 
 export const ROOM_MOOD: Record<EnvironmentId, string> = {
   'mountain-sky': 'Stand on a summit above the clouds. The video floats in the sky.',
-  'tv-room': 'A 1970s set in a dark room. The story lives here.',
+  'tv-room': 'A floating light-field display in a dim room. The story lives here.',
   cinema: 'An empty auditorium, you in the middle.',
   'drive-in': 'A car at the drive-in, the screen through the windscreen.',
   'open-air': 'An open-air screen under string lights and a night sky.',
@@ -27,4 +27,6 @@ export const ROOM_MOOD: Record<EnvironmentId, string> = {
 };
 
 /** Room names used in announcements and the picker (the registry holds the working labels). */
-export const roomLabel = (id: EnvironmentId) => ENVIRONMENTS[id].label;
+/** The TV room's id is kept internally, but it is the Holo room everywhere the viewer sees it (T50-12). */
+const LABEL_OVERRIDE: Partial<Record<EnvironmentId, string>> = { 'tv-room': 'Holo room' };
+export const roomLabel = (id: EnvironmentId) => LABEL_OVERRIDE[id] ?? ENVIRONMENTS[id].label;

@@ -57,7 +57,7 @@ body {
 }
 
 .app[data-layout='screen'] {
-  background: var(--tv-bezel);
+  background: var(--color-bg);
 }
 
 .stage {
@@ -566,22 +566,18 @@ body {
   }
 }
 
-/* Content layers (the crt2d overlay from the technical-artist sits above them). */
+/* Content layers. */
 .screen2d__content {
   position: absolute;
   inset: 0;
 }
 
-.screen2d.is-off::after {
-  opacity: 0;
-}
-
 .screen2d.is-warming {
-  animation: crt-on 2200ms both;
+  animation: bloom-in var(--duration-bloom, 2200ms) both;
 }
 
 .screen2d.is-collapsing {
-  animation: crt-off 700ms both;
+  animation: fold-away 700ms both;
 }
 
 :root[data-calm='true'] .screen2d.is-warming,
@@ -632,60 +628,40 @@ body {
 }
 
 /*
- * Line grows, shrinks to a dot, holds, then opens to the picture. The opening and the opacity
- * ramp are spread over most of the 2.2 s so a 341 x 256 tile never steps by more than 0.05
- * per 100 ms (design-spec 7.1 margin). Eased in and out, no brightness pulse.
+ * Bloom-in (design-spec-2050 3.3): the card is revealed from a seed at its centre by a rounded mask
+ * that grows over 2.2 s, with a slow opacity ramp, so a 341 x 256 tile never steps by more than
+ * 0.05 per 100 ms. Fold-away is the reverse over 700 ms with a linear dim. No blur, no scanlines.
  */
-@keyframes crt-on {
+@keyframes bloom-in {
   0% {
-    transform: scale(0, 0.006);
-    opacity: 0;
-    animation-timing-function: ease-in-out;
+    clip-path: inset(49% 49% 49% 49% round var(--radius-screen));
+    opacity: 0.2;
+    animation-timing-function: var(--ease-soft);
   }
-  10% {
-    transform: scale(1, 0.006);
-    opacity: 0.3;
-    animation-timing-function: ease-in-out;
-  }
-  22% {
-    transform: scale(0.012, 0.012);
-    opacity: 0.3;
-  }
-  30% {
-    transform: scale(0.012, 0.012);
-    opacity: 0.3;
-    animation-timing-function: ease-in-out;
-  }
-  60% {
-    transform: scale(1, 0.006);
-    opacity: 0.5;
-    animation-timing-function: ease-in-out;
+  35% {
+    clip-path: inset(48% 8% 48% 8% round var(--radius-screen));
+    opacity: 0.4;
+    animation-timing-function: var(--ease-soft);
   }
   100% {
-    transform: scale(1, 1);
+    clip-path: inset(0 0 0 0 round var(--radius-screen));
     opacity: 1;
   }
 }
 
-/* Power-off: the picture dims linearly while it collapses, so no tile steps by more than 0.05 per 100 ms. */
-@keyframes crt-off {
+@keyframes fold-away {
   0% {
-    transform: scale(1, 1);
+    clip-path: inset(0 0 0 0 round var(--radius-screen));
     opacity: 1;
     animation-timing-function: linear;
   }
   60% {
-    transform: scale(1, 0.006);
+    clip-path: inset(46% 6% 46% 6% round var(--radius-screen));
     opacity: 0.45;
     animation-timing-function: linear;
   }
-  85% {
-    transform: scale(0.012, 0.012);
-    opacity: 0.2;
-    animation-timing-function: linear;
-  }
   100% {
-    transform: scale(0, 0);
+    clip-path: inset(49% 49% 49% 49% round var(--radius-screen));
     opacity: 0;
   }
 }
@@ -837,21 +813,21 @@ body {
 
 /* ---------- Colour / B&W: one filter, on the canvas element only (never on an ancestor of the player) ---------- */
 .scene-host canvas {
+  transition: filter var(--duration-colour) var(--ease-soft);
+}
+
+/* Monochrome (Colour off): one greyscale filter on the canvas element only. */
+.app[data-colour='off'] .scene-host canvas {
   filter: grayscale(1);
-  transition: filter var(--duration-colour) var(--ease-standard);
 }
 
-.app[data-colour='on'] .scene-host canvas {
-  filter: none;
-}
-
-/* Focus layout: the room is a dimmed backdrop, still filtered on the canvas only. */
+/* Focus layout: the room is a dimmed backdrop, filtered on the canvas only (no blur). */
 .app[data-focus='true'] .scene-host canvas {
-  filter: grayscale(1) brightness(var(--focus-backdrop-brightness));
+  filter: brightness(var(--focus-backdrop-brightness));
 }
 
-.app[data-focus='true'][data-colour='on'] .scene-host canvas {
-  filter: brightness(var(--focus-backdrop-brightness));
+.app[data-focus='true'][data-colour='off'] .scene-host canvas {
+  filter: grayscale(1) brightness(var(--focus-backdrop-brightness));
 }
 
 /* ---------- Player layer: a plain DOM layer ABOVE the canvas. No transform, filter, opacity, mask or blend. ---------- */
@@ -1452,12 +1428,11 @@ body {
 .skin2d {
   position: absolute;
   inset: 0;
-  filter: grayscale(1);
-  transition: filter var(--duration-colour) var(--ease-standard);
+  transition: filter var(--duration-colour) var(--ease-soft);
 }
 
-.app[data-colour='on'] .skin2d {
-  filter: none;
+.app[data-colour='off'] .skin2d {
+  filter: grayscale(1);
 }
 
 .skin2d__idle {

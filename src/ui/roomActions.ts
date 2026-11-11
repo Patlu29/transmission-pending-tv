@@ -10,19 +10,8 @@ import { playerController } from '@/ui/player/controller';
 const say = (m: string) => useUiStore.getState().announce(m);
 
 export function toggleColour(): void {
-  const settings = useSettingsStore.getState();
-  const env = useEnvironmentStore.getState().id;
-  const onChannel0 = env === 'tv-room' && useChannelStore.getState().current === null;
-  if (onChannel0) {
-    say('Channel 0 is always black and white.');
-    return;
-  }
-  settings.toggleColour();
-  say(
-    useSettingsStore.getState().colour === 'colour'
-      ? 'Room in colour.'
-      : 'Room in black and white.',
-  );
+  useSettingsStore.getState().toggleColour();
+  say(useSettingsStore.getState().colour === 'colour' ? 'Colour on.' : 'Monochrome.');
 }
 
 export function toggleFocus(): void {
@@ -58,6 +47,11 @@ export function toggleVideoMute(): void {
   const muted = usePlayerStore.getState().muted;
   playerController.setMuted(!muted);
   say(usePlayerStore.getState().muted ? 'Video muted.' : 'Video sound on.');
+}
+
+export function toggleSolidPanels(): void {
+  useSettingsStore.getState().toggleSolidPanels();
+  say(useSettingsStore.getState().solidPanels ? 'Solid panels on.' : 'Solid panels off.');
 }
 
 export function toggleRoomSound(): void {

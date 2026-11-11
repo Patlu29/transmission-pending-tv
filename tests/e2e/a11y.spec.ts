@@ -120,7 +120,7 @@ for (const mode of ['2d', '3d-screen'] as Mode[]) {
       expect(after('sound')).toBeGreaterThan(after('calm'));
       expect(after('text')).toBeGreaterThan(after('sound'));
       expect(
-        order.some((o) => o.startsWith('Television')),
+        order.some((o) => o.startsWith('Display')),
         'the stage region is a Tab stop',
       ).toBe(true);
       expect(focusStyles.length).toBeGreaterThan(3);

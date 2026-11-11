@@ -156,7 +156,9 @@ function Row({ channel }: { channel: GuideChannel }) {
           {channel.languages.map(languageName).join(', ')}, {channel.genre},{' '}
           {countryName(channel.country)}
         </span>
-        <span className={`guide-row__status${live ? ' is-live' : ''}`}>
+        <span
+          className={`guide-row__status${live ? (channel.stale ? ' is-stale' : ' is-live') : ''}`}
+        >
           {live ? (channel.stale ? 'LIVE (check)' : 'LIVE') : 'OFF AIR'}
         </span>
         {!live && <span className="guide-row__reason">{offAirReason(channel)}</span>}

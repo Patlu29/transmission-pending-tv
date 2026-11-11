@@ -72,7 +72,7 @@ export function TranscriptDialog() {
         <div className="dialog__body">
           <IntroPages tagFacts={false} />
           <section>
-            <h2>Build diary</h2>
+            <h2>Build log</h2>
             <ol className="dialog__diary">
               {facts.git.commits.map((c, i) => (
                 <li key={c.hash}>
@@ -98,7 +98,7 @@ export function TranscriptDialog() {
           </section>
           <details className="dialog__keys">
             <summary>Keyboard</summary>
-            <p>These keys work while focus is on the television or its controls.</p>
+            <p>These keys work while focus is on the display or its controls.</p>
             <dl>
               {SHORTCUTS.map(([key, what]) => (
                 <div key={key}>

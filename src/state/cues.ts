@@ -8,7 +8,7 @@ import { HAUNT_MIN_STEP_S } from './timing.ts';
  * anchors, cues or keys are errors; out-of-range values are clamped with a warning.
  */
 export const STATE_CUES = ['ghost', 'ghost-near', 'creep', 'dim', 'shadow', 'hum'] as const;
-export const EVENT_CUES = ['tremble', 'rewrite', 'bleed', 'roll', 'knob'] as const;
+export const EVENT_CUES = ['tremble', 'rewrite', 'bleed', 'roll', 'knob', 'glitch'] as const;
 export type StateCueKind = (typeof STATE_CUES)[number];
 export type EventCueKind = (typeof EVENT_CUES)[number];
 export type CueKind = StateCueKind | EventCueKind;
@@ -74,6 +74,7 @@ const SPECS: Record<CueKind, Spec> = {
   },
   bleed: { dur: num(3, 6), rows: num(1, 1, false) },
   roll: { dur: num(1.5, 3) },
+  glitch: { amp: num(0, 1), dur: num(1, 2) },
   knob: {
     which: { required: true, kind: 'enum', values: ['channel', 'volume'] },
     deg: num(-60, 60),
@@ -166,7 +167,7 @@ export function parseCues(text: string, intro: ResolvedIntro): CueParseResult {
 
     // Anchor rules per cue.
     if (
-      (kind === 'tremble' || kind === 'rewrite' || kind === 'bleed') &&
+      (kind === 'tremble' || kind === 'rewrite' || kind === 'bleed' || kind === 'glitch') &&
       (!anchor.lineId || !anchor.end)
     ) {
       errors.push(`${at}: "${kind}" needs a line anchor ending in @end (page-n@end)`);

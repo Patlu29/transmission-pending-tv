@@ -185,7 +185,7 @@ for (const mode of MODES) {
       expect(latency).toBeLessThan(500);
       if (mode === '2d')
         await page.waitForFunction(
-          () => /BUILD DIARY/.test(document.querySelector('[data-screen="2d"]')?.textContent ?? ''),
+          () => /BUILD LOG/.test(document.querySelector('[data-screen="2d"]')?.textContent ?? ''),
           null,
           { timeout: 500, polling: 20 },
         );
@@ -273,7 +273,7 @@ test.describe('end state and diary (2D, fake clock)', () => {
     await expect(page.locator('[data-key=replay]')).toBeVisible();
     await expect(page.locator('[data-key=index]')).toBeVisible();
     const text = await screenText(page);
-    expect(text).toContain('BUILD DIARY');
+    expect(text).toContain('BUILD LOG');
     const facts = await (await page.request.get('/facts.json')).json();
     const commits = facts.git.commits as Array<{ subject: string }>;
     // First screen of the index lists the first commits, oldest first, as 101, 102, ...

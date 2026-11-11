@@ -1,8 +1,9 @@
 import type { GridSpec } from './grid';
 
 /**
- * Glyph size for the grid (design-spec 14). VT323 is tall and narrow (advance
- * well under 0.6 em), so the draw size is derived, not assumed:
+ * Glyph size for the grid (design-spec 14, design-spec-2050 section 2). The screen face is Space Mono
+ * (advance about 0.612 em, close to the 0.612 cell aspect), but the draw size is still derived from
+ * the measured advance, not assumed, so any monospaced face works:
  *   advance = measureText('M').width / refPx
  *   drawPx  = cellWidth / advance, capped at rowPitch / 0.9, glyph centred in its cell.
  * The grid geometry (columns, cell width, row pitch) is unchanged.
@@ -16,7 +17,7 @@ export function measureAdvance(family: string): number {
   const hit = cache.get(family);
   if (hit) return hit;
   if (!scratch) scratch = document.createElement('canvas').getContext('2d');
-  let advance = 0.6;
+  let advance = 0.612; // Space Mono's advance, used until the face has loaded
   if (scratch) {
     scratch.font = `${REF_PX}px ${family}`;
     const w = scratch.measureText('M').width / REF_PX;

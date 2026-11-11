@@ -39,6 +39,31 @@ export interface RollState {
   dur: number;
 }
 
+/** The `glitch` cue (design-spec-2050 4.3): the display's own UI chrome dips in opacity, never below 0.55. */
+export interface GlitchState {
+  active: boolean;
+  /** performance.now() ms. */
+  startedAt: number;
+  /** Seconds. */
+  dur: number;
+  /** 0..1: depth of the dip (opacity goes to 1 - amp x 0.45, floored at 0.55). */
+  amp: number;
+}
+
+export const GLITCH_MIN_OPACITY = 0.55;
+export const GLITCH_MAX_DIP = 0.45;
+
+/**
+ * Chrome opacity for a glitch at `elapsedMs`: a smooth single dip (sine squared, so at most one dip
+ * of about 0.5 to 0.7 Hz, well under 1.5 Hz), never below 0.55. Pure.
+ */
+export function glitchOpacity(g: Pick<GlitchState, 'amp' | 'dur'>, elapsedMs: number): number {
+  const x = elapsedMs / (g.dur * 1000);
+  if (!(x > 0 && x < 1)) return 1;
+  const env = Math.sin(Math.PI * x) ** 2;
+  return Math.max(GLITCH_MIN_OPACITY, 1 - g.amp * GLITCH_MAX_DIP * env);
+}
+
 export interface KnobCue {
   /** Increments for every cue so the scene can detect a new one. */
   nonce: number;
@@ -67,6 +92,8 @@ export interface HauntValues {
 interface HauntState extends HauntValues {
   roll: RollState;
   knobCue: KnobCue | null;
+  /** Running glitch of the display's UI chrome, or idle. */
+  glitch: GlitchState;
   /** Map of IntroLine id to the running effect. At most one entry (one effect at a time). */
   textEffects: Record<string, TextEffect>;
   /**
@@ -86,11 +113,13 @@ export const HAUNT_ZERO: HauntValues = {
 };
 
 export const HAUNT_IDLE_ROLL: RollState = { active: false, startedAt: 0, dur: 0 };
+export const HAUNT_IDLE_GLITCH: GlitchState = { active: false, startedAt: 0, dur: 0, amp: 0 };
 
 export const useHauntStore = create<HauntState>()(() => ({
   ...HAUNT_ZERO,
   roll: HAUNT_IDLE_ROLL,
   knobCue: null,
+  glitch: HAUNT_IDLE_GLITCH,
   textEffects: {},
   busy: false,
 }));

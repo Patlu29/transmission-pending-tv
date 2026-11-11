@@ -132,7 +132,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
       noSuchPageAt: null,
       epoch: s.epoch + 1,
     }));
-    announce(`Page ${pageNumberOf(diary)} of the build diary`);
+    announce(`Log ${pageNumberOf(diary)} of the build log`);
   };
 
   const showFrame = (frame: PlaylistFrame) =>
@@ -178,7 +178,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
     skip() {
       if (get().status !== 'playing') return;
       transition('ended', { ...fresh, endReason: 'skip' });
-      announce('Intro skipped. Build diary showing.');
+      announce('Intro skipped. Build log showing.');
       useUiStore.getState().requestFocus('replay');
     },
 
@@ -277,7 +277,7 @@ export const useIntroStore = create<IntroState>()((set, get) => {
     endIntro() {
       if (get().status !== 'playing') return;
       transition('ended', { ...fresh, endReason: 'natural' });
-      announce('Intro finished. Build diary showing.');
+      announce('Intro finished. Build log showing.');
     },
 
     setProgress: (pageIndex, lineIndex, revealedChars) =>

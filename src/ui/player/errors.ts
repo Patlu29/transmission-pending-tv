@@ -47,7 +47,7 @@ export const NO_SIGNAL: Record<PlayerErrorClass, NoSignalCopy> = {
     actions: ['next', 'guide'],
   },
   'not-for-set': {
-    heading: 'NOT FOR THIS SET',
+    heading: 'NOT FOR THIS DISPLAY',
     body: 'The owner does not allow their picture to be shown on other sites, or it is not available in your region. We do not try to get around that.',
     actions: ['watch', 'next'],
   },

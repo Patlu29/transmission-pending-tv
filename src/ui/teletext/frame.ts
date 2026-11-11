@@ -69,6 +69,8 @@ export interface Frame {
   card: { sub: string; loadingPercent: number | null; dim: boolean } | null;
   /** Running tremble or bleed, or null. */
   fx: FrameFx | null;
+  /** Opacity of the display's own chrome (header and fastext chips): the `glitch` cue dips it, 1 otherwise. */
+  chromeAlpha: number;
 }
 
 /** Same union as introStore's IntroStatus (kept local so the frame model has no store dependency). */
@@ -88,6 +90,8 @@ export interface FrameInput {
   loadProgress: number;
   assetFailed: boolean;
   reducedMotion: boolean;
+  /** Chrome opacity from the `glitch` cue (0.55 to 1); omitted means 1. Never changes the text. */
+  chromeAlpha?: number;
   /** The running haunted-text effect, if any. Ignored under reduced motion. */
   fx?: FxInput | null;
 }
@@ -146,6 +150,7 @@ function blank(grid: GridSpec, mode: Frame['mode'], card: Frame['card'] = null):
     hits: [],
     card,
     fx: null,
+    chromeAlpha: 1,
   };
 }
 
@@ -270,7 +275,7 @@ function diaryFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
   const layout = layoutDiary(commits, grid.cols, contentRows(grid));
   const view = input.diary;
   const entry = input.pageEntry;
-  const tagBase = entry ? `P${entry.padEnd(3, '_')}` : `P${pageNumberOf(view)}`;
+  const tagBase = entry ? `LOG ${entry.padEnd(3, '_')}` : `LOG ${pageNumberOf(view)}`;
   const lastRow = grid.rows - 2;
   frame.id =
     view.kind === 'index'
@@ -286,7 +291,7 @@ function diaryFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
       data,
     );
     const last = sub === layout.subs.length - 1;
-    titleRow(frame, input, 'BUILD DIARY', last ? 'LAST PAGE' : `${sub + 1}/${layout.subs.length}`);
+    titleRow(frame, input, 'BUILD LOG', last ? 'LAST PAGE' : `${sub + 1}/${layout.subs.length}`);
     let row = 2;
     for (let i = range.start; i < range.end; i++) {
       const commit = commits[i];
@@ -362,6 +367,12 @@ function diaryFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
 
 /** Builds what the screen should show for the given playback and display state. */
 export function buildFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
+  const frame = buildFrameInner(input, grid, data);
+  frame.chromeAlpha = input.reducedMotion ? 1 : (input.chromeAlpha ?? 1);
+  return frame;
+}
+
+function buildFrameInner(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
   switch (input.status) {
     case 'loading': {
       return blank(grid, 'card', {

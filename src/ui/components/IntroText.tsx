@@ -47,7 +47,7 @@ export function IntroPages({ tagFacts }: { tagFacts: boolean }) {
 export function DiaryList() {
   return (
     <section data-page="diary-list">
-      <h2>Build diary</h2>
+      <h2>Build log</h2>
       <ol>
         {facts.git.commits.map((c) => (
           <li key={c.hash}>

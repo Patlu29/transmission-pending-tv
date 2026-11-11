@@ -66,3 +66,27 @@ describe('parseCues rejects bad input', () => {
     expect(r.warnings.length).toBe(2);
   });
 });
+
+describe('glitch cue (2050)', () => {
+  const shippedResult = parseCues(shipped, intro);
+  const errorsFor = (line: string) => parseCues(line, intro).errors;
+  it('parses with an amp and a duration on a line anchor', () => {
+    const r = parseCues('staff-2@end+7 glitch amp=0.4 dur=1.4', intro);
+    expect(r.errors).toEqual([]);
+    expect(r.cues[0]).toMatchObject({ kind: 'glitch', params: { amp: 0.4, dur: 1.4 } });
+  });
+  it('needs a line anchor ending in @end, and both keys', () => {
+    expect(errorsFor('staff glitch amp=0.4 dur=1.4').join()).toMatch(/line anchor/);
+    expect(errorsFor('staff-2@end glitch amp=0.4').join()).toMatch(/needs "dur"/);
+    expect(errorsFor('staff-2@end glitch dur=1.4').join()).toMatch(/needs "amp"/);
+  });
+  it('clamps amp and dur into range with a warning', () => {
+    const r = parseCues('staff-2@end glitch amp=5 dur=9', intro);
+    expect(r.cues[0]?.params).toMatchObject({ amp: 1, dur: 2 });
+    expect(r.warnings.length).toBe(2);
+  });
+  it('ships the two glitch cues from the design (after staff and after diary)', () => {
+    const glitches = shippedResult.cues.filter((c) => c.kind === 'glitch');
+    expect(glitches.map((c) => c.anchor.lineId)).toEqual(['staff-2', 'diary-5']);
+  });
+});

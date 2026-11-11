@@ -38,11 +38,13 @@ interface PlayerState {
   scenePlacement: PlayerPlacement | null;
   /** Viewport the corners were projected for. */
   cornersViewport: Viewport | null;
+  /** ScreenAnchorSpec.inset of the room's anchor (fraction cut from each edge of the projected glass), default 0. */
+  inset: number;
   setPhase(phase: PlayerPhase): void;
   setError(error: PlayerErrorClass | null): void;
   setVideoId(id: string | null): void;
   setMuted(muted: boolean): void;
-  reportCorners(corners: ScreenCorners | null, viewport?: Viewport): void;
+  reportCorners(corners: ScreenCorners | null, viewport?: Viewport, inset?: number): void;
   setPlacement(placement: PlayerPlacement | null): void;
   reset(): void;
 }
@@ -55,11 +57,13 @@ export const usePlayerStore = create<PlayerState>()((set) => ({
   corners: null,
   scenePlacement: null,
   cornersViewport: null,
+  inset: 0,
   setPhase: (phase) => set({ phase }),
   setError: (error) => set({ error }),
   setVideoId: (videoId) => set({ videoId }),
   setMuted: (muted) => set((s) => (s.muted === muted ? s : { muted })),
-  reportCorners: (corners, viewport) => set({ corners, cornersViewport: viewport ?? null }),
+  reportCorners: (corners, viewport, inset) =>
+    set((s) => ({ corners, cornersViewport: viewport ?? null, inset: inset ?? s.inset })),
   setPlacement: (scenePlacement) => set({ scenePlacement }),
   reset: () => set({ phase: 'none', error: null, videoId: null, muted: true }),
 }));

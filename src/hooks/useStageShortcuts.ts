@@ -11,6 +11,7 @@ import {
   toggleFocus,
   toggleLook,
   toggleRoomSound,
+  toggleSolidPanels,
   toggleVideoMute,
   watchAgain,
 } from '@/ui/roomActions';
@@ -126,6 +127,10 @@ export function handleStageKey(e: KeyboardEvent<HTMLElement>): void {
     case 'a':
     case 'A':
       toggleRoomSound();
+      break;
+    case 'u':
+    case 'U':
+      toggleSolidPanels();
       break;
     case '?':
       ui.openPanel('keys');

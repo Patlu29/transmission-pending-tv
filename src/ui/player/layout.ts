@@ -36,6 +36,8 @@ export interface LayoutInput {
   phone: boolean;
   mode2d: boolean;
   userFocus: boolean;
+  /** `screen.inset ?? 0` of the room's anchor (see ScreenAnchorSpec). */
+  inset?: number;
   /** Aspect of the room's screen (16/9; 4/3 for the TV room). The focus layout is always 16:9. */
   aspect?: number;
 }
@@ -91,6 +93,7 @@ export function resolveLayout(input: LayoutInput): ResolvedLayout {
       phone: input.phone,
       userFocus: input.userFocus,
       mode2d: input.mode2d,
+      inset: input.inset ?? 0,
     });
   } else if (input.scenePlacement && !forced) {
     placement = input.scenePlacement;

@@ -29,7 +29,9 @@ function safeInsets() {
 
 /**
  * Tells the rasteriser how big the screen is on the display (design-spec 3
- * and 5). 3d-set: min(0.56 vw, 0.82 vh) wide, 4:3, drawn at 960 x 720.
+ * and 5; design-spec-2050 3.5). 3d-set: the pane is 16:9 and 0.60 of the viewport wide (at most 0.78 of its
+ * height), drawn at 1280 x 720; the text card is a centred 4:3 region of the pane's height, which is
+ * what the grid maths see.
  * 3d-screen: the viewport minus the dock and bezel; the canvas element of the
  * scene host is placed exactly there (displayStore.screenRect).
  */
@@ -45,8 +47,9 @@ export function ScreenSizer() {
       return;
     }
     if (mode === '3d-set') {
-      const cssW = Math.min(0.56 * vp.w, 0.82 * vp.h);
-      setScreenSize({ cssW, cssH: cssW * 0.75, pixelW: 960, pixelH: 720 });
+      const paneW = Math.min(0.6 * vp.w, 0.78 * vp.h * (16 / 9));
+      const paneH = paneW * (9 / 16);
+      setScreenSize({ cssW: paneH * (4 / 3), cssH: paneH, pixelW: 1280, pixelH: 720 });
       display.setScreenRect(null);
       return;
     }

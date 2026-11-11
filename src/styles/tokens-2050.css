@@ -35,14 +35,24 @@
   --rose: #ff9fb0; /* soft error accent (borders and icons only, never body text) */
   --ember: #ffc58a; /* warnings, warm room light */
   --mint: #8ff0c8; /* success */
-  --iridescent: linear-gradient(120deg, #8fe3ff 0%, #b9a4ff 50%, #ffb8dc 100%); /* borders and the hero card only */
+  --iridescent: linear-gradient(
+    120deg,
+    #8fe3ff 0%,
+    #b9a4ff 50%,
+    #ffb8dc 100%
+  ); /* borders and the hero card only */
 
   /* Semantic colour: page and UI chrome */
   --color-bg: var(--grey-50);
   --color-room: var(--grey-100);
   --color-surface: var(--grey-150);
   --color-surface-raised: var(--grey-200);
-  --color-border: rgba(255, 255, 255, 0.5); /* control boundaries: 4.2:1 on worst-case glass, meets 3:1 */
+  --color-border: rgba(
+    255,
+    255,
+    255,
+    0.5
+  ); /* control boundaries: 4.2:1 on worst-case glass, meets 3:1 */
   --color-border-subtle: rgba(255, 255, 255, 0.2); /* panel edges, decoration only */
   --color-text: #eef4ff; /* 6.7:1 on worst-case glass */
   --color-text-muted: #cbd6ea; /* 5.1:1 on worst-case glass; there is no lower text tier */
@@ -66,20 +76,36 @@
      1. SMALL chrome (dock, HUD tags): live blur of 12px or less, no nesting.
      2. LARGE surfaces (guide, picker, dialogs, cards): tinted glass, NO live blur.
      3. NEAR-PLAYER plates (within 24px of the player rect, e.g. the info row): solid and flat, no blur, no glow, no shadow bleed. */
-  --glass-small-fill: rgba(8, 12, 22, 0.84); /* alpha 0.84 with brightness 0.7 keeps text AA over a backdrop up to luminance 0.55 */
+  --glass-small-fill: rgba(
+    8,
+    12,
+    22,
+    0.84
+  ); /* alpha 0.84 with brightness 0.7 keeps text AA over a backdrop up to luminance 0.55 */
   --glass-small-blur: 12px;
   --glass-backdrop-brightness: 0.7;
   --glass-backdrop-saturate: 1.3;
-  --glass-small-filter: blur(var(--glass-small-blur)) brightness(var(--glass-backdrop-brightness)) saturate(var(--glass-backdrop-saturate));
-  --glass-large-fill: linear-gradient(160deg, rgba(20, 30, 50, 0.93), rgba(8, 12, 22, 0.95)); /* tinted, no blur; text AA over any backdrop up to 0.85 */
+  --glass-small-filter: blur(var(--glass-small-blur)) brightness(var(--glass-backdrop-brightness))
+    saturate(var(--glass-backdrop-saturate));
+  --glass-large-fill: linear-gradient(
+    160deg,
+    rgba(20, 30, 50, 0.93),
+    rgba(8, 12, 22, 0.95)
+  ); /* tinted, no blur; text AA over any backdrop up to 0.85 */
   --glass-large-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='64' height='64'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='64' height='64' filter='url(%23n)'/%3E%3C/svg%3E"); /* static 5 per cent grain tile over the tint, for the frosted look without blur */
   --glass-solid-fill: #0e1524; /* near-player plates and the Solid panels option */
   --glass-panel-fill: var(--glass-small-fill); /* v1-style alias kept for small chrome */
   --glass-panel-filter: var(--glass-small-filter);
   --glass-deco-fill: rgba(220, 235, 255, 0.06); /* decoration only, never carries text */
   --glass-deco-blur: 0px;
-  --glass-chip-fill: rgba(143, 227, 255, 0.14); /* canvas-drawn chips only (their backdrop is known) */
-  --glass-highlight: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  --glass-chip-fill: rgba(
+    143,
+    227,
+    255,
+    0.14
+  ); /* canvas-drawn chips only (their backdrop is known) */
+  --glass-highlight:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   --glass-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 2px 8px rgba(0, 0, 0, 0.4);
   --glass-edge: 1px solid var(--color-border-subtle);
 
@@ -124,10 +150,15 @@
   --tv-glass-tint: #070b16; /* smoked glass when off */
 
   /* Typography */
-  --font-teletext: 'Space Mono', 'Courier New', ui-monospace, monospace; /* screen text on the cell grid; advance about 0.612 em */
-  --font-display: 'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
-  --font-ui: 'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; /* body text, guide rows, notices, info row: l, 1, I and 0, O are distinct */
-  --font-screen: var(--font-teletext); /* neutral alias; the old name is kept only so existing code compiles */
+  --font-teletext:
+    'Space Mono', 'Courier New', ui-monospace, monospace; /* screen text on the cell grid; advance about 0.612 em */
+  --font-display:
+    'Space Grotesk', 'Helvetica Neue', Arial, sans-serif; /* labels, buttons, headings */
+  --font-ui:
+    'Atkinson Hyperlegible', 'Helvetica Neue', Arial, sans-serif; /* body text, guide rows, notices, info row: l, 1, I and 0, O are distinct */
+  --font-screen: var(
+    --font-teletext
+  ); /* neutral alias; the old name is kept only so existing code compiles */
   --font-weight-regular: 400;
   --font-weight-strong: 600;
   --text-xs: 0.875rem; /* 14px: UI hint text only, never on the screen */
@@ -178,7 +209,8 @@
   --shadow-panel: var(--glass-shadow);
   --shadow-key: 0 6px 18px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --shadow-screen-inset: inset 0 0 40px 8px rgba(5, 7, 13, 0.7);
-  --shadow-bezel-inset: inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 0 24px 2px rgba(0, 0, 0, 0.6);
+  --shadow-bezel-inset:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.12), inset 0 0 24px 2px rgba(0, 0, 0, 0.6);
 
   /* Layers */
   --z-canvas: 0;

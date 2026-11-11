@@ -1,0 +1,724 @@
+/* ======================================================================
+   2050 "holographic glass" chrome (design-spec-2050 sections 1.3 and 6). Owner: frontend-developer.
+   Loaded after ui.css, so these rules replace the earlier look. Tokens only (tokens-2050.css).
+
+   Three glass levels (ADR 0012 section 4):
+     1. SMALL chrome (dock, HUD plates): live blur of 12 px or less, never nested.
+     2. LARGE surfaces (guide, picker, dialogs, cards, start plate): tinted glass, NO live blur.
+     3. NEAR-PLAYER plates (info row, focus header): solid and flat: no blur, no glow, no shadow,
+        no opacity. Nothing here is ever an ancestor of the player, and no backdrop-filter, filter,
+        opacity, shadow or glow sits on or within 24 px of the player.
+   `html[data-glass='solid']` (reduced transparency, no backdrop-filter support, a stepped-down DPR, or
+   the viewer's Solid panels) turns every level opaque through the tokens.
+   ====================================================================== */
+
+body {
+  background: var(--color-bg);
+}
+
+/* ---------- Keys: glass pills, with a lit pill for the primary action ---------- */
+.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--glass-deco-fill);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--glass-highlight);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+  text-transform: none;
+}
+
+.key__icon {
+  flex: none;
+  width: 1.25em;
+  height: 1.25em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* Lit pill: the action of the moment (Switch on, Play, Continue, Watch). */
+.key--large,
+.paste .key {
+  background: var(--color-control-bg);
+  color: var(--color-control-text);
+  border-color: transparent;
+  font-size: var(--text-md);
+}
+
+@media (hover: hover) {
+  .key:hover:not([aria-disabled='true']) {
+    background: color-mix(in srgb, var(--glass-deco-fill), white 8%);
+    box-shadow: var(--glass-highlight), var(--glow-lumen);
+    transform: none;
+  }
+
+  .key--large:hover:not([aria-disabled='true']),
+  .paste .key:hover:not([aria-disabled='true']) {
+    background: var(--color-control-bg-hover);
+  }
+}
+
+.key:active:not([aria-disabled='true']) {
+  background: var(--color-control-bg-active);
+  color: var(--color-control-text);
+  box-shadow: none;
+  transform: none;
+}
+
+.key[aria-disabled='true'] {
+  background: var(--color-control-bg-disabled);
+  color: var(--color-control-text-disabled);
+  border-color: var(--color-border-subtle);
+  box-shadow: none;
+}
+
+.key.is-on::after {
+  left: var(--space-3);
+  right: var(--space-3);
+  bottom: 3px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--lumen);
+}
+
+.key--large.is-on::after {
+  background: var(--color-control-text);
+}
+
+.key:focus-visible,
+.linkkey:focus-visible,
+.guide-row:focus-visible {
+  outline: var(--focus-ring-width) solid var(--color-focus);
+  outline-offset: var(--focus-ring-offset);
+  box-shadow: 0 0 0 calc(var(--focus-ring-width) + var(--focus-ring-offset)) var(--color-focus-halo);
+}
+
+/* ---------- Level 1: small chrome (dock, HUD plates). One blur layer, 12 px at most. ---------- */
+.dock {
+  padding: var(--space-2);
+  border-radius: var(--radius-lg);
+  background: var(--glass-small-fill);
+  backdrop-filter: var(--glass-small-filter);
+  -webkit-backdrop-filter: var(--glass-small-filter);
+  border: var(--glass-edge);
+  box-shadow: var(--glass-highlight), var(--glass-shadow);
+}
+
+.dock__reason,
+.dock__note {
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+}
+
+.app[data-layout='screen'] .dock {
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+  border-width: 1px 0 0;
+}
+
+.hud__plate,
+.hud__room,
+.hud__idle {
+  background: var(--glass-small-fill);
+  backdrop-filter: var(--glass-small-filter);
+  -webkit-backdrop-filter: var(--glass-small-filter);
+  border: var(--glass-edge);
+  border-radius: var(--radius-md);
+  box-shadow: var(--glass-highlight);
+  font-family: var(--font-teletext);
+  letter-spacing: 0.02em;
+  /* The `glitch` cue dips the display's own chrome (never below 0.55). Idle: 1. */
+  opacity: var(--glitch-opacity, 1);
+}
+
+.hud__plate::before {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--lumen);
+}
+
+.hud__name {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+  font-size: var(--text-xl);
+  letter-spacing: 0.02em;
+  text-transform: none;
+  text-shadow: 0 1px 12px var(--color-bg);
+}
+
+.app[data-layout='screen'] .hud__name:not(.sr-only) {
+  font-size: var(--text-2xl);
+}
+
+/* ---------- Level 3: near-player plates are solid and flat ---------- */
+.info-row,
+.focus-header {
+  background: var(--glass-solid-fill);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  backdrop-filter: none;
+  color: var(--color-text);
+  font-family: var(--font-ui);
+}
+
+.info-row .key,
+.focus-header .key,
+.info-row__link {
+  box-shadow: none;
+  transition: none;
+}
+
+.info-row .key:hover:not([aria-disabled='true']),
+.focus-header .key:hover:not([aria-disabled='true']) {
+  box-shadow: none;
+}
+
+.info-row__name {
+  font-family: var(--font-display);
+}
+
+.info-row__link {
+  color: var(--lumen);
+}
+
+.focus-header {
+  border-radius: 0;
+  border-width: 0 0 1px;
+  font-family: var(--font-teletext);
+}
+
+/* The dock is within 24 px of the player in the focus layout: solid and flat there. */
+.app[data-focus='true'] .dock {
+  background: var(--glass-solid-fill);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  box-shadow: none;
+}
+
+/* ---------- Level 2: large surfaces are tinted glass with grain and NO live blur ---------- */
+.panel,
+.dialog,
+.card,
+.notice,
+.start {
+  position: relative;
+  background: var(--glass-large-fill);
+  color: var(--color-text);
+  border: var(--glass-edge);
+  box-shadow: var(--glass-highlight);
+  backdrop-filter: none;
+}
+
+.panel::before,
+.dialog__panel::before,
+.card::before,
+.notice::before,
+.start::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-large-grain);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.panel > *,
+.dialog__panel > *,
+.card > *,
+.notice > *,
+.start > * {
+  position: relative;
+}
+
+.panel {
+  position: absolute;
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+  border-left: 0;
+  box-shadow: none; /* no shadow bleed towards the player */
+  animation: panel-in var(--duration-normal) var(--ease-glass) both;
+}
+
+.app[data-layout='screen'] .panel {
+  border-radius: 0;
+}
+
+.panel__head {
+  background: transparent;
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.panel__head h2,
+.guide-group,
+.dialog__head h2,
+.dialog__body h2,
+.card__title {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+  letter-spacing: var(--tracking-label);
+}
+
+.panel__head h2 {
+  font-size: var(--text-xl);
+  text-transform: none;
+}
+
+@keyframes panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.dialog {
+  border-radius: var(--radius-lg);
+  box-shadow: var(--glass-shadow);
+  font-family: var(--font-ui);
+  background: var(--glass-large-fill);
+  overflow: hidden;
+}
+
+.dialog::backdrop {
+  background: var(--color-scrim);
+}
+
+.dialog__panel {
+  position: relative;
+}
+
+.dialog__head {
+  border-bottom: 1px solid var(--color-border-subtle);
+}
+
+.dialog .fact,
+[data-fact] {
+  background: var(--screen-fact-bg);
+  color: var(--screen-fact-text);
+  border-radius: 6px;
+  padding: 0 var(--space-1);
+}
+
+.card {
+  border-radius: var(--radius-md);
+  font-family: var(--font-ui);
+  font-size: var(--text-md);
+  box-shadow: none;
+}
+
+.card__title {
+  font-size: var(--text-xl);
+  color: var(--color-text);
+}
+
+.card--nosignal {
+  border-left: 3px solid var(--color-error-edge);
+}
+
+.card--nosignal .card__title {
+  background: none;
+  color: var(--color-text);
+  padding: 0;
+}
+
+.card--still {
+  border-left: 3px solid var(--lumen);
+}
+
+.notice {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-family: var(--font-ui);
+}
+
+.notice--error {
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-error-edge);
+}
+
+/* ---------- Chips and tags: outlined pills, with a text label always ---------- */
+.tag {
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-ui);
+  font-size: var(--text-xs);
+  letter-spacing: 0.02em;
+  padding: 0 var(--space-2);
+}
+
+/* ---------- Guide ---------- */
+.panel input[type='text'],
+.panel input[type='search'],
+.panel select {
+  background: var(--glass-solid-fill);
+  color: var(--color-text);
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+}
+
+.panel input.is-error {
+  border-color: var(--color-error-edge);
+}
+
+.paste__error {
+  background: transparent;
+  color: var(--color-text);
+  border-left: 3px solid var(--color-error-edge);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+}
+
+.guide-down h3 {
+  background: transparent;
+  color: var(--color-text);
+  border-left: 3px solid var(--color-warn-edge);
+  padding: 0 var(--space-2);
+  font-family: var(--font-display);
+}
+
+.guide-group {
+  margin: var(--space-4) 0 var(--space-2);
+  padding-bottom: var(--space-1);
+  border-bottom: 1px solid var(--color-border-subtle);
+  color: var(--color-text-muted);
+  font-size: var(--text-sm);
+  text-transform: uppercase;
+}
+
+.guide-list li {
+  margin-bottom: var(--space-2);
+}
+
+.guide-row {
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--glass-deco-fill);
+  color: var(--color-text);
+  padding: var(--space-2) var(--space-3);
+}
+
+.guide-row__num {
+  align-self: start;
+  justify-self: start;
+  padding: 0 var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--glass-chip-fill);
+  color: var(--color-text);
+  font-family: var(--font-teletext);
+  font-size: var(--text-sm);
+}
+
+.guide-row__name {
+  color: var(--color-text);
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+}
+
+.guide-row__meta,
+.guide-row__reason {
+  color: var(--color-text-muted);
+  font-family: var(--font-ui);
+}
+
+.guide-row__status {
+  align-self: center;
+  background: transparent;
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-pill);
+  padding: 0 var(--space-3);
+  font-family: var(--font-ui);
+  font-size: var(--text-sm);
+  letter-spacing: 0.04em;
+}
+
+.guide-row__status.is-live {
+  border-color: var(--color-ok-edge);
+}
+
+.guide-row__status.is-live::before {
+  content: '';
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin-right: var(--space-2);
+  border-radius: 50%;
+  background: var(--mint);
+}
+
+.guide-row__status.is-stale {
+  border-color: var(--color-warn-edge);
+}
+
+.guide-row__status:not(.is-live):not(.is-stale) {
+  border-color: var(--color-error-edge);
+}
+
+.guide-row[aria-disabled='true'] {
+  color: var(--color-text-muted);
+}
+
+@media (hover: hover) {
+  .guide-row:hover,
+  .room-row:hover {
+    background: var(--glass-chip-fill);
+    color: var(--color-text);
+  }
+}
+
+/* ---------- Room picker ---------- */
+.room-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--space-3);
+}
+
+.room-row {
+  flex-direction: column;
+  align-items: flex-start;
+  border: 1px solid var(--color-border-subtle);
+  border-radius: var(--radius-md);
+  background: var(--glass-deco-fill);
+  padding: var(--space-3);
+}
+
+.room-row--hero {
+  grid-column: 1 / -1;
+  border: 1px solid transparent;
+  background:
+    linear-gradient(var(--color-surface), var(--color-surface)) padding-box,
+    var(--iridescent) border-box;
+}
+
+.room-row.is-current {
+  box-shadow: inset 0 -3px 0 var(--lumen);
+}
+
+.room-row.is-current .room-row__name::before {
+  content: none;
+}
+
+.room-row__name {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+  color: var(--color-text);
+}
+
+.room-row__mood,
+.room-row__loading {
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+}
+
+.schematic {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border-subtle);
+}
+
+.sc-bg {
+  fill: var(--grey-200);
+}
+
+.sc-mid {
+  fill: var(--grey-400);
+}
+
+.sc-hi {
+  fill: var(--lumen);
+}
+
+.sc-dark {
+  fill: var(--grey-50);
+}
+
+.sc-screen {
+  fill: var(--lumen-bright);
+}
+
+/* ---------- Start screen ---------- */
+.start {
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  pointer-events: auto;
+}
+
+.app[data-layout='screen'] .start,
+.app[data-layout='screen'] .start__tagline,
+.app[data-layout='screen'] .start__note {
+  color: var(--color-text);
+}
+
+.start__tagline {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-strong);
+}
+
+.start__note,
+.start__line {
+  font-family: var(--font-ui);
+  color: var(--color-text-muted);
+}
+
+.app[data-mode='2d'] .start__tagline,
+.app[data-mode='2d'] .start__note {
+  color: inherit;
+}
+
+.app[data-layout='set'] .start__tagline,
+.app[data-layout='set'] .start__note {
+  text-shadow: none;
+}
+
+/* ---------- The 2D glass card (replaces the CRT screen) ---------- */
+.app[data-layout='set'] .screen2d-wrap {
+  padding: var(--space-4);
+  background: var(--glass-large-fill);
+  border: var(--glass-edge);
+  border-radius: var(--radius-lg);
+  box-shadow: none;
+  aspect-ratio: 16 / 9;
+  width: min(
+    1100px,
+    calc(100vw - 2 * var(--space-8)),
+    calc((100vh - 4.5 * var(--dock-size)) * 16 / 9)
+  );
+  top: calc(50% - var(--dock-size) * 1.2);
+}
+
+.screen2d {
+  background: var(--screen-bg);
+  border-radius: var(--radius-screen);
+  border: 1px solid color-mix(in srgb, var(--lumen) 35%, transparent);
+  box-shadow: none;
+  text-shadow: none;
+  font-family: var(--font-teletext);
+}
+
+.tt--strong {
+  color: var(--screen-text-strong);
+  font-weight: 700;
+  text-shadow: var(--glow-text);
+}
+
+.tt--fact {
+  background: var(--screen-fact-bg);
+  color: var(--screen-fact-text);
+  border-radius: 6px;
+  box-shadow: 0 0 0 2px var(--screen-fact-bg);
+  text-shadow: none;
+}
+
+.tt--header,
+.tt--hilite {
+  background: var(--screen-header-bg);
+  color: var(--screen-header-text);
+  border-radius: 8px;
+  text-shadow: none;
+}
+
+.tt--header,
+.tt--fast1,
+.tt--fast2,
+.tt--fast3,
+.tt--fast4 {
+  opacity: var(--glitch-opacity, 1);
+}
+
+.tt--fast1,
+.tt--fast2,
+.tt--fast3,
+.tt--fast4 {
+  background: var(--glass-chip-fill);
+  color: var(--tt-7);
+  border-radius: 8px;
+  box-shadow: inset 0 -2px 0 var(--lumen);
+}
+
+.tt--cursor {
+  background: var(--screen-text-strong);
+  border-radius: 2px;
+}
+
+.screen2d__streak {
+  background: var(--lumen);
+}
+
+.screen2d__vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent calc(var(--tt-safe-area) * 100% - 6%),
+    color-mix(in srgb, var(--grey-0) calc(var(--haunt-dim) * 25%), transparent) 100%
+  );
+}
+
+/* Light-field grain on the 2D card: static (the technical-artist's holo2d.css animates it when present). */
+.screen2d::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--glass-large-grain);
+  opacity: var(--crt-noise-opacity);
+}
+
+.screen2d.is-off::after {
+  opacity: 0;
+}
+
+/* ---------- 2D skins (rooms) take the ink background ---------- */
+.skin2d__idle {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border-subtle);
+}
+
+.skin2d__footer {
+  background: var(--glass-solid-fill);
+  font-family: var(--font-ui);
+}
+
+/* ---------- Footer links, focus ring ---------- */
+.footer-links a,
+.footer-links .linkkey {
+  color: var(--lumen);
+}
+
+.dialog__body a {
+  color: var(--lumen);
+}
+
+.stage__ring {
+  border-radius: var(--radius-lg);
+  border-color: var(--color-focus);
+  box-shadow: none;
+}
+
+/* Forced colours: the system draws borders and focus. */
+@media (forced-colors: active) {
+  .dock,
+  .panel,
+  .dialog,
+  .card,
+  .info-row,
+  .hud__plate {
+    border: 1px solid CanvasText;
+    background: Canvas;
+  }
+}

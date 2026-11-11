@@ -3,7 +3,9 @@ import { useEnvironmentStore } from '@/state/environmentStore';
 import { useChannelStore } from '@/state/channelStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
+import { useSettingsStore } from '@/state/settingsStore';
 import { useUiStore } from '@/state/uiStore';
+import { toggleSolidPanels } from '@/ui/roomActions';
 import { FooterLinks } from './FooterLinks';
 
 /** Shown while the set is off: tagline, flicker note and the Calm switch (US-11), plus the v2 doors. */
@@ -14,6 +16,7 @@ export function StartScreen() {
   const env = useEnvironmentStore((s) => s.id);
   const live = useChannelStore((s) => s.current);
   const panel = useUiStore((s) => s.panel);
+  const solid = useSettingsStore((s) => s.solidPanels);
   const noteId = 'start-note';
   const powered = isPoweredStatus(status);
   const [gone, setGone] = useState(false);
@@ -35,7 +38,7 @@ export function StartScreen() {
       aria-label="Start"
       inert={powered || undefined}
     >
-      <p className="start__tagline">A television with something to say.</p>
+      <p className="start__tagline">A display with something to say.</p>
       <button
         type="button"
         aria-pressed={calm || os}
@@ -72,6 +75,9 @@ export function StartScreen() {
           <span className="key__sub">Try the mountain sky</span>
         </button>
       </div>
+      <button type="button" className="key" aria-pressed={solid} onClick={toggleSolidPanels}>
+        {solid ? 'Solid panels: on' : 'Solid panels: off'}
+      </button>
       <FooterLinks className="footer-links--start" />
     </section>
   );

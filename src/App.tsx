@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
 import { startAudioEngine } from '@/hooks/audioEngine';
 import { useBootstrap } from '@/hooks/useBootstrap';
+import { useChromeGlitch } from '@/hooks/useChromeGlitch';
+import { useGlassMode } from '@/hooks/useGlassMode';
 import { useIntroClock } from '@/hooks/useIntroClock';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
 import { useMotionPreference } from '@/hooks/useMotionPreference';
@@ -41,6 +43,8 @@ export default function App() {
   const onSceneLoaded = useCallback(() => setSceneLoaded(true), []);
 
   useMotionPreference();
+  useGlassMode();
+  useChromeGlitch();
   useRenderMode();
   useIntroClock();
   useBootstrap(sceneLoaded);
@@ -75,7 +79,7 @@ export default function App() {
       <div
         className="stage"
         role="group"
-        aria-label="Television. The show is also available as text."
+        aria-label="Display. The story is also available as text."
         tabIndex={0}
         onKeyDown={handleStageKey}
       >

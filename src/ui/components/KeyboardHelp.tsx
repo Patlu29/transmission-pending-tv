@@ -13,6 +13,7 @@ const MAP: Array<[string, string]> = [
   ['S', 'Stop the channel (Skip, while the story plays)'],
   ['M', 'Mute or unmute the video'],
   ['A', 'Room sound on or off'],
+  ['U', 'Solid panels on or off'],
   ['?', 'This list'],
   ['Escape', 'Close the open panel; with none open, move focus to the screen'],
   ['Tab', 'Leave the player. Skip to controls comes before it, Back to controls after it'],

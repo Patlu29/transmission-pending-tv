@@ -12,6 +12,7 @@ import {
   CUE_END_DELAY_MS,
 } from './timing';
 import {
+  HAUNT_IDLE_GLITCH,
   HAUNT_IDLE_ROLL,
   HAUNT_ZERO,
   useHauntStore,
@@ -73,6 +74,7 @@ export function startHauntScheduler(): () => void {
   let queue: Cue[] = [];
   let running: { lineId: string; startNow: number; effect: TextEffect } | null = null;
   let rollEndNow = 0;
+  let glitchEndNow = 0;
   let knobNonce = 0;
   const values: HauntValues = { ...HAUNT_ZERO };
   const ramps: Partial<Record<keyof HauntValues, Ramp>> = {};
@@ -83,7 +85,8 @@ export function startHauntScheduler(): () => void {
     !running &&
     pending.length === 0 &&
     queue.length === 0 &&
-    rollEndNow === 0;
+    rollEndNow === 0 &&
+    glitchEndNow === 0;
 
   function resetTracking() {
     started = new Set();
@@ -96,18 +99,19 @@ export function startHauntScheduler(): () => void {
   function publish() {
     const s = useHauntStore.getState();
     const roll = rollEndNow > 0 ? s.roll : HAUNT_IDLE_ROLL;
+    const glitch = glitchEndNow > 0 ? s.glitch : HAUNT_IDLE_GLITCH;
     const effects = running ? { [running.lineId]: running.effect } : {};
     const busy =
       queue.length > 0 ||
       running !== null ||
       rollEndNow > 0 ||
       pending.some((p) => !isStateCue(p.cue.kind) && p.cue.kind !== 'knob');
-    let changed = s.busy !== busy || s.roll !== roll;
+    let changed = s.busy !== busy || s.roll !== roll || s.glitch !== glitch;
     for (const k of Object.keys(values) as Array<keyof HauntValues>) {
       if (Math.abs(s[k] - values[k]) > 1e-4) changed = true;
     }
     if (running || Object.keys(s.textEffects).length > 0) changed = true;
-    if (changed) useHauntStore.setState({ ...values, busy, roll, textEffects: effects });
+    if (changed) useHauntStore.setState({ ...values, busy, roll, glitch, textEffects: effects });
   }
 
   function zeroAll() {
@@ -115,10 +119,12 @@ export function startHauntScheduler(): () => void {
     for (const k of Object.keys(ramps) as Array<keyof HauntValues>) delete ramps[k];
     running = null;
     rollEndNow = 0;
+    glitchEndNow = 0;
     resetTracking();
     useHauntStore.setState({
       ...HAUNT_ZERO,
       roll: HAUNT_IDLE_ROLL,
+      glitch: HAUNT_IDLE_GLITCH,
       knobCue: null,
       textEffects: {},
       busy: false,
@@ -130,6 +136,7 @@ export function startHauntScheduler(): () => void {
     queue = [];
     running = null;
     rollEndNow = 0;
+    glitchEndNow = 0;
     for (const k of Object.keys(values) as Array<keyof HauntValues>) {
       if (values[k] > 0) ramps[k] = { from: values[k], to: 0, start: now, over: ms };
     }
@@ -186,6 +193,14 @@ export function startHauntScheduler(): () => void {
         const dur = Number(cue.params.dur);
         rollEndNow = now + dur * 1000;
         useHauntStore.setState({ roll: { active: true, startedAt: performance.now(), dur } });
+        break;
+      }
+      case 'glitch': {
+        const dur = Number(cue.params.dur);
+        glitchEndNow = now + dur * 1000;
+        useHauntStore.setState({
+          glitch: { active: true, startedAt: performance.now(), dur, amp: Number(cue.params.amp) },
+        });
         break;
       }
       case 'knob':
@@ -292,6 +307,7 @@ export function startHauntScheduler(): () => void {
       if (running.effect.elapsed >= running.effect.dur * 1000) running = null;
     }
     if (rollEndNow > 0 && now >= rollEndNow) rollEndNow = 0;
+    if (glitchEndNow > 0 && now >= glitchEndNow) glitchEndNow = 0;
     publish();
   };
 

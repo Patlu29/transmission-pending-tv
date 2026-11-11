@@ -5,21 +5,29 @@ import { useSettingsStore } from '../../src/state/settingsStore.ts';
 
 describe('settingsStore', () => {
   beforeEach(() =>
-    useSettingsStore.setState({ colour: 'bw', roomSound: false, noticeAccepted: false }),
+    useSettingsStore.setState({
+      colour: 'colour',
+      roomSound: false,
+      noticeAccepted: false,
+      solidPanels: false,
+    }),
   );
 
-  it('starts black and white, with room sound off and the notice not yet accepted', () => {
+  it('starts in Colour, with room sound off, solid panels off and the notice not yet accepted', () => {
     const s = useSettingsStore.getState();
-    expect(s.colour).toBe('bw');
+    expect(s.colour).toBe('colour');
+    expect(s.solidPanels).toBe(false);
     expect(s.roomSound).toBe(false);
     expect(s.noticeAccepted).toBe(false);
   });
 
   it('toggles colour and room sound, and records the notice', () => {
     useSettingsStore.getState().toggleColour();
-    expect(useSettingsStore.getState().colour).toBe('colour');
+    expect(useSettingsStore.getState().colour).toBe('bw'); // Monochrome
     useSettingsStore.getState().toggleColour();
-    expect(useSettingsStore.getState().colour).toBe('bw');
+    expect(useSettingsStore.getState().colour).toBe('colour');
+    useSettingsStore.getState().toggleSolidPanels();
+    expect(useSettingsStore.getState().solidPanels).toBe(true);
     useSettingsStore.getState().toggleRoomSound();
     expect(useSettingsStore.getState().roomSound).toBe(true);
     useSettingsStore.getState().acceptNotice();

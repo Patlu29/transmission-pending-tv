@@ -1,8 +1,8 @@
-import { ENVIRONMENTS } from '@/scene/environments/registry';
 import { useChannelStore } from '@/state/channelStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { useEnvironmentStore } from '@/state/environmentStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
+import { roomLabel } from './rooms';
 
 /** Site name (the page h1), the room and channel readout, and the Reset view key. */
 export function Hud() {
@@ -18,7 +18,7 @@ export function Hud() {
   // 3d-set always shows the name; elsewhere it is visually hidden after power-on.
   const nameVisible = mode === '3d-set' || (!powered && !live);
   const showReset = mode === '3d-set' && !calm && powered && off;
-  const room = ENVIRONMENTS[envId].label;
+  const room = roomLabel(envId);
   return (
     <div className="hud">
       <h1 className={`hud__name${nameVisible ? '' : ' sr-only'}`}>Transmission Pending</h1>
@@ -39,7 +39,7 @@ export function Hud() {
       {envId !== 'tv-room' && !live && <p className="hud__idle">No channel. Open the guide.</p>}
       {loading && (
         <p className="hud__plate hud__plate--loading" aria-hidden="true">
-          Loading {ENVIRONMENTS[loading.id].label}... {Math.round(loading.progress * 100)}%
+          Loading {roomLabel(loading.id)}... {Math.round(loading.progress * 100)}%
         </p>
       )}
       {showReset && (

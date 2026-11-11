@@ -1,5 +1,5 @@
 import { facts, intro } from '@/facts';
-import { useHauntStore } from '@/state/hauntStore';
+import { glitchOpacity, useHauntStore } from '@/state/hauntStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { COLLAPSE_MS, SCREEN_FADE_MS } from '@/state/timing';
@@ -42,8 +42,15 @@ const FADE_MS = SCREEN_FADE_MS;
 let lastFrameId: string | null = null;
 let snapshot: HTMLCanvasElement | null = null;
 let fade: { start: number } | null = null;
+let glitchTimer: ReturnType<typeof setInterval> | undefined;
 let fadeTimer: ReturnType<typeof setTimeout> | undefined;
 let holdTimer: ReturnType<typeof setTimeout> | undefined;
+
+/** Opacity of the display's own chrome while the `glitch` cue runs (1 otherwise). */
+function currentChromeAlpha(): number {
+  const g = useHauntStore.getState().glitch;
+  return g.active ? glitchOpacity(g, performance.now() - g.startedAt) : 1;
+}
 
 /** Snapshot of the store state the frame model needs (also used for tap hit-testing). */
 export function currentFrameInput(): FrameInput {
@@ -64,6 +71,7 @@ export function currentFrameInput(): FrameInput {
     assetFailed: d.assetFailed,
     reducedMotion: d.reducedMotion,
     fx: d.reducedMotion ? null : toFxInput(useHauntStore.getState().textEffects),
+    chromeAlpha: d.reducedMotion ? 1 : currentChromeAlpha(),
   };
 }
 
@@ -85,6 +93,7 @@ function inputKey(i: FrameInput, cols: number, rows: number): string {
     cols,
     rows,
     i.fx ? `${i.fx.lineId}:${i.fx.kind}:${fxTick(i.fx)}` : '',
+    Math.round((i.chromeAlpha ?? 1) * 40),
   ].join('|');
 }
 
@@ -118,7 +127,11 @@ function draw(force = false) {
     fade = { start: now };
   }
   lastFrameId = frame.id;
-  drawFrame(ctx, frame, grid, readPalette(), canvas.width / size.cssW);
+  // The card (cssW x cssH) may be a centred 4:3 region of a 16:9 pane (3d-set): scale by height.
+  drawFrame(ctx, frame, grid, readPalette(), canvas.height / size.cssH, {
+    width: canvas.width,
+    height: canvas.height,
+  });
   if (fade && snapshot) {
     const p = (now - fade.start) / FADE_MS;
     if (p >= 1) fade = null;
@@ -159,7 +172,19 @@ export function startTeletextScreen(): () => void {
   const unsubs = [
     useIntroStore.subscribe(onIntro),
     useDisplayStore.subscribe(() => schedule()),
-    useHauntStore.subscribe(() => schedule()),
+    useHauntStore.subscribe((s) => {
+      schedule();
+      // The glitch dips the chrome for about a second: redraw at 30 Hz while it runs.
+      if (s.glitch.active && !glitchTimer) {
+        glitchTimer = setInterval(() => {
+          if (!useHauntStore.getState().glitch.active) {
+            clearInterval(glitchTimer);
+            glitchTimer = undefined;
+          }
+          schedule();
+        }, 33);
+      }
+    }),
   ];
   const onFonts = () => {
     resetFontMetrics();
@@ -182,6 +207,8 @@ export function startTeletextScreen(): () => void {
     document.fonts?.removeEventListener('loadingdone', onFonts);
     clearTimeout(holdTimer);
     clearTimeout(fadeTimer);
+    clearInterval(glitchTimer);
+    glitchTimer = undefined;
     fontsReady = false;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;

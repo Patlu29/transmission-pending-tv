@@ -36,7 +36,7 @@ class SceneBoundary extends Component<{ children: ReactNode }, { failed: boolean
     const display = useDisplayStore.getState();
     // Canvas throws when it cannot create a WebGL context: that is the 2D case.
     if (/webgl/i.test(error.message)) display.fallbackTo2d('no-webgl');
-    else display.setAssetFailed("The set's picture did not arrive.");
+    else display.setAssetFailed("The display's picture did not arrive.");
   }
   render() {
     return this.state.failed ? null : this.props.children;

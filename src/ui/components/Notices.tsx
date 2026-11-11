@@ -24,7 +24,7 @@ export function Notices() {
     <>
       {failed && mode !== '2d' && (
         <div className="notice notice--error" role="alert">
-          <p>{message ?? "The set's picture did not arrive."}</p>
+          <p>{message ?? "The display's picture did not arrive."}</p>
           <div className="notice__keys">
             <button
               type="button"
@@ -46,7 +46,8 @@ export function Notices() {
       {showNotice && (
         <div className="notice" role="status">
           <p>
-            3D is not available here, so you are getting the plain set. Everything else is the same.
+            3D is not available here, so you are getting the plain version. Everything else is the
+            same.
           </p>
           {canDismiss && (
             <button type="button" className="key" onClick={() => setDismissed(true)}>

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { KeyIcon } from './KeyIcon';
 
 interface DockKeyProps {
   id: string;
@@ -45,6 +46,7 @@ export function DockKey({
         if (!disabled) onPress();
       }}
     >
+      <KeyIcon name={id} />
       {label}
     </button>
   );

@@ -9,6 +9,7 @@ import { panelCoversPlayer, resolveLayout, type ResolvedLayout } from './layout'
 export function usePlayerLayout(): { layout: ResolvedLayout; covered: boolean } {
   const viewport = useViewport();
   const corners = usePlayerStore((s) => s.corners);
+  const inset = usePlayerStore((s) => s.inset);
   const scenePlacement = usePlayerStore((s) => s.scenePlacement);
   const pose = useEnvironmentStore((s) => s.pose);
   const userFocus = useEnvironmentStore((s) => s.userFocus);
@@ -22,6 +23,7 @@ export function usePlayerLayout(): { layout: ResolvedLayout; covered: boolean } 
     phone: mode === '3d-screen',
     mode2d: mode === '2d',
     userFocus,
+    inset,
   });
   const covered = panelCoversPlayer(panel, layout, { width: viewport.w, height: viewport.h });
   return { layout, covered };

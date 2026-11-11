@@ -16,9 +16,9 @@
 #   roll       display slip: the picture slips up by one wrap, with its depth layers lagging
 #   knob       the dial rings on the base puck turn by themselves (which=channel or volume)
 #   dim        the room light dims;  shadow  the Occupant's shadow shows on the frosted wall;  creep  slow camera push-in
-# Proposed new cue (not yet supported by the parser, so kept as a comment): glitch amp=<0..1> dur=<s>
+# Cue: glitch amp=<0..1> dur=<s>  (supported by the parser and scheduler)
 #   the display's own UI chrome (HUD plates, the header chip, fastext chips; never the dock keys) dips in opacity
-#   and returns, at most 1.5 Hz, never below 0.55. Uncomment the glitch lines once the frontend adds the cue.
+#   and returns, at most 1.5 Hz, never below 0.55.
 
 # signal: calm cold open, almost nothing
 signal              hum         to=0.15 over=8
@@ -35,7 +35,7 @@ makers-3@end        rewrite     word=6 to=HOST hold=1.2 dur=3
 staff               dim         to=0.2 over=8
 staff-2@end         bleed       dur=4 rows=1
 staff-2@end+3       knob        which=channel deg=25 over=3
-# staff-2@end+7     glitch      amp=0.4 dur=1.4
+staff-2@end+7     glitch      amp=0.4 dur=1.4
 
 # phases: the picture slips once, at the end of the page
 phases-3@end        tremble     amp=0.05 dur=2.5
@@ -56,7 +56,7 @@ diary               hum         to=0.5 over=12
 diary-1@end         knob        which=volume deg=-30 over=3
 diary-3@end         bleed       dur=6 rows=1
 diary-5@end         rewrite     word=14 to=YOU hold=1.4 dur=3.2
-# diary-5@end+6     glitch      amp=0.6 dur=1.4
+diary-5@end+6     glitch      amp=0.6 dur=1.4
 
 # glass: closest approach
 glass               ghost-near  to=0.9 over=8

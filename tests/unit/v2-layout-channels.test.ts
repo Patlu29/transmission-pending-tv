@@ -76,20 +76,10 @@ describe('channel stepping', () => {
   });
 });
 
-describe('colour option', () => {
-  it('is black and white by default and on channel 0', () => {
-    expect(isColourActive('bw', 'cinema', true)).toBe(false);
-    expect(isColourActive('colour', 'tv-room', false)).toBe(false);
-  });
-
-  it('tints the TV room only with Colour on and a live channel', () => {
-    expect(isColourActive('colour', 'tv-room', true)).toBe(true);
-    expect(isColourActive('bw', 'tv-room', true)).toBe(false);
-  });
-
-  it('applies to other rooms whatever is playing', () => {
-    expect(isColourActive('colour', 'mountain-sky', false)).toBe(true);
-    expect(isColourActive('colour', 'train', true)).toBe(true);
+describe('colour option (2050: Colour by default, Monochrome when off)', () => {
+  it('follows the switch in every room and on channel 0', () => {
+    expect(isColourActive('colour')).toBe(true);
+    expect(isColourActive('bw')).toBe(false);
   });
 });
 

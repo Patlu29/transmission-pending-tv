@@ -11,9 +11,9 @@ export type LinkResult = { ok: true; videoId: string } | { ok: false; problem: L
 
 /** In-character messages, one per problem (design-spec v2 1.5). */
 export const LINK_MESSAGES: Record<LinkProblem, string> = {
-  empty: 'Paste a link first. The set cannot guess.',
+  empty: 'Paste a link first. The display cannot guess.',
   'not-url': 'That is not a link. Try one that starts with https://.',
-  host: 'Only YouTube links work on this set.',
+  host: 'Only YouTube links work on this display.',
   list: 'That points to a channel or a list, not one live video. Paste the link of the video itself.',
   'no-id': 'No picture found in that link.',
 };

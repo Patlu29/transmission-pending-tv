@@ -1,11 +1,11 @@
 import { useEffect, useRef, type CSSProperties } from 'react';
 import { useViewport } from '@/hooks/useViewport';
-import { ENVIRONMENTS } from '@/scene/environments/registry';
 import { useChannelStore } from '@/state/channelStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { useEnvironmentStore } from '@/state/environmentStore';
 import { usePlayerStore } from '@/state/playerStore';
 import { useUiStore } from '@/state/uiStore';
+import { roomLabel } from '@/ui/components/rooms';
 import { playerController } from './controller';
 import { InfoRow, NoSignalCard, StillCard } from './Cards';
 import { focusRect } from './layout';
@@ -95,7 +95,7 @@ export function PlayerHost() {
         <NoSignalCard error={error} channel={current} style={rectStyle(rect)} />
       )}
       {shown && current && <InfoRow channel={current} info={shown.info} layout={shown} />}
-      <span className="sr-only">{ENVIRONMENTS[envId].label}</span>
+      <span className="sr-only">{roomLabel(envId)}</span>
     </div>
   );
 }

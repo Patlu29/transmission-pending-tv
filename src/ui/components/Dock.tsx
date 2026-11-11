@@ -14,6 +14,7 @@ import {
   toggleFocus,
   toggleLook,
   toggleRoomSound,
+  toggleSolidPanels,
   toggleVideoMute,
 } from '@/ui/roomActions';
 import { DockKey } from './DockKey';
@@ -63,6 +64,7 @@ export function Dock() {
   const muted = usePlayerStore((s) => s.muted);
   const playerPhase = usePlayerStore((s) => s.phase);
   const roomSound = useSettingsStore((s) => s.roomSound);
+  const solidPanels = useSettingsStore((s) => s.solidPanels);
   const colourSetting = useSettingsStore((s) => s.colour);
   const focusRequest = useUiStore((s) => s.focusRequest);
   const wide = useMediaQuery('(min-width: 1024px)');
@@ -70,7 +72,6 @@ export function Dock() {
   const ref = useRef<HTMLDivElement>(null);
   const sheetId = useId();
   const reasonId = useId();
-  const colourReasonId = useId();
   const initialFocus = useRef(false);
 
   const intro = useIntroStore.getState;
@@ -149,12 +150,10 @@ export function Dock() {
   });
   keys.push({
     id: 'colour',
-    label: colourSetting === 'colour' && !channel0 ? 'Colour: on' : 'Colour: off',
-    ariaLabel: 'Room colour',
+    label: colourSetting === 'colour' ? 'Colour: on' : 'Colour: off',
+    ariaLabel: 'Colour',
     onPress: toggleColour,
-    pressed: colourSetting === 'colour' && !channel0,
-    disabled: channel0,
-    describedBy: channel0 ? colourReasonId : undefined,
+    pressed: colourSetting === 'colour',
     pri: 3,
   });
 
@@ -254,6 +253,14 @@ export function Dock() {
     zone: 'more',
   });
   keys.push({
+    id: 'solid',
+    label: solidPanels ? 'Solid panels: on' : 'Solid panels: off',
+    onPress: toggleSolidPanels,
+    pressed: solidPanels,
+    pri: 6,
+    zone: 'more',
+  });
+  keys.push({
     id: 'keys',
     label: 'Keyboard help',
     onPress: () => useUiStore.getState().openPanel('keys'),
@@ -335,7 +342,7 @@ export function Dock() {
       onPress={() => {
         k.onPress();
         // Keys that open a dialog or toggle a setting keep the sheet open, so focus has somewhere to return to.
-        if (inSheet && !['text', 'keys', 'roomsound'].includes(k.id)) setMoreOpen(false);
+        if (inSheet && !['text', 'keys', 'roomsound', 'solid'].includes(k.id)) setMoreOpen(false);
       }}
       disabled={k.disabled}
       pressed={k.pressed}
@@ -345,15 +352,10 @@ export function Dock() {
     />
   );
   return (
-    <div className="dock" id="dock" ref={ref} role="group" aria-label="Television controls">
+    <div className="dock" id="dock" ref={ref} role="group" aria-label="Display controls">
       {loading && isTv && (
         <p className="dock__reason" id={reasonId}>
           Tuning in, {pct}%
-        </p>
-      )}
-      {channel0 && (
-        <p className="dock__note" id={colourReasonId}>
-          Channel 0 is always black and white
         </p>
       )}
       <div className="dock__keys">

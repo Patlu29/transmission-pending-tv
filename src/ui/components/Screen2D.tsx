@@ -8,7 +8,6 @@ import {
   type ReactNode,
 } from 'react';
 import { facts, intro } from '@/facts';
-import { drawTestCard } from '@/scene/materials/testcard/drawTestCard';
 import { useFrameInput } from '@/hooks/useFrameInput';
 import { useDisplayStore } from '@/state/displayStore';
 import { useHauntStore } from '@/state/hauntStore';
@@ -21,6 +20,7 @@ import { buildFrame, type Frame, type FrameInput, type Run } from '@/ui/teletext
 import { computeGrid, type GridSpec } from '@/ui/teletext/grid';
 import { findHit } from '@/ui/teletext/hit';
 import { readPalette } from '@/ui/teletext/palette';
+import { drawStandbyField } from '@/ui/teletext/standby';
 import { Haunt2D } from './Ghost2D';
 
 const CROSSFADE_MS = SCREEN_FADE_MS;
@@ -41,7 +41,7 @@ export function TestCardCanvas({
     const ctx = c?.getContext('2d');
     if (!c || !ctx) return;
     const draw = () => {
-      drawTestCard(ctx, c.width, c.height, {
+      drawStandbyField(ctx, c.width, c.height, readPalette(), {
         loadingPercent: card.loadingPercent,
         subCaption: card.sub,
       });
@@ -116,7 +116,7 @@ function RowText({
 
 /**
  * The visible screen in 2D mode: the frame model as DOM, with the technical-artist's
- * crt2d overlay (scanlines, vignette, noise), the haunted-text effects, the ghost layer,
+ * holo2d glass card (no scanlines or curvature; light-field grain), the haunted-text effects, the ghost layer,
  * the picture roll and the edge dim. aria-hidden: the visually hidden Transcript is the text
  * of record, so facts here are plain spans (no data-fact) to avoid duplicates.
  */
@@ -241,7 +241,7 @@ export function Screen2D() {
         )}
         {f.mode === 'page' && (
           <div
-            className="screen2d__grid crt2d__glow"
+            className="screen2d__grid"
             style={{
               left: grid.originX,
               top: grid.originY,
@@ -286,7 +286,7 @@ export function Screen2D() {
     <div className="screen2d-wrap">
       <div
         ref={ref}
-        className={`screen2d crt2d ${frame.mode === 'card' ? 'crt2d--idle' : 'crt2d--text'} ${animation}${off ? ' is-off' : ''}`}
+        className={`screen2d holo2d ${frame.mode === 'card' ? 'holo2d--idle' : 'holo2d--text'} ${animation}${off ? ' is-off' : ''}`}
         data-calm={calm}
         aria-hidden="true"
         onClick={onClick}
