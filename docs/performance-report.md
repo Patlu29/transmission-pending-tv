@@ -138,3 +138,91 @@ Not measured yet; what I expect and will test:
 - **Rules to keep:** live blur only on small chrome (dock, info row, HUD tags) at 12 px or less with no nesting; large panels tinted with no live blur, or blur only while the canvas is on demand (Calm, idle); `data-glass="solid"` as the low-end path. The canvas now sets `<html data-dprstepped>` (`dataset.dprStepped`), so CSS can switch to solid panels with `html[data-dpr-stepped='true']`.
 - **Overlap:** nothing frosted, glowing or shadowed may overlap the player rect or its 24 px halo; the player's ancestors keep no `backdrop-filter`.
 - **Volumetrics:** additive cone meshes with depth write off, no `EffectComposer`; I will check overdraw on mountain-sky-class scenes.
+
+---
+
+# 2050 pass (2026-11-11): holo room, frosted glass, fonts
+
+Branch `v2` at cdca942. The 2050 retheme is integrated (holo shader, HoloDisplay, HoloEnvironment, HoloRoom, glass chrome, Solid panels). **No source change was needed in this pass.** The measurements below show nothing that has to be fixed, so the only files written are this report and the handoff.
+
+## Test setup
+
+| Item | Value |
+|---|---|
+| Machine | Apple-silicon Mac, macOS, headless browsers driven by Playwright |
+| Software run | Chromium headless shell on SwiftShader (software WebGL and software compositing). Same caveat as before: ratios only |
+| Hardware runs | Chromium headless shell on ANGLE Metal (real GPU) and Playwright WebKit 27.2 (Safari engine, real GPU). This is a desktop-class Apple GPU, not a 2022 mid-range laptop or phone, so it shows "no cost here", not "no cost on a phone" |
+| Viewports | 1440x900 at DPR 2 (canvas 2880x1800), and 390x844 at DPR 2 (phone layout) |
+| Build | `vite build --mode test` copy of the production code (adds only `window.__APP_TEST__`), served by `vite preview`. No YouTube, no external requests |
+| Method | Frames that issue draw calls are "rendered fps"; rAF rate is "page fps". Glass variants are applied in the page: `html[data-glass="solid"]`, `--glass-small-blur` set to 0, 6, 24 or 48 px, or `backdrop-filter: none` on the dock or on the HUD plates. Intro measured after "Switch on" (60 Hz loop); rooms measured in watch pose (30 Hz ticker) |
+| Not measured | Firefox (no browser installed), a real phone, a real mid-range laptop, hidden tabs (headless cannot report `hidden`; by code reading, as before) |
+
+## 1. Glass cost
+
+What carries `backdrop-filter` now: `.dock`, `.hud__plate`, `.hud__room` and `.hud__idle`, all at `blur(12px) brightness(0.7) saturate(1.3)`. Large panels are tinted, with no live blur. That is the ADR 0012 section 4 design, and it holds in the build.
+
+| Config | Engine | Live glass | Solid panels | Blur 24 px | Blur 48 px |
+|---|---|---|---|---|---|
+| Holo room, intro at 60 Hz, 2880x1800 | Chromium, real GPU | 60 fps, p95 16.8 ms | 60, 16.7 | 60, 16.8 | 59.3, 16.8 (one 100 ms frame in 6 s) |
+| Holo room, intro at 60 Hz, 2880x1800 | WebKit | 58.8, p95 25 ms | 61.3, 24 | 59.5, 24 | 60.5, 24 |
+| Mountain sky, 30 Hz ticker, 2880x1800 | Chromium, real GPU | 30 rendered, p95 16.8 | 30, 16.7 | 30, 16.7 | 30, 16.8 |
+| Mountain sky, 30 Hz ticker, 2880x1800 | WebKit | 30, p95 17 | 30, 18 | 30.2, 17 | 30, 18 |
+| Phone layout, 390x844 DPR 2, holo and mountain sky | both | 59 to 60 page, 30 rendered | same | not run | not run |
+| Holo room, 1440x900, software compositing | SwiftShader | 11.8 fps | 11.8 | 10.6 (-10 per cent) | not run |
+| Cinema, 30 Hz, 1440x900, software | SwiftShader | page 60, rendered 30 | same | same | not run |
+| Dock only off, HUD only off (software, holo room) | SwiftShader | 11.8 | dock off 11.4, HUD off 12.0 | | |
+
+- **Verdict:** frosted glass over the 60 Hz and 30 Hz canvas costs nothing measurable on a desktop GPU in Chromium or WebKit, even at 48 px. In software compositing only a 24 px blur showed (-10 per cent, in a scene already at 11 fps). The glass area is small (the dock is about 1,200 x 70 px, a few HUD plates), which is why. When the canvas is idle (Calm, demand loop) there are no canvas frames, so no blur re-runs.
+- **WebKit p95 25 ms on the holo room** is the scene, not the glass: it is identical with Solid panels. At 5 MP in Safari the holo shader is near the 16.7 ms budget on this GPU.
+- **Auto-switch threshold:** none needed beyond what is built. The frontend already goes solid when `AdaptiveDpr` has stepped down (`data-dpr-stepped`), when `prefers-reduced-transparency` or `prefers-contrast: more` applies, or when `backdrop-filter` is unsupported. I would keep that rule as is. If a phone test later shows glass cost, add one more trigger: solid when the rendered p95 frame time stays over 33 ms after the DPR has reached 1.
+- **Not covered:** a phone GPU, Firefox (Gecko is the slow engine for backdrop blur, per ADR 0012), and more than one frosted layer (there is only one now).
+
+## 2. Holo room
+
+| Metric | v2 pass (CRT room) | 2050 | Budget |
+|---|---|---|---|
+| Draw calls, powered, 1440x900 (median) | 17 | 21 | 100 |
+| Draw calls, phone layout | 2 | 6 | 50 |
+| Triangles, powered, desktop | 11,224 | 13,210 | 500,000 |
+| Triangles, phone layout | 4 | 12 | 150,000 |
+| Rendered fps, powered, 1440x900 DPR 1, software | 4 to 5 | 11.6 to 11.8 | 60 |
+| Rendered fps, powered, 2880x1800, real GPU | not measured | 60 (Chromium), 58.8 (WebKit, p95 25 ms) | 60 |
+| Idle draws, ready state | 0 | 0 | 0 |
+| Idle draws, Calm | 0 | 0 | 0 |
+| Light cone | n/a | 1 draw, 288 indices, `DoubleSide` additive, so up to 2 layers over the beam | |
+| Rooms at 30 Hz, 1440x900 DPR 1, software | 17 to 30 rendered | 30 for all rooms but mountain sky (22.7) | 30 |
+
+- **Light cone overdraw:** the cone is one open cylinder (48 sides), drawn front and back with additive blending, so every pixel of the beam is shaded twice. The shader is cheap (a `pow`, the keep-out fade and a multiply). Skipping the draw changed nothing measurable in software (about 10.5 versus 12 frames a second, inside the run-to-run spread), so I have not touched it. Making it single-sided would change the picture.
+- **Rooms are faster in software than in the v2 pass** because Colour is on by default now, so the canvas has no CSS `grayscale` filter to composite (that filter cost 19 to 36 per cent in software before). Mono still applies it.
+- **Memory and leaks across room switches** (three laps through all nine rooms, returning to the holo room each time, WebGL objects counted by wrapping create and delete): flat. Holo room on every re-entry: textures 9, buffers 73, programs 16, framebuffers 39, VAOs 25. Cinema: textures 8, buffers 28, programs 6, framebuffers 3. `HoloEnvironment` disposes its PMREM target, so the v2 leak did not come back. JS heap 9.4 MB, then 11.4, 11.9, 12.2 after each lap (+0.3 to 0.5 MB per lap, narrowing). A longer soak would settle whether that is a slow leak or just JIT.
+- **Switch time:** first visit to a room about 300 ms, revisit 7 ms, holo room re-entry about 950 ms in software (shader compile, 16 programs; not JS).
+
+## 3. First view
+
+| Metric | v2 pass | 2050 | Budget |
+|---|---|---|---|
+| Initial JS (gzip, Vite report) | 99.2 kB | 103.0 kB (+3.8) | v1 + 10 kB (about 109 kB) |
+| First-view JS, holo room (all files loaded, gzip) | 387.8 kB | 388.3 kB | 350 kB architecture (over), 500 kB skill |
+| First-view transfer, holo room, 3d-set | 454 kB | 474 kB (1,475 kB raw) | under 5 MB, stretch 2 MB |
+| First view with Mountain sky selected | 458 kB | 479 kB | |
+| Scene chunk (`Experience`, gzip) | 29.4 kB | 27.1 kB | |
+| Fonts | 60.5 kB | 75.9 kB (5 woff2: Space Grotesk 18.8, Space Mono 14.2 and 14.4, Atkinson 15.0 and 15.3 kB) | 150 kB |
+| Main CSS plus fonts CSS (gzip) | 5.4 + 1.4 kB | 7.0 + 2.8 kB | |
+
+## 4. Fonts
+
+- `index.html` preloads `space-mono-regular.woff2` with `crossorigin` and `type`, and the browser logs no "preloaded but not used" warning. The other four faces are found when the CSS arrives, about 400 ms later on the 4G profile (9 Mbps, 170 ms RTT), and all five are in by about 840 ms. All use `font-display: swap`, so none blocks first paint: the page text is visible by 300 ms in every run, with the fallback face.
+- **Headless first-contentful-paint figures (2.4 to 3.3 s) are wrong** and should be ignored: a 2D-mode page with no long tasks reports 3.3 s, while screenshots show the text on screen by 300 ms. A real-browser Lighthouse run is still needed.
+- **Tried and not kept:** also preloading Space Grotesk (the heading and button face) and Atkinson 400. That put the three main faces in by about 430 ms (instead of about 840), but it delayed the render-blocking main CSS from 388 to about 555 ms on the 4G profile, because the fonts share the link. First paint earlier with a font swap later was the better trade, so `index.html` is unchanged. If the font swap is visible to the viewer, preload Space Grotesk only and accept the CSS delay (about 170 ms on 4G); that is a design call.
+- No render-blocking JS: the main bundle is a module script. The CSS is 7.0 kB gzip.
+
+## Over budget or open (2050)
+
+| Issue | Detail | Suggested fix | Owner |
+|---|---|---|---|
+| First-view JS 388.3 kB gzip vs 350 kB (architecture) | Under the 500 kB skill budget. Initial JS 103.0 kB is inside v1 + 10 kB | Accept, or raise architecture section 6 to 400 kB | architect |
+| Holo room at DPR 2 in WebKit | p95 frame 25 ms on a desktop Apple GPU, with or without glass; the holo shader is near the 60 fps limit at 5 MP | Check a real mid-range laptop and phone; `AdaptiveDpr` is the safety net and now also triggers Solid panels | qa-engineer |
+| Glass on phones, Firefox and Safari iOS | Not measured; desktop GPUs show no cost | Real devices; if it costs, solid when rendered p95 stays over 33 ms at DPR 1 | qa-engineer |
+| Heap +0.3 to 0.5 MB per room lap | May be JIT | A 20-lap soak with `performance.memory` | qa-engineer |
+| Fonts swap after first paint | Only Space Mono regular is preloaded | See section 4 | ux-ui-designer |
+| Real-browser FCP and LCP | Headless numbers are unreliable | Lighthouse on a real device or CI | devops-engineer |
