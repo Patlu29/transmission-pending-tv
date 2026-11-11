@@ -165,3 +165,4 @@ Registry, nine room modules, `ScreenAnchor`, the watch-pose solver and projector
 ### Remaining
 - Real iframe playback in a live TV room was not run through the scene; the rect and keep-out were checked in the test hook and screenshot.
 - Look around (browse) orbit was not exercised in this pass.
+- Channel knob handover: `isLastDiaryPage()` in `seam.ts` now re-exports `introStore`'s (checked in the browser: false before the story, true on the last commit page, false on the index), so the knob moves from the diary's last page to channel 1.

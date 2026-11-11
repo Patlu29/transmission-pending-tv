@@ -24,10 +24,7 @@ export const useChannelName = () => useChannelStore((s) => s.current?.name ?? nu
 export const stepChannel = (direction: 1 | -1) => useChannelStore.getState().step(direction);
 
 /**
- * PLACEHOLDER: true when the channel 0 diary is on its last page, so the channel knob moves on to
- * channel 1 (design-spec-v2 section 3, item 3). introStore does not expose it yet, so this is always
- * false and the knob keeps v1's "next diary page" behaviour.
+ * True when the channel 0 diary is on its last page, so the channel knob moves on to channel 1
+ * (design-spec-v2 section 3, item 3). introStore's check is not reactive: call it in event handlers.
  */
-export function isLastDiaryPage(): boolean {
-  return false;
-}
+export { isLastDiaryPage } from '@/state/introStore';
