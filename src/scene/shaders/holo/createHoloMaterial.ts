@@ -14,8 +14,8 @@ import fragmentShader from './holo.frag.glsl?raw';
 
 /** Seconds the warm-up timeline lasts. The shader's key times are tied to this length. */
 export const WARMUP_SECONDS = 2.2;
-/** Default power-off collapse length in seconds. */
-export const COLLAPSE_SECONDS = 0.55;
+/** Fold-away length in seconds (1.0, so the worst 341 x 256 tile step is 0.042 per 100 ms). The scene and frontend read this. */
+export const COLLAPSE_SECONDS = 1.0;
 /** Hard ceiling for the noise rate (design-spec 7.2). */
 export const MAX_NOISE_HZ = 24;
 /** Smallest grain cell in CSS px (design-spec 7.2). */
@@ -215,13 +215,13 @@ const MATERIALISE: Array<[number, number]> = [
 // Fold: value against collapse progress 0..1.
 const FOLD: Array<[number, number]> = [
   [0, 1],
-  [0.05, 1],
-  [0.18, 0.905],
-  [0.36, 0.785],
-  [0.5, 0.705],
-  [0.65, 0.103],
-  [0.75, 0.08],
-  [0.85, 0.028],
+  [0.05, 0.986],
+  [0.18, 0.871],
+  [0.36, 0.721],
+  [0.5, 0.377],
+  [0.65, 0.137],
+  [0.75, 0.097],
+  [0.85, 0.045],
   [0.95, 0],
   [1, 0],
 ];

@@ -9,7 +9,7 @@ precision highp float;
 uniform sampler2D uMap;        // light-field text canvas (CanvasTexture, sRGB, mipmapped)
 uniform float uTime;           // seconds
 uniform float uWarmup;         // 0..1 over 2.2 s: materialise (0 = dark)
-uniform float uCollapse;       // 0..1 over 0.55 s: fold away (0 = not folding)
+uniform float uCollapse;       // 0..1 over COLLAPSE_SECONDS (1.0 s): fold away (0 = not folding)
 uniform float uCalm;           // 1 = frozen grain, no band, no ghost, no slip, no shimmer
 uniform float uPixelRatio;     // device pixels per CSS px
 uniform float uAspect;         // glass width / height (16/9)
@@ -117,23 +117,23 @@ void main() {
   float blurLod = t < 1.8 ? mix(4.0, 1.0, smoothstep(1.1, 1.8, t)) : mix(1.0, 0.0, smoothstep(1.8, 2.2, t));
   float edgeAmt = max(traceP * 0.6, smoothstep(1.8, 2.2, t));
   float sharpen = smoothstep(1.4, 2.0, t);
-  float shrinkR = mix(1.25, 0.0, smoothstep(0.364, 0.727, u));
-  float seedF = 1.0 - smoothstep(0.727, 1.0, u);
-  float hairF = 1.0 - smoothstep(0.727, 0.95, u);
+  float shrinkR = mix(2.15, 0.0, smoothstep(0.02, 0.97, u));   // 2.15 = 1.25 plus the 0.9 edge softness, so the field starts whole
+  float seedF = 1.0 - smoothstep(0.75, 1.0, u);
+  float hairF = 1.0 - smoothstep(0.75, 0.95, u);
   if (collapsing > 0.5) {
     seedI = seedF;
     hairE = 1.0;
-    hairI = hairF;
+    hairI = hairF * smoothstep(0.15, 0.5, u);
     traceP = 1.0;
     revealR = shrinkR;
-    fillGain = 1.0 - 0.2 * smoothstep(0.0, 0.364, u);
-    blurLod = 3.0 * smoothstep(0.0, 0.364, u);
+    fillGain = 1.0 - 0.2 * smoothstep(0.0, 0.3, u) - 0.5 * smoothstep(0.2, 0.9, u);
+    blurLod = 3.0 * smoothstep(0.0, 0.3, u);
     edgeAmt = hairF;
     sharpen = 1.0;
   }
 
   float rn = length(d) / 1.4142;
-  float fillMask = 1.0 - smoothstep(revealR - 0.2, revealR, rn);
+  float fillMask = 1.0 - smoothstep(revealR - mix(0.2, 0.9, collapsing), revealR, rn);
   float filling = (t >= 1.1 || collapsing > 0.5) ? 1.0 : 0.0;
   fillMask *= filling;
 

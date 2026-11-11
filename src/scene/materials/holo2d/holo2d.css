@@ -6,7 +6,7 @@
  *   <div class="holo2d-field" data-calm="false">             a slow conic-gradient field behind the sheet (frozen in Calm)
  *     <div class="holo2d holo2d--on" data-calm="false"> ...transcript screen... </div>
  *   </div>
- *   .holo2d--bloom  runs the 2.2 s mask reveal (seed of light to the full sheet); .holo2d--fold runs the 0.55 s fold
+ *   .holo2d--bloom  runs the 2.2 s mask reveal (seed of light to the full sheet); .holo2d--fold runs the 1.0 s fold
  *   .holo2d--on     settled; omit both classes and add .holo2d--off for dark glass
  *   data-calm="true" (or prefers-reduced-motion) cuts every animation to its end state
  *
@@ -96,7 +96,7 @@
   mask-repeat: no-repeat;
   -webkit-mask-position: center;
   mask-position: center;
-  animation: holo2d-fold 0.55s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: holo2d-fold 1s cubic-bezier(0.4, 0, 0.2, 1) both;
 }
 
 /* the Occupant's layer and text glow stay below the grain; glow only on strong text */
