@@ -1,6 +1,6 @@
 # Project status
 
-- **Current phase:** v2 on branch `v2`: Phases 2-4 done (all nine rooms, player, guide, guide Action); Phase 5 (performance) in progress. v1 on `main` awaits the user's release steps.
+- **Current phase:** v2 on branch `v2`: Phases 2-4 done (all nine rooms, player, guide, guide Action); Phase 5 (performance) done; 2050 retheme design in progress. v1 on `main` awaits the user's release steps.
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
@@ -21,6 +21,7 @@
 - **v2 design approved (2026-11-11):** warm "colour era" tint for the TV room on live channels (channel 0 stays B&W); optional synthesised room sound included, off by default; no rooms cut. New 9th headline room: **Mountain sky**, where the viewer stands on a summit and the video plays on a giant flat screen floating in the sky (flat and head-on per YouTube rules; scenery frames it, never covers it). DD/Sansad entries stay disabled until the user confirms the permission email has been sent.
 - **YouTube API key (2026-11-11):** created by the user, kept in the gitignored `.env` locally, and added as the repo secret `YOUTUBE_API_KEY`. Local resolver test: 53 of 53 enabled channels live; 2,007 quota units used on the cold run.
 - **2050 retheme (2026-11-11, v2 branch only):** the user replaces the 1970s theme with a 2050 "holographic glass" identity across the whole site: channel 0's set, start screen, dock, guide, fonts, colours and notices. The other eight rooms keep their scenes but get the 2050 UI chrome. The Occupant's ghost story stays, retold for 2050 (a ghost in a 2050 holo-display), still telling only true build facts. Colour is allowed. v1 on main stays the 1970s release. This overrides the brief's 1970s styling (ps.md is kept as the original brief).
+- **v2 performance decisions (tech lead, 2026-11-11):** first-view JS 387.8 kB gzip accepted (over the 350 kB architecture target, inside NFR-3); 30 Hz ambient room motion accepted (the intro stays at 60 Hz); Colour/Monochrome filter cost to be measured on a real phone.
 - **Blocked (user action):** GitHub Actions cannot run. The first CI run (42991865167, 2026-11-11) was not started because the Patlu29 account is locked due to a billing issue. CI, the Pages deploy and the v2 guide Action all wait on this.
 - **Open questions:** none (hosting: GitHub Pages per ADR 0011)
 - **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
