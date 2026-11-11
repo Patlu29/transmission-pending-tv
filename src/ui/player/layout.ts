@@ -14,8 +14,12 @@ import {
  * out outside it.
  */
 export const DOCK_PX = 64;
-/** Desktop dock: bottom-centre, 24 px up, up to two rows of 44 px keys. */
-export const DESKTOP_DOCK_PX = 128;
+/** Desktop dock: bottom-centre, 24 px up, always ONE row (the extra keys go under More). */
+/** Under this viewport height the dock shows only four keys and the rest go under More. */
+export const SHORT_VIEWPORT_PX = 700;
+/** A one-row dock: keys 44 px plus padding. */
+export const DOCK_ONE_ROW_PX = 76;
+export const KEEP_OUT_PX = 24;
 export const INFO_ROW_PX = 40;
 export const FOCUS_HEADER_PX = 48;
 export const PHONE_MIN_PLAYER_H = 240;
@@ -52,6 +56,22 @@ export function isLandscapeShort(v: Viewport): boolean {
  * row, the room dimmed behind. Landscape short: height fills the viewport, 16:9 width, dock on the
  * right. Desktop manual focus: the largest 16:9 rectangle that leaves the header, info row and dock.
  */
+/** Height the dock takes at the bottom of the viewport in the room layout, including its 24 px offset. */
+export function dockReservePx(v: Viewport): number {
+  if (v.width < 1024) return DOCK_PX;
+  return DOCK_ONE_ROW_PX + 24;
+}
+
+/** Where the bottom-centre dock sits (an estimate, slightly generous), for the keep-out check. */
+export function dockBox(v: Viewport): Rect {
+  const height = DOCK_ONE_ROW_PX;
+  const width = Math.min(v.width - 32, v.height < SHORT_VIEWPORT_PX ? 600 : 960);
+  return { x: (v.width - width) / 2, y: v.height - 24 - height, width, height };
+}
+
+const overlaps = (a: Rect, b: Rect) =>
+  a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+
 export function focusRect(v: Viewport): { rect: Rect; info: Rect; landscape: boolean } {
   if (isLandscapeShort(v)) {
     const height = Math.max(PLAYER_HARD_MIN.height, v.height - INFO_ROW_PX - GAP_PX * 2);
@@ -65,8 +85,7 @@ export function focusRect(v: Viewport): { rect: Rect; info: Rect; landscape: boo
       landscape: true,
     };
   }
-  const dock = v.width >= 1024 ? DESKTOP_DOCK_PX : DOCK_PX;
-  const availH = v.height - FOCUS_HEADER_PX - 2 * INFO_ROW_PX - dock - GAP_PX * 3;
+  const availH = v.height - FOCUS_HEADER_PX - 2 * INFO_ROW_PX - dockReservePx(v) - GAP_PX * 3;
   let width = v.width;
   let height = width * (9 / 16);
   if (height > availH && availH >= PHONE_MIN_PLAYER_H) {
@@ -112,10 +131,29 @@ export function resolveLayout(input: LayoutInput): ResolvedLayout {
   if (placement.kind === 'hidden') return { kind: 'hidden', reason: placement.reason };
   if (placement.kind === 'inline') {
     const rect = placement.rect;
+    const info = {
+      x: rect.x,
+      y: rect.y + rect.height + GAP_PX,
+      width: rect.width,
+      height: INFO_ROW_PX,
+    };
+    // The dock must clear the player, its info row and the 24 px keep-out; if it cannot, use the focus layout.
+    const dock = dockBox(viewport);
+    const keepOut = {
+      x: rect.x - KEEP_OUT_PX,
+      y: rect.y - KEEP_OUT_PX,
+      width: rect.width + 2 * KEEP_OUT_PX,
+      // From 24 px above the player down to 8 px under the info row (the info row is the one plate allowed near it).
+      height: info.y + info.height + GAP_PX - (rect.y - KEEP_OUT_PX),
+    };
+    if (overlaps(dock, keepOut)) {
+      const f = focusRect(viewport);
+      return { kind: 'focus', rect: f.rect, info: f.info, reason: 'dock', landscape: f.landscape };
+    }
     return {
       kind: 'inline',
       rect,
-      info: { x: rect.x, y: rect.y + rect.height + GAP_PX, width: rect.width, height: INFO_ROW_PX },
+      info,
     };
   }
   const f = focusRect(viewport);

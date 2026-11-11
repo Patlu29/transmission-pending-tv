@@ -605,8 +605,6 @@ body {
 .screen2d {
   background: var(--screen-bg);
   border-radius: var(--radius-screen);
-  border: 1px solid color-mix(in srgb, var(--lumen) 35%, transparent);
-  box-shadow: none;
   text-shadow: none;
   font-family: var(--font-teletext);
 }
@@ -622,6 +620,7 @@ body {
   color: var(--screen-fact-text);
   border-radius: 6px;
   box-shadow: 0 0 0 2px var(--screen-fact-bg);
+  font-weight: 700; /* numerals: Space Mono's dotted zero is faint under about 18 px */
   text-shadow: none;
 }
 
@@ -668,20 +667,6 @@ body {
   );
 }
 
-/* Light-field grain on the 2D card: static (the technical-artist's holo2d.css animates it when present). */
-.screen2d::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  background: var(--glass-large-grain);
-  opacity: var(--crt-noise-opacity);
-}
-
-.screen2d.is-off::after {
-  opacity: 0;
-}
-
 /* ---------- 2D skins (rooms) take the ink background ---------- */
 .skin2d__idle {
   border-radius: var(--radius-md);
@@ -721,4 +706,18 @@ body {
     border: 1px solid CanvasText;
     background: Canvas;
   }
+}
+
+/* The desktop dock is ONE row: it must never wrap over the player. */
+.app[data-layout='set'] .dock {
+  width: max-content;
+  max-width: calc(100vw - var(--space-8));
+}
+
+.app[data-layout='set'] .dock__keys {
+  flex-wrap: nowrap;
+}
+
+.dock[data-short='true'] .key {
+  padding: 0 var(--space-3);
 }

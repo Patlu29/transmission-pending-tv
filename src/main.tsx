@@ -15,10 +15,7 @@ import '@/styles/fonts-2050.css';
 import '@/scene/materials/rooms/skins2d.css';
 import '@/ui/ui.css';
 import '@/ui/glass.css';
-
-// The technical-artist's 2D hologram styles, when they exist (2D mode grain and bloom). Optional: the glass card
-// works without them.
-import.meta.glob('/src/scene/materials/holo2d/*.css', { eager: true });
+import '@/scene/materials/holo2d/holo2d.css';
 
 // Test hook (dev and test builds only): lets QA read store state without reading pixels.
 if (import.meta.env.DEV || import.meta.env.MODE === 'test') {

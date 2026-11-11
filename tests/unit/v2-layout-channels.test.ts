@@ -200,3 +200,40 @@ describe('player layout', () => {
     expect(panelCoversPlayer('picker', focus, v)).toBe(true);
   });
 });
+
+describe('dock keep-out (never over the player, its info row or the 24 px margin)', () => {
+  it('keeps the player in the room at 1024 x 600 when the one-row dock clears it', () => {
+    const v = { width: 1024, height: 600 };
+    const layout = resolveLayout({ ...base, viewport: v, corners: corners(212, 78, 600, 335) });
+    expect(layout.kind).toBe('inline');
+  });
+
+  it('switches to focus at 1024 x 600 when the player would reach the dock', () => {
+    const v = { width: 1024, height: 600 };
+    const layout = resolveLayout({ ...base, viewport: v, corners: corners(172, 90, 680, 383) });
+    expect(layout.kind).toBe('focus');
+  });
+
+  it('switches to focus at 1280 x 720 for a tall player, and keeps a smaller one inline', () => {
+    const v = { width: 1280, height: 720 };
+    expect(resolveLayout({ ...base, viewport: v, corners: corners(256, 150, 768, 432) }).kind).toBe(
+      'focus',
+    );
+    expect(resolveLayout({ ...base, viewport: v, corners: corners(320, 56, 640, 360) }).kind).toBe(
+      'inline',
+    );
+  });
+
+  it('uses the focus layout without overlapping the dock, in every size', () => {
+    for (const v of [
+      { width: 1440, height: 900 },
+      { width: 1280, height: 720 },
+      { width: 1024, height: 600 },
+    ]) {
+      const { rect, info } = focusRect(v);
+      const dockTop = v.height - 100;
+      expect(info.y + info.height, JSON.stringify(v)).toBeLessThanOrEqual(dockTop + 1);
+      expect(rect.height).toBeGreaterThanOrEqual(200);
+    }
+  });
+});

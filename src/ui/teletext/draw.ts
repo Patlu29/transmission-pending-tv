@@ -152,7 +152,8 @@ export function drawFrame(
   ctx.setTransform(scale, 0, 0, scale, offsetX, 0);
   ctx.textAlign = 'center';
   ctx.textBaseline = 'alphabetic';
-  const baseline = grid.rowH * 0.5 + drawPx * 0.3;
+  // Space Mono's line box is 1.481 em; glyphs are placed by their baseline (the DOM's half-leading gives the same spot).
+  const baseline = grid.rowH * 0.5 + drawPx * 0.38;
   const fx = frame.fx;
   const fringe = fx && fx.kind === 'tremble' ? Math.min(1.5, 0.03 * grid.fontPx) : 0;
   const chipRadius = Math.max(3, grid.rowH * 0.22);
@@ -204,7 +205,8 @@ export function drawFrame(
         }
       }
       if (run.kind === 'cursor') continue;
-      ctx.font = `${run.kind === 'strong' ? '700 ' : ''}${drawPx}px ${p.fontTeletext}`;
+      // Strong text and fact chips (most numerals) are Bold: Space Mono's dotted zero is faint under about 18 px.
+      ctx.font = `${run.kind === 'strong' || run.kind === 'fact' ? '700 ' : ''}${drawPx}px ${p.fontTeletext}`;
       // A soft text glow on the strong tone only; body text has none, so contrast is not reduced.
       if (run.kind === 'strong') {
         ctx.shadowColor = p.glow;

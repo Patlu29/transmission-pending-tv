@@ -55,3 +55,17 @@ describe('glitch opacity envelope (design-spec-2050 4.3)', () => {
     );
   });
 });
+
+describe('fold-away timing follows the shader', () => {
+  it('COLLAPSE_MS equals COLLAPSE_SECONDS of the holo material (and the 2D fold)', async () => {
+    const { readFileSync } = await import('node:fs');
+    const { COLLAPSE_MS, COLLAPSE_2D_MS } = await import('../../src/state/timing.ts');
+    const src = readFileSync(
+      new URL('../../src/scene/shaders/holo/createHoloMaterial.ts', import.meta.url),
+      'utf8',
+    );
+    const seconds = Number(/COLLAPSE_SECONDS\s*=\s*([0-9.]+)/.exec(src)?.[1]);
+    expect(COLLAPSE_MS).toBe(seconds * 1000);
+    expect(COLLAPSE_2D_MS).toBe(COLLAPSE_MS);
+  });
+});

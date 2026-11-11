@@ -487,7 +487,6 @@ body {
   overflow: hidden;
   background: var(--screen-bg);
   border-radius: var(--radius-screen);
-  box-shadow: var(--shadow-screen-inset);
   font-family: var(--font-teletext);
   color: var(--screen-text);
   text-shadow: 0 0 6px var(--screen-glow);
@@ -572,19 +571,6 @@ body {
   inset: 0;
 }
 
-.screen2d.is-warming {
-  animation: bloom-in var(--duration-bloom, 2200ms) both;
-}
-
-.screen2d.is-collapsing {
-  animation: fold-away 700ms both;
-}
-
-:root[data-calm='true'] .screen2d.is-warming,
-:root[data-calm='true'] .screen2d.is-collapsing {
-  animation: none;
-}
-
 .tt__glyph {
   display: inline-block;
 }
@@ -601,6 +587,7 @@ body {
   width: 100%;
   height: 100%;
   pointer-events: none;
+  image-rendering: pixelated;
 }
 
 /* Edge dim: only outside the safe area, never over text (--haunt-dim is 0..1, set by the layer). */
@@ -625,45 +612,6 @@ body {
   transform: translateY(-50%);
   pointer-events: none;
   background: color-mix(in srgb, var(--grey-0) 6%, transparent);
-}
-
-/*
- * Bloom-in (design-spec-2050 3.3): the card is revealed from a seed at its centre by a rounded mask
- * that grows over 2.2 s, with a slow opacity ramp, so a 341 x 256 tile never steps by more than
- * 0.05 per 100 ms. Fold-away is the reverse over 700 ms with a linear dim. No blur, no scanlines.
- */
-@keyframes bloom-in {
-  0% {
-    clip-path: inset(49% 49% 49% 49% round var(--radius-screen));
-    opacity: 0.2;
-    animation-timing-function: var(--ease-soft);
-  }
-  35% {
-    clip-path: inset(48% 8% 48% 8% round var(--radius-screen));
-    opacity: 0.4;
-    animation-timing-function: var(--ease-soft);
-  }
-  100% {
-    clip-path: inset(0 0 0 0 round var(--radius-screen));
-    opacity: 1;
-  }
-}
-
-@keyframes fold-away {
-  0% {
-    clip-path: inset(0 0 0 0 round var(--radius-screen));
-    opacity: 1;
-    animation-timing-function: linear;
-  }
-  60% {
-    clip-path: inset(46% 6% 46% 6% round var(--radius-screen));
-    opacity: 0.45;
-    animation-timing-function: linear;
-  }
-  100% {
-    clip-path: inset(49% 49% 49% 49% round var(--radius-screen));
-    opacity: 0;
-  }
 }
 
 /* ---------- Transcript dialog ---------- */

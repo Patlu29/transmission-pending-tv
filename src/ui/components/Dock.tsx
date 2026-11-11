@@ -1,5 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { useMediaQuery } from '@/hooks/useMediaQuery';
+import { useViewport } from '@/hooks/useViewport';
+import { SHORT_VIEWPORT_PX } from '@/ui/player/layout';
 import { useChannelStore } from '@/state/channelStore';
 import { useDisplayStore } from '@/state/displayStore';
 import { useEnvironmentStore } from '@/state/environmentStore';
@@ -68,6 +70,9 @@ export function Dock() {
   const colourSetting = useSettingsStore((s) => s.colour);
   const focusRequest = useUiStore((s) => s.focusRequest);
   const wide = useMediaQuery('(min-width: 1024px)');
+  const viewport = useViewport();
+  // Under 700 px of height the dock is one row: the extra keys go under More (so it never covers the player).
+  const short = viewport.h < SHORT_VIEWPORT_PX;
   const [moreOpen, setMoreOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const sheetId = useId();
@@ -270,13 +275,17 @@ export function Dock() {
 
   const main = keys.filter((k) => k.zone !== 'more');
   const sheet = keys.filter((k) => k.zone === 'more');
-  const compact = mode === '3d-screen' || (mode === '2d' && !wide);
+  // The dock is one row everywhere. Phones and short viewports show four keys; desktop shows up to seven
+  // (under 1300 px wide) or eight, and the rest go under More, so the dock never wraps over the player.
+  const limit =
+    mode === '3d-screen' || (mode === '2d' && !wide) || short ? 4 : viewport.w < 1300 ? 7 : 8;
+  const compact = main.length > limit;
   const inline = compact
     ? new Set(
         main
           .map((k, i) => ({ k, i }))
           .sort((a, b) => a.k.pri - b.k.pri || a.i - b.i)
-          .slice(0, 4)
+          .slice(0, limit)
           .map((x) => x.k.id),
       )
     : null;
@@ -352,7 +361,14 @@ export function Dock() {
     />
   );
   return (
-    <div className="dock" id="dock" ref={ref} role="group" aria-label="Display controls">
+    <div
+      className="dock"
+      id="dock"
+      data-short={short}
+      ref={ref}
+      role="group"
+      aria-label="Display controls"
+    >
       {loading && isTv && (
         <p className="dock__reason" id={reasonId}>
           Tuning in, {pct}%

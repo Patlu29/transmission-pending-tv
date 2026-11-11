@@ -14,10 +14,14 @@ export const WARMUP_MS = 2200;
 export const CARD_HOLD_MS = 300;
 /** Calm / reduced motion: the static card shows this long before page 1. */
 export const CALM_CARD_MS = 1500;
-/** CRT collapse on power-off (the scene and 2D screen play it; the rasteriser holds the last picture). */
-export const COLLAPSE_MS = 450;
-/** The 2D CSS collapse is slower (700 ms) so no 341 x 256 tile steps more than 0.05 per 100 ms. */
-export const COLLAPSE_2D_MS = 700;
+/**
+ * The fold-away on power-off (design-spec-2050 3.3), in ms. Mirrors COLLAPSE_SECONDS in
+ * src/scene/shaders/holo/createHoloMaterial.ts (a test keeps them equal). It is repeated here, not imported,
+ * so the initial chunk and the unit tests do not pull three.js in. The rasteriser holds the last picture for
+ * this long, and the 2D card runs the same fold.
+ */
+export const COLLAPSE_MS = 1000;
+export const COLLAPSE_2D_MS = COLLAPSE_MS;
 /** Screen-change cross-fade, eased (design-spec 7.1: a 0.10 to 0.12 cut stays under 0.05 per 100 ms). */
 export const SCREEN_FADE_MS = 500;
 /** Black frame on Replay (full motion only). */

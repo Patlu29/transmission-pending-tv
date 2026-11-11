@@ -276,17 +276,19 @@ export function Screen2D() {
     );
   };
 
-  const animation = collapsing
-    ? 'is-collapsing'
-    : status === 'warming' && !calm
-      ? 'is-warming'
-      : '';
   const off = status === 'ready' || status === 'off';
+  const animation = collapsing
+    ? 'holo2d--fold'
+    : status === 'warming' && !calm
+      ? 'holo2d--bloom'
+      : off
+        ? 'holo2d--off'
+        : 'holo2d--on';
   return (
-    <div className="screen2d-wrap">
+    <div className="screen2d-wrap holo2d-field" data-calm={calm}>
       <div
         ref={ref}
-        className={`screen2d holo2d ${frame.mode === 'card' ? 'holo2d--idle' : 'holo2d--text'} ${animation}${off ? ' is-off' : ''}`}
+        className={`screen2d holo2d ${animation}`}
         data-calm={calm}
         aria-hidden="true"
         onClick={onClick}
