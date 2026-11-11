@@ -1,6 +1,8 @@
 # Handoff: qa-engineer
 
 ## Summary
+Round 1 re-test is at the end of this note and in `docs/qa-report.md` section 8 (301 of 311 checks pass; 6 fail, all the design-margin finding BUG-7 and the BUG-4 collapse; 4 skipped).
+
 Wrote the unit and end-to-end suites for every user story and the Phase 6 report in `docs/qa-report.md`. 288 of 297 checks pass (51 of 51 unit; 237 of 246 E2E across Chromium, WebKit, two Pixel 7 viewports and an iPhone 14, with 4 deliberate skips). The 5 failures are three real bugs, listed with owners below. Firefox is installed but cannot start on this host.
 
 ## Files changed
@@ -37,3 +39,28 @@ Wrote the unit and end-to-end suites for every user story and the Phase 6 report
 - devops-engineer: **BUG-6** (minor): production ships 6 MB of source maps and empty `.gitkeep` files in `dist/`. Decide whether that is intended.
 - architect: `npm run typecheck` and `npm run build` type-check `tests/` and `playwright.config.ts` with no DOM library, which is why `tests/e2e/dom-lib.d.ts` exists. Note the new scripts in `package.json` and the facts-snapshot behaviour in `playwright.config.ts`.
 - tech lead: this handoff file is itself a fact source (`agents.ids`), so `npm run build` must be rerun after it is committed, or the unit facts test will correctly report a stale `dist/`. Commits made while a long E2E run is under way can make it stop with "HEAD moved during the build"; rerun it. Firefox needs a host where it starts. Real-device FPS and 4G timing (NFR-1, NFR-2) are still unmeasured.
+
+## Round 1 re-test (build 7111d4b)
+
+### Summary
+BUG-1, BUG-2, BUG-3 (hard limit) and BUG-5 are fixed and verified; BUG-4 is partly fixed (warm-up yes, collapse still 0.066 per 100 ms against a 0.05 margin); BUG-6 stays open and is deferred to devops in Phase 7. One new minor finding, BUG-7. Counts: unit 51 of 51; E2E 250 pass, 6 fail, 4 skip of 260.
+
+### Files changed in this round
+- `tests/e2e/camera.spec.ts` (new): camera framing, creep bounds, Calm and 3d-screen cases, knob cues, through `__SCENE_TEST__.cameraPose()` and `knobAngles()`.
+- `tests/e2e/dom-lib.d.ts`: types for the two new hooks.
+- `tests/e2e/power.spec.ts`: 3D warm-up now bounded at 4.5 s (the clock uses real time).
+- `tests/e2e/flash.spec.ts`: the warm-up and collapse design margin is enforced again.
+- `tests/e2e/__screenshots__/chromium/visual.spec.ts/calm-page1-3d-set.png`: regenerated on purpose, because BUG-1 changed the framing. Reason recorded in `docs/qa-report.md` sections 5 and 8. The other four baselines are unchanged and pass.
+- `docs/qa-report.md` (section 8 and status tags on each bug), this note.
+
+### Decisions
+- Test failures that came from my own tests (azimuth not yet settled, the power knob resting at 40 degrees) were fixed in the tests, not by loosening product checks.
+- The design margin stays enforced, so BUG-7 and the BUG-4 collapse stay red until fixed.
+
+### Open questions
+- Is a 250 ms fade enough, or should it be about 500 ms to meet the 5 per cent per 100 ms margin? (ux-ui-designer)
+
+### Requests for other agents
+- ux-ui-designer and frontend-developer: BUG-7 (minor), fade steps of 0.056 to 0.075 per 100 ms; and the collapse step (BUG-4, 0.066).
+- devops-engineer: BUG-6 (deferred, Phase 7).
+- tech lead: the 8 earlier unit failures were the stale-`dist/` check, reproduced and confirmed. Run `npm run build` before `npm test`, and again after committing this note (it is a fact source). Firefox still cannot start on this host.

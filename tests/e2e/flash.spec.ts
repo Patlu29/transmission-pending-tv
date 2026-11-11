@@ -222,7 +222,7 @@ test.describe('flash safety frame analysis (2D)', () => {
     ).toBeLessThan(0.5);
     // The first step is the start overlay (text and Calm switch) being removed as the picture opens: a UI cut.
     series.cuts[1] = true;
-    judge(series, 'warm-up', 10, 'report');
+    judge(series, 'warm-up');
   });
 
   test('US-1 AC-2 and US-11 AC-2: the power-off collapse does not flash (real time, screencast)', async ({
@@ -250,7 +250,7 @@ test.describe('flash safety frame analysis (2D)', () => {
     // The start overlay returns when the set is off: a UI cut at the end of the collapse.
     for (let i = 1; i < series.mean.length; i++)
       if (Math.abs(series.mean[i]! - series.mean[i - 1]!) > 0.05) series.cuts[i] = true;
-    judge(series, 'power-off collapse', 10, 'report');
+    judge(series, 'power-off collapse');
   });
 
   test('US-11 AC-1: typing and page changes in the opening pages, Skip and Replay do not flash', async ({

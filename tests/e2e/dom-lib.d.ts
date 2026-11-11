@@ -16,6 +16,18 @@ interface Window {
     useHauntStore: TestStore;
   };
   __SCENE_TEST__: {
+    cameraPose?: () => {
+      position: number[];
+      target: number[];
+      D: number;
+      distance: number;
+      distanceOverD: number;
+      userK: number;
+      creep: number;
+      azimuthDeg: number;
+      elevationDeg: number;
+    };
+    knobAngles?: () => { power: number; channel: number; volume: number };
     crtUniforms: Record<
       'uTime' | 'uCalm' | 'uCollapse' | 'uGhost' | 'uGhostNear' | 'uHauntVignette' | 'uRoll',
       { value: number }

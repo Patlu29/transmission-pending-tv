@@ -75,7 +75,8 @@ for (const mode of MODES) {
       );
       const warm = playingSince - warmingSince;
       expect(warm).toBeGreaterThanOrEqual(1000);
-      if (mode === '2d') expect(warm).toBeLessThanOrEqual(3000);
+      // The clock uses real elapsed time (BUG-5 fix), so the bound holds in 3D too, with slack for a slow frame.
+      expect(warm).toBeLessThanOrEqual(mode === '2d' ? 3000 : 4500);
     });
 
     test(`US-1 AC-4: Enter and Space on the focused power control switch the set on [${mode}]`, async ({

@@ -153,7 +153,7 @@ Status key: **PASS**, **FAIL** (bug id), **PARTIAL** (what was and was not check
 
 Severity: **major** breaks a Must acceptance criterion or an obvious visual defect; **minor** is a limit missed by a small margin, a risk, or housekeeping.
 
-### BUG-1: the 3D set is framed too tightly in the Watch pose (major)
+### BUG-1: the 3D set is framed too tightly in the Watch pose (major) - FIXED in round 1, verified
 - Owner: **scene-developer** (camera distance and target). Spec question for ux-ui-designer (below).
 - Reproduces: yes, confirming the tech lead's observation.
 - Steps: open `/?mode=3d-set` at 1440 x 900 (or 1024 x 600), press Switch on, wait 3 s, take a screenshot. Same after the dolly in Calm.
@@ -165,7 +165,7 @@ Severity: **major** breaks a Must acceptance criterion or an obvious visual defe
 - Note: **the baseline `calm-page1-3d-set.png` records the defective framing.** Regenerate it with `npm run test:e2e:update` after the fix, and say so here.
 - Spec note for ux-ui-designer: 4.2 defines D by the glass width. If the intent is "the set fills 56 per cent", the formula needs the set's width.
 
-### BUG-2: Calm mode is not kept across a reload (major)
+### BUG-2: Calm mode is not kept across a reload (major) - FIXED in round 1, verified
 - Owner: **frontend-developer**.
 - Steps: open `/?mode=2d`, press "Calm mode: off" on the start screen so it reads "on", reload the page.
 - Expected: Calm is still on (US-9 AC-2, FR-31: "persists for the visit"). A visitor who chose Calm because of photosensitivity would otherwise meet the full effects again after a reload.
@@ -173,7 +173,7 @@ Severity: **major** breaks a Must acceptance criterion or an obvious visual defe
 - Suggestion: `sessionStorage` (per tab, cleared when the tab closes, not a cookie, no personal data), which fits NFR-7 and "the visit".
 - Evidence: test "US-9 AC-2 and FR-31: Calm persists across a reload within the visit" (`calm.spec.ts`).
 
-### BUG-3: one screen cut steps a large area by more than 10 per cent (minor)
+### BUG-3: one screen cut steps a large area by more than 10 per cent (minor) - FIXED in round 1 (hard limit); see BUG-7 for the design margin
 - Owner: **ux-ui-designer** (page layout and copy), with **frontend-developer** (how screens are cut).
 - Steps: play the story in 2D (full motion) to the diary page, where the screen holds three highlighted fact blocks. Sample the screen at 10 Hz and compare each 341 x 256 CSS px tile as the page moves on to its next screen.
 - Expected: no large-area step of 0.10 or more in relative luminance (design-spec 7.1 rule 2); the design margin is 0.05.
@@ -182,7 +182,7 @@ Severity: **major** breaks a Must acceptance criterion or an obvious visual defe
 - Fix options: cross-fade the cut over two or three steps, reduce the area of the inverse fact blocks on one screen, or split the diary page so fewer blocks vanish at once.
 - Evidence: `flash.spec.ts` "a page or screen cut changes a 341 x 256 tile by less than 10 per cent" (fails). The matching "ghost at maximum" test passes, which shows the ghost itself is not the cause.
 
-### BUG-4: the 2D warm-up and collapse exceed the design margin (minor)
+### BUG-4: the 2D warm-up and collapse exceed the design margin (minor) - PARTLY FIXED: warm-up fixed, collapse still over
 - Owner: **frontend-developer** (`.screen2d.is-warming` and `.is-collapsing` in `src/ui/ui.css`) with ux-ui-designer.
 - Steps: switch on, then off, in 2D with full motion; capture the screen in real time (DevTools screencast) and compare tiles per 100 ms.
 - Expected: large-area swings under 0.05 per 100 ms (design margin) and always under 0.10.
@@ -190,14 +190,14 @@ Severity: **major** breaks a Must acceptance criterion or an obvious visual defe
 - Not covered: the 3D shader's own warm-up and collapse (not frame-analysed; see section 2).
 - The test reports these numbers and enforces only the hard 0.10 limit, because screencast sampling moves them by a few thousandths between runs.
 
-### BUG-5: the story clock slows when the frame rate is under 10 FPS (minor, risk)
+### BUG-5: the story clock slows when the frame rate is under 10 FPS (minor, risk) - FIXED in round 1, verified
 - Owner: **frontend-developer** (`useIntroClock`), with **performance-optimiser**.
 - Steps: run `?mode=3d-set` on software WebGL (2 to 5 FPS) and time the warm-up.
 - Expected: 2.5 s (FR-5: 1 to 3 s).
 - Actual: the warm-up took 7.4 s in 3d-screen and 12.1 s in 3d-set, because each frame advances the clock by at most 100 ms (a deliberate clamp so that it does not jump after a hidden tab). Below 10 FPS the whole story slows in proportion, so on a weak device FR-8 (45 to 90 s) could be exceeded. `AdaptiveDpr` only steps down after two slow windows. This is a risk, not a failure on a real device; it could not be checked without one.
 - Suggestion: raise the clamp (for example 250 ms) or let the clock use wall time and clamp only on a hidden-tab resume.
 
-### BUG-6: production output ships source maps and empty placeholder files (minor, housekeeping)
+### BUG-6: production output ships source maps and empty placeholder files (minor, housekeeping) - DEFERRED to devops-engineer, Phase 7
 - Owner: **devops-engineer** (hosting and build output); the Vite setting itself is the architect's.
 - `dist/assets` contains three `.map` files (6.0 MB in total, `sourcemap: true`) and `dist/{fonts,textures,models,env,audio}/.gitkeep`. The maps are not part of the first view but publish the source. Decide whether that is intended; drop the `.gitkeep` files from the build.
 
@@ -217,7 +217,7 @@ These are the first baselines for this project (none existed before), created on
 | `start-3d-set.png` | start screen, 3d-set, 1440 x 900, Calm | 2 per cent |
 | `start-3d-screen-portrait.png` | start screen, 3d-screen, 390 x 844, Calm | 2 per cent |
 | `calm-page1-2d.png` | Calm story page 1, 2D (header row masked: it carries the revision) | 0.5 per cent |
-| `calm-page1-3d-set.png` | Calm story page 1, 3d-set (header revision under the threshold) | 3 per cent. **Records BUG-1 framing** |
+| `calm-page1-3d-set.png` | Calm story page 1, 3d-set (header revision under the threshold) | 3 per cent. **Regenerated in round 1** (see section 8): it now shows the whole set framed. The first version recorded the BUG-1 framing |
 
 The thresholds are loose for 3D (SwiftShader, small text that carries the revision) and strict for 2D. Regenerate only for an intended visual change: `npm run test:e2e:update`, then record the reason in this section.
 
@@ -242,3 +242,45 @@ The thresholds are loose for 3D (SwiftShader, small text that carries the revisi
 | `npm run test:qa` | unit tests, then E2E |
 
 Playwright's HTML report is written to `test-results/report` and the JSON to `test-results/results.json`. Test hooks used: `window.__APP_TEST__` (the four stores, including `useHauntStore`) and `window.__SCENE_TEST__.crtUniforms`, present only in dev and `--mode test` builds; the production spec asserts they are absent from the production build.
+
+## 8. Round 1 re-test
+
+Build: HEAD `7111d4b` plus the uncommitted QA files (revision `7111d4b-dirty`). New tests: `tests/e2e/camera.spec.ts` (7 tests, using the new `__SCENE_TEST__.cameraPose()` and `knobAngles()` hooks). Changed tests: the warm-up bound in 3D is now 4.5 s (was unbounded), and the design-margin checks for the warm-up and collapse are enforced rather than only reported.
+
+### Counts
+
+| Suite | Tests | Pass | Fail | Skipped |
+|---|---|---|---|---|
+| Unit (Vitest) | 51 | 51 | 0 | 0 |
+| E2E Chromium | 124 | 120 | 4 | 0 |
+| E2E WebKit | 112 | 106 | 2 | 4 |
+| E2E Pixel 7 portrait | 8 | 8 | 0 | 0 |
+| E2E Pixel 7 landscape | 8 | 8 | 0 | 0 |
+| E2E iPhone 14 portrait | 8 | 8 | 0 | 0 |
+| **Total** | **311** | **301** | **6** | **4** |
+
+Before round 1 the total was 297 checks, 288 pass, 5 fail. All 6 failures are the same finding, BUG-7 and BUG-4 (collapse), described below; the two functional bugs (BUG-1 and BUG-2) now pass in both engines. The full run found 11 failures; 5 were fixed in my own tests (an azimuth that had not yet settled, and the power knob legitimately resting at 40 degrees while the set is on), and the camera spec and the visual spec were then re-run in full (14 of 14 and 6 of 6 pass).
+
+### Status of each bug
+
+| Bug | Status | Evidence |
+|---|---|---|
+| BUG-1 3d-set framing | **Fixed** | `cameraPose()`: Watch is 1.00 x D, Idle is further back, all poses aim at the same set centre. Edge strips (99th percentile luminance) left 0.033, right 0.021 (limit 0.05; was right 0.292). New baseline `calm-page1-3d-set.png` shows the whole TV with CH, VOL and POWER inside the frame. Creep: camera distance falls only slowly (follower within 0.04 per second, no jump) and never below 0.78 x D; no creep under Calm; 3d-screen has no camera rig. Knobs: a channel cue turns the knob 25 degrees and leaves it, the other knobs do not move, power-off returns them to rest, and Calm never turns them |
+| BUG-2 Calm reload | **Fixed** | the reload test passes in Chromium and WebKit |
+| BUG-3 screen cut step | **Fixed (hard limit)** | the screen-cut step is now 0.003 to 0.005 (was 0.102 and 0.118). The fade itself is the subject of BUG-7 |
+| BUG-4 warm-up and collapse | **Partly fixed** | warm-up largest step 0.028 per 100 ms (was 0.062): fixed. Collapse 0.066 (was 0.054 to 0.070): still over the 0.05 design margin, under the 0.10 limit, no flashes. Kept open |
+| BUG-5 clock | **Fixed** | the 3D warm-up now passes the 4.5 s bound (it took 7.4 s and 12.1 s on the same software renderer before) |
+| BUG-6 source maps, `.gitkeep` | **Deferred** | devops-engineer, Phase 7 |
+
+### New findings
+
+**BUG-7: the 250 ms screen fades still step a large area by more than the 5 per cent design margin (minor).**
+- Owner: **ux-ui-designer** (fade length), **frontend-developer** (implementation).
+- Steps: play the story in 2D with full motion; compare 341 x 256 tiles per 100 ms from the ghost-at-maximum window onwards (also around Replay).
+- Expected: under 0.05 per 100 ms (design-spec 7.1 rule 2 margin).
+- Actual: 0.063 (Chromium) and 0.075 (WebKit) in the diary and glass window, and 0.056 at the start of Replay. All are far under the 0.10 hard limit and there are no flashes (0 per second), so US-11 holds. The fade spreads a 0.10 to 0.12 change over 250 ms, which still puts 0.06 to 0.075 in one 100 ms sample. A fade of about 500 ms would meet the margin.
+- Evidence: `flash.spec.ts`, the ghost-at-maximum test, the page-cut test, the "page changes, Skip and Replay" test (and the collapse test for BUG-4). All six failures in the table above are these soft design-margin checks.
+
+### The earlier "8 unit failures that went away on a re-run"
+
+Confirmed as the stale-build check. I reproduced it: with `dist/` built at an older commit and HEAD at `7111d4b`, `tests/unit/facts.test.ts` fails 8 of its 17 tests (build commit, commit count, diary commits, co-author count, revision and the whole-file comparison all differ), and after `npm run build` all 51 unit tests pass. A commit landing mid-run, or a handoff file added after the last build, causes exactly this. It is the test doing its job, not flakiness; run `npm run build` before `npm test`.
