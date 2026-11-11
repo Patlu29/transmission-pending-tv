@@ -4,18 +4,29 @@ Status: approved direction (2026-11-11). This replaces docs/requirements/v2-live
 
 Sources: docs/project-status.md, docs/research/embeddable-channels.md, docs/research/viewing-environments.md.
 
+## Changelog
+| Date | Change | Items |
+|---|---|---|
+| 2026-11-11 | Initial v2 environments scope (YouTube embeds, eight environments) | All |
+| 2026-11-11 | v2 design approved. **[NEW]** ninth environment "Mountain sky" (`mountain-sky`) as the headline room; all nine rooms stay in scope (the fallback to cut to four is superseded). **[CHANGED]** TV room gains a warm "colour era" tint for live channels (channel 0 stays B&W). **[NEW]** optional synthesised room sound, off by default, only while video is muted. **[CHANGED]** Calm uses a site-drawn card, no YouTube thumbnails, so `ytimg.com` is not contacted. **[CHANGED]** Playlist links are rejected (ADR 0011). **[CHANGED]** DD and Sansad TV entries stay disabled until you confirm the permission email is sent | D4, D10 to D12, C1, C3, C7, FR-7, FR-15, FR-20, FR-29, FR-33, new FR-35 to FR-38, V2-YT-14, Q-V2-1, Section 10, stories US-2, US-4, US-8, US-15 |
+
+Items marked **[NEW]** or **[CHANGED]** below were altered by the 2026-11-11 design approval.
+
 ## 0. Decisions (final, from the user)
 | # | Decision |
 |---|---|
 | D1 | v2 is a multi-environment player for streams from other sites. The site does not host, relay or re-encode any stream |
 | D2 | Playback is through official embeds only, in practice the YouTube IFrame Player |
 | D3 | Sources: a curated channel guide of verified official live channels, stored by channel ID, plus paste-a-link for the viewer's own YouTube link |
-| D4 | Eight environments in the first release: 1970s TV (v1), cinema theatre, car / drive-in, open-air screen, rainy-night bedroom, chai stall with cricket, train window seat, space deck. Later reskins: single-screen hall, Doordarshan living room, Indian rooftop |
+| D4 | **[CHANGED]** Nine environments in the first release: 1970s TV (v1), cinema theatre, car / drive-in, open-air screen, rainy-night bedroom, chai stall with cricket, train window seat, space deck, and the headline room **Mountain sky** (`mountain-sky`). Later reskins: single-screen hall, Doordarshan living room, Indian rooftop |
 | D5 | Channel 0 stays the Occupant's story, in the 1970s TV environment, with the full B&W CRT treatment |
 | D6 | Colour/B&W is a viewer option that changes the environment only. YouTube video is never filtered or overlaid |
 | D7 | DD and Sansad TV channels are included through their official YouTube embeds. The team drafts a permission email (Appendix A) for the user to send to Prasar Bharati and Sansad TV |
 | D8 | Live video IDs are resolved by a scheduled GitHub Action using a YouTube Data API key held as a repo secret; it publishes the channel guide. The public site stays static with no backend |
 | D9 | The earlier archive channels, private login backend, tuner relay and runtime brightness limiter are dropped |
+| D10 | **[NEW]** All nine rooms are in scope. The user's decision supersedes any earlier idea of cutting rooms |
+| D11 | **[NEW]** Optional synthesised ambient room sound is in this release, off by default, and plays only while the video is muted |
+| D12 | **[NEW]** Calm shows a site-drawn card with no YouTube thumbnails; the CSP stays as it is. Playlist links are rejected (ADR 0011). DD and Sansad TV entries stay disabled until the user confirms the permission email has been sent |
 
 ## 1. Overview
 v2 turns the site into a place to watch other people's live channels in a setting of the viewer's choice. The viewer picks an environment (a 1970s set, a cinema, a car at a drive-in, a rainy bedroom and so on), picks a channel from a curated guide or pastes a YouTube link, and the official YouTube player appears on the screen inside that scene. The scene is styled around the player and never on it. Channel 0 remains the Occupant's ghost story on the 1970s set.
@@ -42,13 +53,13 @@ v2 turns the site into a place to watch other people's live channels in a settin
 ## 4. Conflicts with existing requirements
 | # | Existing requirement | Conflict | Resolution |
 |---|---|---|---|
-| C1 | NFR-7 (no third-party requests, same-origin only) | The player and thumbnails come from YouTube | **Amended for v2:** an allow-list of youtube.com, youtube-nocookie.com and ytimg.com (and its subdomains), contacted only after the visitor picks a channel or pastes a link. Channel 0 and first view stay same-origin. Disclosed on a visible page (V2-FR-33) |
+| C1 | NFR-7 (no third-party requests, same-origin only) | The player comes from YouTube | **Amended for v2 [CHANGED]:** an allow-list of youtube.com and youtube-nocookie.com (the CSP also keeps ytimg.com on its list, but the site shows no YouTube thumbnails, so it is not contacted), contacted only after the visitor picks a channel or pastes a link. Channel 0 and first view stay same-origin. Disclosed on a visible page (V2-FR-33) |
 | C2 | NFR-8 (no backend, static bundle) | Live video IDs change | **Kept.** The site stays static. A scheduled GitHub Action resolves IDs at build time and publishes the guide. No runtime backend and no relay |
-| C3 | FR-2 and FR-3 (greyscale, CRT effects) | Video is colour and cannot be filtered | **Amended for v2:** greyscale and CRT effects apply to channel 0, site UI and the 1970s TV surround. The video is never filtered. Environments follow the Colour/B&W option (V2-FR-14). Site text and UI chrome stay greyscale in every environment |
+| C3 | FR-2 and FR-3 (greyscale, CRT effects) | Video is colour and cannot be filtered | **Amended for v2:** greyscale and CRT effects apply to channel 0, site UI and the 1970s TV surround. The video is never filtered. Environments follow the Colour/B&W option (V2-FR-14); **[CHANGED]** with Colour on, the TV room's surround takes a warm "colour era" tint for live channels (V2-FR-36), and channel 0 stays B&W. Site text and UI chrome stay greyscale in every environment |
 | C4 | FR-19 and WCAG 2.3.1 (flash safety) | Live YouTube content may flash and cannot be filtered | The site cannot make third-party video flash-safe. Site-made effects (burst, light spill, ghost) keep v1 limits. A notice before first play, Calm mode defaulting to click-to-play with a still thumbnail card, and one-action Stop mitigate the rest (V2-FR-28 to V2-FR-30) |
 | C5 | FR-22 (audio off by default) | Live channels are mostly sound | Playback starts muted; the viewer unmutes with the player's own controls or a site control. Autoplay follows YouTube rules (V2-FR-21) |
 | C6 | NFR-13, FR-X3 (no broadcaster marks) | Channel names and the players' own marks appear | Site-made artwork carries no broadcaster logos or test cards. The guide shows channel names as text, and YouTube's and the channel's own branding appear only inside the player. Names are used only to identify the source |
-| C7 | NFR-3 (5 MB first view) | Eight environments are heavy | The first view stays within NFR-3 on the 1970s TV. Each other environment loads only when chosen, with its own stated size cap set by the architect |
+| C7 | NFR-3 (5 MB first view) | Nine environments are heavy | The first view stays within NFR-3 on the 1970s TV. Each other environment loads only when chosen, with its own stated size cap set by the architect |
 | C8 | NFR-1 (frame rate) | A live iframe plus a 3D scene costs more | Frame-rate targets hold with the player playing; if not, scene quality drops first, never the player |
 | C9 | FR-18 and NFR-6 (text alternatives, WCAG AA) | Live speech has no site transcript | YouTube captions are available through the player's own controls (V2-FR-32). The site does not claim captions it cannot verify |
 | C10 | FR-20 (2D fallback) | 2D mode must still work | The 2D mode is a plain page with the guide, the paste-a-link box and the player, with the same compliance rules |
@@ -66,11 +77,11 @@ v2 turns the site into a place to watch other people's live channels in a settin
 | V2-FR-4 | Must | The Action stays within the YouTube Data API quota and keeps the last known good ID for an entry when a refresh fails; the guide shows when it was last refreshed |
 | V2-FR-5 | Must | An entry with no current live stream, or whose video is not embeddable, shows as "off air" in the guide and cannot be started |
 | V2-FR-6 | Must | The first guide holds only channels the research marks high confidence, plus the DD and Sansad TV channels in D7; medium or low confidence sources, iptv-org playlists, scraped HLS URLs and WAVES are excluded |
-| V2-FR-7 | Must | The viewer can paste a YouTube link (watch, live, youtu.be, embed or playlist forms); the site extracts the ID with a strict pattern, accepts only YouTube hosts, and rejects anything else with a plain message |
+| V2-FR-7 | Must | **[CHANGED]** The viewer can paste a YouTube link to a single video (watch, live, youtu.be or embed forms); the site extracts the ID with a strict pattern, accepts only YouTube hosts, and rejects anything else, including playlist, channel and list links, with a plain message (ADR 0011) |
 | V2-FR-8 | Must | A pasted link is held in the browser for the visit only; it is not stored, logged or sent anywhere except to the YouTube player |
 | V2-FR-9 | Must | The viewer changes channel by the knob or dock in the scene, Up/Down keys, typing a guide number, or the guide list; all are keyboard and touch operable |
 | V2-FR-10 | Should | The guide can be filtered by genre, country and owner type, and shows state-media channels with a visible label |
-| V2-FR-11 | Should | The guide marks the DD and Sansad TV channels "official YouTube embeds" and can hide them with a single data change (kill switch) |
+| V2-FR-11 | Must | **[CHANGED]** The guide can hide any entry, including the DD and Sansad TV channels, with a single data change (kill switch). DD and Sansad TV entries ship disabled (hidden, no row, no placeholder) until the user confirms the permission email has been sent; they are then enabled by a data change only |
 | V2-FR-12 | Must | The API key, Cloud project details and any other secret are never in the repo, the bundle or the published guide; a CI secret scan runs on every push |
 | V2-FR-13 | Could | Station-ident style teletext guide page in the 1970s TV environment |
 
@@ -78,7 +89,7 @@ v2 turns the site into a place to watch other people's live channels in a settin
 | ID | Priority | Requirement |
 |---|---|---|
 | V2-FR-14 | Must | A visible, keyboard-operable Colour/B&W option changes the environment (lighting, materials, palette) and nothing else; the video is never desaturated or tinted. The default is B&W; the state is announced to assistive technology; channel 0 stays B&W |
-| V2-FR-15 | Must | The first release has these eight environments: 1970s TV, cinema theatre, car / drive-in, open-air screen, rainy-night bedroom, chai stall with cricket, train window seat, space deck; the viewer can switch between them without reloading |
+| V2-FR-15 | Must | **[CHANGED]** The first release has these nine environments: 1970s TV, cinema theatre, car / drive-in, open-air screen, rainy-night bedroom, chai stall with cricket, train window seat, space deck, and Mountain sky (`mountain-sky`, the headline room); the viewer can switch between them without reloading |
 | V2-FR-16 | Must | In every environment the player sits on a flat, face-on rectangle (no curved, dome or wraparound screens) with nothing drawn, rendered or placed in front of any part of it |
 | V2-FR-17 | Must | In every environment the rendered player is at least 480 by 270 CSS px on desktop; where the layout would make it smaller, focus mode is offered (V2-FR-18); it is never below 200 by 200 CSS px |
 | V2-FR-18 | Must | Focus mode: on small screens the screen is brought up close, the player fills the viewport width with the environment as backdrop and the player controls visible; it is offered automatically when the player would be under 480 by 270 CSS px, and can be toggled by hand |
@@ -87,7 +98,11 @@ v2 turns the site into a place to watch other people's live channels in a settin
 | V2-FR-21 | Should | The later reskins (single-screen hall, Doordarshan living room, Indian rooftop) reuse existing scenes (release after the first) |
 | V2-FR-22 | Must | Dragging the 3D view never captures the player's own controls: the player area and the controls remain usable by pointer, touch and keyboard, and orbit or look-around is disabled while the pointer is over the player |
 | V2-FR-23 | Must | Each environment other than the default loads only when chosen |
-| V2-FR-24 | Should | The chosen environment, Colour/B&W option and focus mode are remembered for the visit only (no cookies) |
+| V2-FR-24 | Should | The chosen environment, Colour/B&W option and focus mode are remembered for the visit only (session storage at most; no cookies) |
+| V2-FR-35 | Must | **[NEW]** Mountain sky: the viewer stands on a summit above a sea of clouds, and the player sits on a giant flat, head-on 16:9 screen floating in the sky. There is no curved sky screen. Clouds, peaks and mist frame the screen but never cover, cross or sit in front of any part of it, and keep at least 24 CSS px clear of the player on every side. All V2-YT rules apply |
+| V2-FR-36 | Must | **[NEW]** In the 1970s TV environment with Colour on, live channels (not channel 0) give the room's materials and surround a warm "colour era" tint. The tint never touches the player. Channel 0 stays B&W with the full CRT treatment in both options |
+| V2-FR-37 | Must | **[NEW]** Optional room sound: synthesised in the browser (no audio files), off by default, started only by an explicit viewer action, never autoplaying, with a visible keyboard-operable control. It plays only while the video is muted or no video plays, and stops or mutes when the viewer unmutes the video; it is muted under Calm mode and nothing in it is sudden (envelopes of at least 1.5 s) |
+| V2-FR-38 | Must | **[NEW]** Rooms keep at least a 24 CSS px clear margin around the player for props, crowd, glass and scenery wherever the room design places objects near the screen |
 
 ### Channel 0 and the Occupant
 | ID | Priority | Requirement |
@@ -100,11 +115,11 @@ v2 turns the site into a place to watch other people's live channels in a settin
 | ID | Priority | Requirement |
 |---|---|---|
 | V2-FR-28 | Must | Before the first YouTube player loads in a visit, a notice says: the video comes from YouTube and the channel's owner, may be loud or contain flashing, may be region-restricted, and YouTube may set cookies or collect data; it offers Continue and Back |
-| V2-FR-29 | Must | With Calm mode or prefers-reduced-motion, playback does not autoplay: a still thumbnail card with the channel name appears, and the viewer starts the video |
+| V2-FR-29 | Must | **[CHANGED]** With Calm mode or prefers-reduced-motion, playback does not autoplay: a site-drawn still card with the channel name appears (no YouTube thumbnail is requested), and the viewer starts the video; the card is a page element beside the player's place, not part of the player |
 | V2-FR-30 | Must | A Stop control returns to the scene (or channel 0 in the 1970s TV) within 1 s by pointer, touch or keyboard |
 | V2-FR-31 | Must | Keyboard users can leave the player: a visible "back to controls" action and a documented key return focus to the site controls |
 | V2-FR-32 | Must | The player's own controls, including YouTube's captions button, are always visible and never hidden or covered |
-| V2-FR-33 | Must | A visible page lists the third-party origins contacted (youtube.com, youtube-nocookie.com, ytimg.com), what for, and that they are contacted only after the viewer picks a channel |
+| V2-FR-33 | Must | **[CHANGED]** A visible page lists the third-party origins actually contacted (youtube.com and youtube-nocookie.com), what for, and that they are contacted only after the viewer picks a channel and continues. It does not list ytimg.com as contacted while no YouTube thumbnails are shown |
 | V2-FR-34 | Should | In Calm mode, captions are requested on by default where the player allows it |
 
 ## 6. YouTube compliance requirements
@@ -167,10 +182,11 @@ As a viewer, I want a guide of live channels, so that I can watch something with
 - Given I use touch, when I tap an entry, then that channel is picked
 - Given a channel is state media, when I read the guide, then it is labelled as such
 
-#### V2-US-2: Paste my own link (V2-FR-7, V2-FR-8, V2-YT-8, Must)
-As a viewer, I want to paste a YouTube link, so that I can watch my own choice in these environments.
+#### V2-US-2: Paste my own link (V2-FR-7, V2-FR-8, V2-YT-8, Must) **[CHANGED]**
+As a viewer, I want to paste a YouTube link to a video, so that I can watch my own choice in these environments.
 
 **Acceptance criteria**
+- Given I paste a playlist, channel or list link, when I confirm, then I see a plain message asking for the link of a single video and nothing loads
 - Given I paste a valid YouTube link, when I confirm, then the player loads that video on the screen
 - Given I paste a link from another host, when I confirm, then I see a plain message that only YouTube links work
 - Given the video cannot be embedded, when it loads, then I see the embedding-disabled message and a next action
@@ -230,7 +246,7 @@ As a phone viewer, I want focus mode, so that the video is big enough to watch.
 As a person sensitive to motion or flashing, I want click-to-play, so that nothing starts on its own.
 
 **Acceptance criteria**
-- Given Calm mode or reduced motion is on, when I pick a channel, then I see a still thumbnail card with the channel name and nothing plays
+- Given Calm mode or reduced motion is on, when I pick a channel, then I see a site-drawn card with the channel name, no request goes to ytimg.com, and nothing plays
 - Given I press play, when the video starts, then it begins muted
 - Given Calm mode is on, when the player allows it, then captions are requested on
 - Given Calm mode is on, when I change environment, then the scene is static
@@ -281,6 +297,22 @@ As the owner, I want a scheduled job to update live IDs, so that the static site
 - Given a push to the repo, when the secret scan runs, then no key appears in files or the bundle
 - Given the published guide and bundle, when I inspect them, then the API key is absent
 
+### Epic V2-E6: Headline room and room sound **[NEW]**
+
+#### V2-US-15: Mountain sky, room sound and the TV tint (V2-FR-35, V2-FR-36, V2-FR-37, V2-FR-38, V2-FR-11, Must)
+As a viewer, I want a mountain-top room, an optional room sound and a warm colour-era TV, so that watching feels like somewhere.
+
+**Acceptance criteria**
+- Given I choose Mountain sky, when it loads, then I stand above a sea of clouds with a flat, head-on 16:9 screen floating in the sky
+- Given a video plays there, when I screenshot the room, then no cloud, peak or mist is in front of the player and at least 24 CSS px is clear on every side
+- Given I look at the sky, when I inspect the screen, then it is a flat rectangle and not curved
+- Given the 1970s TV with Colour on, when a live channel plays, then the room's surround is warm-tinted and the player is unchanged
+- Given the 1970s TV on channel 0, when I switch Colour on, then channel 0 stays B&W with the full CRT treatment
+- Given room sound is off by default, when I load a room, then no room sound plays
+- Given I turn room sound on, when the video is muted, then the room sound plays slowly and softly, and when I unmute the video, then the room sound stops or mutes
+- Given Calm mode is on, when I turn room sound on, then it stays muted
+- Given the guide data marks the DD and Sansad TV entries disabled, when I open the guide, then no row or placeholder for them appears, and enabling them takes only a data change
+
 ### Epic V2-E5: Channel 0 stays
 
 #### V2-US-14: The ghost story stays first (V2-FR-25, V2-FR-26, V2-FR-27, Must)
@@ -292,12 +324,12 @@ As a first-time visitor, I want the Occupant's story first, so that the site kee
 - Given I change channel, when the burst plays, then it lasts 200 to 400 ms, stays on the surround, and meets the flash limits
 
 ## 10. MVP and story map
-v2 MVP is every Must above. This is large. If scope must shrink, the architect and tech lead should first cut environments (the first four with the highest value are 1970s TV, cinema, car, open-air), moving chai stall, train, bedroom and space deck to a v2.1 release, as the compliance, guide, paste-a-link and the colour option do not depend on them.
+**[CHANGED]** v2 MVP is every Must above, with all nine rooms. The earlier fallback of cutting to four environments is **superseded by the user's decision (D10): all nine rooms stay**. Mountain sky is the headline room.
 
 | Release | Stories |
 |---|---|
-| v2 MVP | V2-US-1 to V2-US-14 |
-| v2.1 | V2-FR-10, V2-FR-11 filters and kill switch polish, V2-FR-13, V2-FR-21 reskins, V2-FR-24, V2-NFR-7 to V2-NFR-9 |
+| v2 MVP | V2-US-1 to V2-US-15 |
+| v2.1 | V2-FR-10 filters, V2-FR-13, V2-FR-21 reskins, V2-FR-24, V2-NFR-7 to V2-NFR-9 |
 
 ## 11. Out of scope (v2)
 | Item |
@@ -310,6 +342,9 @@ v2 MVP is every Must above. This is large. If scope must shrink, the architect a
 | Ads, payments, donations beside the player, and analytics |
 | Sources other than YouTube in the first release (iptv-org, scraped HLS, WAVES) |
 | Multiple simultaneous players |
+
+## 11a. Notes on the YouTube table [CHANGED]
+V2-YT-14 (cookies) and V2-YT-5 (privacy) apply as written, with these changes: the site requests no YouTube thumbnails, so ytimg.com is not contacted and does not appear in the contacted-origins list.
 
 ## 12. Assumptions
 1. v1 ships and is tagged first and is not changed.
@@ -324,7 +359,7 @@ v2 MVP is every Must above. This is large. If scope must shrink, the architect a
 ## 13. Open questions
 | # | Question | Default if unanswered |
 |---|---|---|
-| Q-V2-1 | Should the DD and Sansad TV channels go live in the public guide before Prasar Bharati and Sansad TV reply to the permission email, or wait for a reply? Their own terms ask for permission before linking | Publish them only after you have sent the email, and remove them at once if asked |
+| Q-V2-1 | **[RESOLVED]** DD and Sansad TV stay disabled until the user confirms the permission email has been sent (V2-FR-11). The user will need to tell the team when it is sent | Done |
 | Q-V2-2 | Who sets up the Google Cloud project and YouTube Data API key, and what is the refresh schedule you accept given the daily quota (each live lookup costs 100 units)? | You create the key; the team proposes a schedule (for example a few runs per day) that fits the quota |
 
 ## Appendix A: draft permission email

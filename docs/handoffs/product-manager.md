@@ -1,6 +1,18 @@
 # Handoff: product-manager
 
-## v2 pivot: environments and YouTube (2026-11-11, current)
+## Change 2026-11-11: v2 design approved (Mountain sky and review of design-spec-v2 copy)
+- v2-environments.md updated with a changelog: ninth room Mountain sky (V2-FR-35), all nine rooms kept (cut-to-four fallback superseded), TV colour-era tint for live channels (V2-FR-36), optional room sound (V2-FR-37), 24 px keep-out (V2-FR-38), site-drawn Calm card with no YouTube thumbnails (V2-FR-29), playlist links rejected (V2-FR-7), DD and Sansad TV disabled until the user confirms the email is sent (V2-FR-11, Q-V2-1 resolved), US-15 added.
+- Review of docs/design-spec-v2.md (Q-D6). I did not edit that file; the owner is the ux-ui-designer. Requested changes:
+  1. Privacy copy 6.3 and 6.2 table: remove the i.ytimg.com row and the "thumbnails" wording, since no thumbnails are requested. Keep only youtube.com and youtube-nocookie.com as contacted origins.
+  2. Privacy copy: add one line, "This site is not affiliated with or endorsed by YouTube, Prasar Bharati, Doordarshan, Sansad TV or any channel listed." Add a line that room sound is made in your browser and downloads nothing.
+  3. Privacy copy "Channels" paragraph and the OFFICIAL EMBED tag (guide 1.4, Credits): the sentence about Doordarshan and Sansad TV must appear only while those entries are enabled. "OFFICIAL EMBED" could read as an official partnership, so rename the tag to "VIA YOUTUBE EMBED" (or drop it), and keep the tooltip "shown through the channel's official YouTube embed, not endorsed by the broadcaster".
+  4. Guide help text and validation (1.5): the help text is correct for the playlist decision; keep "Watch, live, youtu.be or embed links only" and the playlist/channel message. Note V2-FR-7 now says single videos only, which matches the spec (Q-D3 can close).
+  5. Session storage: privacy copy says choices are kept in session storage for the visit; this fits V2-FR-24 (no cookies). Keep.
+  6. Calm card: spec already uses a site-drawn card; confirm no ytimg request in Calm, and the note on ytimg in 6.2 can go.
+  7. "Sets no cookies" in the privacy copy refers to this site; keep the next sentences that say YouTube may set cookies.
+  8. Mountain sky and the TV tint need entries in the design spec (room table, 24 px keep-out, tint rule: Colour on only, live channels only, not channel 0).
+
+## v2 pivot: environments and YouTube (2026-11-11, earlier)
 - New file docs/requirements/v2-environments.md is the v2 source of truth. docs/requirements/v2-live-channels.md is marked SUPERSEDED. v1 files untouched.
 - Content: decisions D1 to D9; 12 conflicts (C1 to C12); V2-FR-1 to V2-FR-34; 15 YouTube compliance rules (V2-YT-1 to V2-YT-15); V2-NFR-1 to V2-NFR-9; legal L1 to L8; stories V2-US-1 to V2-US-14; Appendix A is the draft permission email (not sent).
 - Amendments: NFR-7 becomes an allow-list (youtube.com, youtube-nocookie.com, ytimg.com) loaded only after the viewer picks a channel and accepts the notice. FR-2 and FR-3 apply to channel 0, the UI and the 1970s TV surround; video is never filtered. NFR-8 kept for the runtime site; the scheduled Action is build-time only.
