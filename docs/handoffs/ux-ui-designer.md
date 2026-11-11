@@ -80,7 +80,27 @@ Full detail: docs/design-spec.md section 16. Verify first: the tech lead should 
 
 Delivered `docs/design-spec-v2.md` (draft for user approval). `docs/design-spec.md` (v1) is unchanged except a pointer line. No code or tokens were written this pass (docs only); proposed v2 tokens are in section 9 of the v2 spec. Open questions Q-D1 to Q-D8 are in section 10 of the v2 spec.
 
-Requests for other agents:
+### v2 update: ninth room (mountain-sky), user decisions, product-manager review (2026-11-11)
+
+The user approved the v2 design. Closed: Q-D1 (site-drawn Calm card, no thumbnails), Q-D2 (no room cut; all nine ship), Q-D3 (playlists rejected), Q-D4 (TV colour variant added), Q-D5, Q-D6 (product-manager review applied), Q-D7 (v1 knob behaviour first), Q-D8 (room sound included, off by default). Added the hero room `mountain-sky` as design-spec-v2 section 5.9 (summary table is now 5.10). Product-manager copy changes applied: no `i.ytimg.com` row or thumbnail wording; non-affiliation line; room sound "made in the browser, downloads nothing"; tag renamed "VIA YOUTUBE EMBED"; the DD/Sansad sentence only while those entries are enabled; TV tint rule (Colour on and live channels only, never channel 0).
+
+Additional requests for the ninth room and shared mechanisms:
+
+- **technical-artist**
+  - Build `mountain-sky` first and polish it most (v2 spec 5.9): procedural sky on a background sphere (never mapped to video), three low-poly ridge layers with distance fog, cloud-sea impostors (about 1024 atlas, 3 to 4 depth rows, shader scroll), two aurora ribbons capped at 15 per cent alpha in the upper side columns, portal dressing (frame, hairline, corner brackets, light pillar, glow pool, halo) as unlit quads on the anchor, cairn and pole meshes under 10 kB, bird and spindrift sprites. Budget 38 kB gzip JS, about 260 kB assets desktop and 190 kB mobile, 28 draw calls, 18k triangles. Wind for Room sound, synthesised. Frozen Calm state as specified (no birds, spindrift or sparkles). B&W reads checked (25 per cent luminance separation, cloud tops versus shadows).
+  - Support the shared `uKeepOut` fade (alpha times `smoothstep(0, 40 px, distanceOutsideKeepOut)`) in every moving ambient material (clouds, birds, aurora, steam, moths, dust, fireflies).
+  - tv-room tint rule: tint uniforms active only with Colour on and a live channel; zero on channel 0.
+- **scene-developer**
+  - Mountain-sky contract values: `screen: { aspect: 16/9, fill: 0.72, align: 'centre', vAlign: 'upper' }` (the architect's provisional values are final; remove the PROVISIONAL comment). `vAlign: 'upper'` puts the rect centre at 41 per cent of viewport height; `'centre'` is 50 per cent.
+  - Pass `uKeepOut` (projected rect plus 24 px halo, viewport pixels, updated whenever the projector updates) to every room. Arrival tween for mountain-sky: camera rises from just above the cloud sea to the watch pose over 1.6 s (cut in Calm); player appears when settled. Browse pose limits: azimuth plus or minus 35 degrees, elevation -8 to +15.
+  - Recommended build order: mountain-sky, tv-room, space deck, bedroom, open air, cinema, car, train, chai stall.
+- **frontend-developer**
+  - Room picker order and the featured hero row (first, larger 192 x 108 schematic, "Featured" text tag, line "Stand on a summit above the clouds. The video floats in the sky."); the start screen's "Change the room" key gets the second line "Try the mountain sky"; `?env=mountain-sky` is the share link; the 1970s TV stays the landing room.
+  - Privacy page copy (v2 spec 6.3) as revised: no `i.ytimg.com` row; the Room sound sentence; the non-affiliation line; the DD/Sansad sentence built from the enabled entries only; guide and Credits tag "VIA YOUTUBE EMBED". Calm card has no YouTube image.
+  - Mountain-sky 2D skin (dusk gradient with soft cloud blobs) and mobile focus backdrop behaviour (5.9).
+- **qa-engineer**: overlap grid test on mountain-sky including portal dressing, clouds and birds across a full drift cycle; frozen-Calm frame check; the removed `i.ytimg.com` check (no image host requested at any time).
+
+Earlier v2 requests (from the first v2 pass), still valid:
 
 - **scene-developer**
   - `ScreenProjector` and watch pose (v2 spec 2.2, 5.0): the pose function takes the anchor, `fill` (0.55 to 0.72 per room), a max height of `min(0.78 vh, vh - 40 - 64 - 2 x 24)`, and an optional "include box" so the tv-room pose can fit the whole set at 95 per cent of the width with the glass left of centre. The camera is translated parallel to the glass plane (never rotated) so the face-on check holds. Show the iframe only when the projected rect is axis-aligned within 1 px, inside the viewport, and at least 480 x 270 (else request focus layout from the frontend).

@@ -7,7 +7,7 @@ Terms: "player rect" is the axis-aligned CSS rectangle where the one YouTube ifr
 ## 0. Summary of the design
 
 - The site opens as in v1: the 1970s TV, off, channel 0 on Power. v2 adds a secondary route in: "Change the room" and "Channel guide" keys on the start screen and in the dock.
-- The viewer picks a room (8) and a channel (guide or pasted link). A once-per-visit notice comes before the first YouTube request. The player then appears as one flat rectangle in a DOM layer above the canvas; the room is styled around it, never on or in front of it.
+- The viewer picks a room (9, with the mountain sky as the featured hero room) and a channel (guide or pasted link). A once-per-visit notice comes before the first YouTube request. The player then appears as one flat rectangle in a DOM layer above the canvas; the room is styled around it, never on or in front of it.
 - Colour/B&W changes only the room. Site text and controls are greyscale in every room.
 - Phones watch in focus mode (player full width, room as a dimmed backdrop). Desktop watches in the room.
 - Calm mode means click-to-play behind a still card, frozen room motion, captions requested on.
@@ -22,7 +22,7 @@ Start screen (tv-room, set off)
  |- Power -> channel 0 (v1 story, v1 flows) -> diary index (P100) -> [Channel guide]
  |- Channel guide ---- pick a guide channel ---+
  |                 \-- paste a link ----------+--> first-play notice (once per visit) -> player
- |- Change the room (picker, 8 rooms)           |
+ |- Change the room (picker, 9 rooms)           |
  |- Calm mode switch (always present)           v
  |                                       Watching (room or focus layout)
  |                                         |- Stop -> back to the room's idle screen (tv-room: channel 0)
@@ -47,7 +47,8 @@ Footer links on every surface: Privacy, Credits, Third parties, YouTube Terms
 
 - Entry: dock key "Room" (label "Change the room" in the tooltip and the accessible name), start-screen key, key `E`.
 - Form: desktop, a panel anchored above the dock (width 360 px, `--z-panel`); phone, a bottom sheet. It never overlaps the player rect (on desktop it opens over the lower-left corner of the viewport, outside the rect by the layout rules in 2.3; if a layout would overlap, the player is paused and hidden while the picker is open, and resumes when it closes).
-- Content: a list of eight rooms, each a row with a 96 x 54 CSS schematic (inline SVG, about 1 kB, original, greyscale, drawn from the room's layout), the room's name, and one line of mood ("Cinema: an empty auditorium, you in the middle"). Name and line are real text.
+- Content: a list of nine rooms, each a row with a 96 x 54 CSS schematic (inline SVG, about 1 kB, original, greyscale, drawn from the room's layout), the room's name, and one line of mood ("Cinema: an empty auditorium, you in the middle"). Name and line are real text.
+- Featured room: **Mountain sky** is listed first, as a larger "hero" row (192 x 108 schematic, a "Featured" text tag, the line "Stand on a summit above the clouds. The video floats in the sky."). Order: Mountain sky, 1970s TV, Cinema, Car, Open air, Rainy bedroom, Chai stall, Train, Space deck. The picker row for the current room is still marked current. The start screen's "Change the room" key carries a second line of text, "Try the mountain sky". The 1970s TV remains the landing room (D5); `?env=mountain-sky` opens the hero room directly and is the link to share.
 - Semantics: `role="radiogroup"` labelled "Room"; roving tabindex; Up/Down or Left/Right move; Enter or Space selects; Esc closes and returns focus to the Room key. The current room is `aria-checked`.
 - Loading: choosing a room starts its chunk. The row shows "Loading Cinema... NN%" (real progress; a static three-dot form if unavailable); the old room stays until the new one is ready, then the camera cuts (Calm) or dissolves over 300 ms. Hover or focus on a row prefetches that room's chunk (ADR 0011).
 - While a video plays: the player is paused and hidden when the switch starts, shows again in the new room's rect, and resumes playing (muted state kept). See the autoplay risk in section 10.
@@ -68,7 +69,7 @@ Footer links on every surface: Privacy, Credits, Third parties, YouTube Terms
   | `live` with `stale: true` | LIVE (check) | Starts; the row adds "last checked <time>" |
   | `off-air`, `not-embeddable`, `unresolved` | OFF AIR | Focusable, `aria-disabled`; Enter says "Off air. Cannot be started." in the live region; row shows the reason in words ("No live programme now", "The owner does not allow embedding") |
   | state media (`owner type`) | STATE MEDIA tag | Visible beside the name (V2-FR-10, L3) |
-  | DD and Sansad entries | OFFICIAL EMBED tag | Shown beside the name; tooltip and the Credits page say "shown through the channel's official YouTube embed" |
+  | DD and Sansad entries | VIA YOUTUBE EMBED tag | Shown beside the name; tooltip and the Credits page say "shown through the channel's YouTube embed". The sentence about them appears only while those entries are enabled (Credits and Privacy pages are built from the enabled entries) |
   | `enabled: false` | not shown | The kill switch removes the entry completely (V2-FR-11): no row, no placeholder, no number gap message |
 
   Permission states in the UI, restated: there is no "permission pending" screen. An entry is either listed (with its tag) or removed by the data switch. If a permission reply asks for removal, only `guide-sources.json` changes.
@@ -93,7 +94,7 @@ Footer links on every surface: Privacy, Credits, Third parties, YouTube Terms
   | No ID found | "No picture found in that link." |
   | Valid | No message; flow continues to 1.6 |
 
-  Note: V2-FR-7 lists playlist forms; ADR 0011 rejects them (one pasted ID, strict pattern). The design follows the ADR: playlist links get the channel/list message. See open question Q-D3.
+  Note: V2-FR-7 lists playlist forms; ADR 0011 rejects them (one pasted ID, strict pattern). The design follows the ADR: playlist links get the channel/list message (Q-D3, closed: reject playlists).
 - A pasted video appears as an entry labelled "Your link" in the info row, with a "Watch on YouTube" link built from the ID.
 
 ### 1.6 Pick flow and the first-play notice (V2-FR-28, V2-US-3)
@@ -123,7 +124,7 @@ First-play notice (modal dialog, once per visit, remembered in session storage a
 ### 1.7 Calm and click-to-play (V2-US-8)
 
 - Calm on (or OS reduced motion): after Continue, the screen anchor shows a still card (site-made, original, greyscale): the channel name in large type, the owner label, "Press play to start the video. It will start muted." and a Play key beneath the player slot. The card is a DOM element in the player rect position (it is not the player); pressing Play replaces the card with the iframe (autoplay muted, user-activated).
-- Thumbnail: the requirement says "still thumbnail card". Default design: the card is site-drawn with no YouTube image, because the ADR 0011 CSP allows no `i.ytimg.com` image (and a thumbnail is third-party pixels we cannot vet). If the user wants real thumbnails, the CSP needs `img-src https://i.ytimg.com` after the notice, and the card shows the thumbnail with the name over its lower band outside the thumbnail area (never over it). See Q-D1.
+- The card is site-drawn and contains no YouTube image: the site contacts no YouTube image host at any time (user decision, Q-D1). It carries the channel name, the owner label and the Play key only.
 - Captions: the iframe is created with `cc_load_policy=1` in Calm.
 - Room motion frozen, camera fixed, no channel-change cue.
 
@@ -132,7 +133,7 @@ First-play notice (modal dialog, once per visit, remembered in session storage a
 - Control: a dock key "Room colour" (toggle, `aria-pressed`), key `C`. Label text states the result: "Colour: off" / "Colour: on". Default off (B&W). Live-region announcement: "Room in black and white." / "Room in colour."
 - It changes the canvas filter only (ADR 0011: one `filter: grayscale(...)` on the `<canvas>`). The change eases over 600 ms (instant in Calm). The player, the info row, the dock, the guide and every site text stay unchanged and greyscale.
 - Channel 0: always B&W. The key is disabled there with the visible reason text "Channel 0 is always black and white" (focusable, `aria-disabled`).
-- tv-room with a YouTube channel: Colour on gives the "colour era" variant (section 5.1); the room's materials take warm tints. The CRT-on-bezel treatment stays greyscale.
+- tv-room with a YouTube channel: Colour on gives the "colour era" variant (section 5.1); the room's materials take warm tints. The CRT-on-bezel treatment stays greyscale. **Tint rule:** the warm tint applies only when Colour is on AND a YouTube channel is playing (or paused in the browse pose or shown as a card); it never applies on channel 0, whatever the Colour setting (the setting is remembered, but channel 0 renders v1 greyscale). Going back to channel 0 removes the tint at once (a cut under Calm, a 600 ms ease otherwise). Q-D4 is closed: the variant is included.
 - Remembered for the visit.
 
 ### 1.9 Errors and no-signal states (V2-US-10, V2-YT-8, V2-YT-15)
@@ -278,7 +279,7 @@ Portrait (360 x 740):
 
 ### 2.5 `2d` mode
 
-Focus layout always. Room as a CSS "skin": a full-bleed background and a frame colour set per room (table in section 5.9), B&W by default and tinted when Colour is on; no animation under Calm, a slow 0.05 Hz brightness drift otherwise (at most 4 per cent). The 2D page has a real footer with the four links. Same notices, guide, paste, errors.
+Focus layout always. Room as a CSS "skin": a full-bleed background and a frame colour set per room (table in section 5.10), B&W by default and tinted when Colour is on; no animation under Calm, a slow 0.05 Hz brightness drift otherwise (at most 4 per cent). The 2D page has a real footer with the four links. Same notices, guide, paste, errors.
 
 ## 3. Keyboard map and conflicts
 
@@ -325,7 +326,7 @@ Contrast: all site text 4.5:1 on its own opaque or scrim plate (v1 9.2 tokens). 
 
 ## 5. Environments
 
-### 5.0 Common rules for all eight
+### 5.0 Common rules for all nine
 
 **Contract (ADR 0011):** each room renders exactly one `ScreenAnchor` (local XY = screen face, +Z towards the viewer). `aspect` 16/9 (4/3 in tv-room). Budget per room: 60 kB gzip JS, 1.5 MB (mobile) and 2 MB (desktop) assets on first entry, 50 and 100 draw calls, 150k and 500k triangles, largest texture 1024 (mobile) and 2048 (desktop). All art original or CC0, `LICENCES.md` per folder; no real brand, logo, trademarked name, real programme, real person or real vehicle make anywhere. Text on props is generic ("EXIT", "CHAI", "TEA").
 
@@ -339,11 +340,13 @@ Contrast: all site text 4.5:1 on its own opaque or scrim plate (v1 9.2 tokens). 
 
 **Ambient motion:** slow, never over the rect, frozen in Calm and reduced motion (a fixed, pleasant frame is chosen for the frozen state). Every animation passes v1 7.1: no area flashes more than 3 times in a second, large-area step under 0.10 and designed under 0.05 per 100 ms.
 
-**Ambient audio (Could):** synthesised with Web Audio (v1 engine, no files). Off by default. Control: "Room sound" in More (and key `A`). It starts only on that explicit action, plays at most 24 dB below nominal, and is audible only while the video is muted or no video plays, so it never competes with a channel. Muted under Calm. Nothing sudden: all envelopes at least 1.5 s attack.
+**Ambient audio (Room sound, included by user decision, Q-D8):** synthesised with Web Audio in the browser (v1 engine); it downloads nothing and has no files. Off by default. Control: "Room sound" in More (and key `A`). It starts only on that explicit action, plays at most 24 dB below nominal, and is audible only while the video is muted or no video plays, so it never competes with a channel. Muted under Calm. Nothing sudden: all envelopes at least 1.5 s attack.
 
 **Phones:** all rooms are backdrop-only in focus layout. Idle (no channel) on a phone frames the room portrait: screen at 92 per cent width, lower third, room above.
 
-**Order if scope shrinks (requirements section 10):** tv-room, cinema, car, open air first. Designer's note: bedroom and space deck are the cheapest and best on phones (Q-D2).
+**Scope (user decision, 2026-11-11):** no room is cut; all nine are in the first release. Suggested build order for the technical-artist and scene-developer, cheapest and most valuable first: mountain-sky (hero, build it first and polish it most), tv-room, space deck, bedroom, open air, cinema, car, train, chai stall. The `keepOut` mechanism below is built once, with the mountain sky, and reused.
+
+**Keep-out uniform (shared mechanism):** the scene-developer passes the projected player rect plus the 24 px halo to every room as `uKeepOut` (a vec4 in viewport pixels, set each time the projector updates). Ambient sprites and bands that move (clouds, birds, aurora ribbons, steam, moths, dust, fireflies, crowd) multiply their alpha by `smoothstep(0, 40 px, distanceOutsideKeepOut)`, so they fade out before they could touch the zone and can never cross it. This is in addition to the authored placement rules, not instead of them.
 
 ### 5.1 1970s TV room (extended for YouTube channels)
 
@@ -457,10 +460,75 @@ Contrast: all site text 4.5:1 on its own opaque or scrim plate (v1 9.2 tokens). 
 - **Budget:** JS 30 kB (procedural sky and Earth shader); assets about 90 kB; 25 draw calls; 20k triangles. Earth, stars and clouds are procedural noise; no NASA imagery is used, so no credit is needed for the art.
 - **Build complexity: Low.** One shader and a few planes.
 
-### 5.9 Summary tables
+### 5.9 Mountain sky (id `mountain-sky`, the hero room)
+
+- **Mood:** you stand alone on a summit at late dusk, above a sea of clouds, with distant peaks, the first stars and a faint aurora at the edges of the sky. In front of you, floating in the sky, hangs a giant screen. The feeling is quiet awe and scale: you are small, the picture is vast, nothing is in your way. It is the room the site is introduced by.
+- **Not a dome.** The video screen is a flat, head-on 16:9 rectangle. There is no curved, dome or wraparound sky screen, and the sky is only a backdrop that the screen floats in front of. The sky itself is drawn on a large background sphere (rendering convenience), but no part of the video is ever mapped to it.
+- **Palette (colour):** zenith `#0b1030`; mid sky `#3a2f6b`; horizon glow band `#e0845a` fading to `#f2c9a8`; stars `#ffffff` (a few `#cfd8ff`); cloud tops `#f2c9a8`, cloud shadows `#5a4a7a`; far ridge `#2b2a52`, mid ridge `#1c1c3a`, near ridge and ledge `#101022`; aurora `#3fe0a0` and `#8a5ae0`; portal frame `#0a0a12` with a hairline `#cfd8ff`. **B&W reads:** zenith darkest, the horizon band the lightest large area, cloud tops light-mid and cloud shadows dark (at least 25 per cent luminance apart), ridges dark silhouettes stepping lighter with distance (atmospheric perspective), stars pure white, aurora a pale translucent ribbon. The screen surround is near-black.
+- **Props and scenery:**
+  - A rock ledge in black silhouette at the lower left and right, with a three-stone cairn at lower left and a trekking pole leaning at lower right for scale (no brand marks).
+  - Three low-poly ridge layers at the horizon, tall sharp peaks only in the outer columns.
+  - A cloud sea in three or four depth rows of soft impostor puffs, lit from above by the horizon glow.
+  - Mid clouds in the side columns.
+  - Distant birds as small V silhouettes.
+  - A star field (about 120 points on desktop) and two aurora ribbons in the upper side columns.
+  - Faint spindrift (snow crystals) blowing in the lower band only.
+- **The sky portal (how a flat screen belongs in the sky):** the screen reads as a gateway hung in the air, framed, not pasted on. All of these sit outside the player rect and never over it:
+  1. A thin dark-glass **portal frame** of about 1 per cent of the rect width on every side, flush with the rect's outer edge (drawn 2 px outside it), with a 2 px light hairline on its outer edge.
+  2. Four **corner brackets**: L-shaped light strokes (length 6 per cent of the rect width, 3 px thick) around the frame's outer corners, 12 px off the frame.
+  3. A soft **light pillar** falling from the frame's bottom edge (starting 24 px below the frame) down to the cloud sea, a faint vertical gradient 4 per cent of the rect width wide, which makes the screen look as if it is held in place by light.
+  4. A **glow pool** on the cloud sea beneath it (a soft ellipse, generic, spill).
+  5. A soft **halo** around the frame: a radial glow that starts at the frame's outer edge and fades over 12 per cent of the rect width.
+  6. A handful of slow **sparkles** drifting upwards outside the keep-out (at most 20, faded by `uKeepOut`).
+- **Screen anchor:** flat 16:9, 120 m wide, 400 m away and about 90 m above the camera's eye line at the summit, face-on, centred horizontally (the frame, brackets and halo are children of the anchor, behind the rect plane by 0.01 m).
+- **Watch pose and framing (it has to feel huge):**
+  - **Final anchor values (contract `screen`):** `aspect: 16/9`, `fill: 0.72`, `align: 'centre'` (the spec's "hAlign"), `vAlign: 'upper'`. This matches the architect's provisional values; no change is needed in `mountain-sky/index.tsx` except removing the "PROVISIONAL" comment.
+  - Fill 0.72 of the viewport width, the widest of all rooms (the cap `min(0.78 x vh, vh - 40 - 64 - 2 x 24)` on height applies).
+  - `vAlign: 'upper'` means the rect's centre sits at 41 per cent of the viewport height (other rooms use `'centre'`, 50 per cent, with the info row and dock budget as in 2.2), so most of the frame is the screen and the sky.
+  - The horizon line sits at least `rect bottom + 24 px + 4 per cent vh` below the top of the viewport (about 78 per cent down on a 1440 x 900 window), so the cloud sea occupies the lower band beside and below the info row and dock.
+  - Scale cues (ledge, cairn, distant peaks, tiny birds far below) make the screen feel huge even at 72 per cent.
+  - On entering the room the camera rises from just above the cloud sea to the watch pose over 1.6 seconds (an instant cut in Calm; the player appears only when the pose has settled).
+  - Browse pose (Look around): azimuth plus or minus 35 degrees, elevation -8 to +15; the screen stays flat in the sky and is seen at an angle only while the player is hidden.
+- **Placement rules:**
+  - Clouds live in the cloud band (below the horizon line) and in the side columns; side-column clouds and aurora ribbons fade by `uKeepOut` before the 24 px halo and never cross it.
+  - Peaks are tall only in the outer 12 per cent columns, and their projected tops at the inner side drop below the cloud line; no peak or ridge is above `rect bottom + halo` within the rect's horizontal span.
+  - Birds fly only in the side columns and the cloud band; their paths are clamped and faded by `uKeepOut`, so none crosses the rect.
+  - The aurora is confined to the upper side columns.
+  - The ledge, cairn and pole are below the horizon.
+  - The portal frame, brackets, pillar, glow and halo are screen-owned dressing outside the rect; QA's overlap grid confirms the rect is clear.
+- **Light spill:** the shared `spill(t)` (at most 1.3 Hz components, plus or minus 13 per cent) on a base of 0.30, falling on the cloud sea and ledge below the screen (the glow pool and pillar), and on the portal halo base 0.20. The sky and stars do not respond to it. Never driven by the video.
+- **Ambient motion (all frozen in Calm):**
+  - Cloud sea drifts at 3 and 7 px/s (two rows, at 1080 p height), mid clouds at 12 px/s, horizontally.
+  - Star twinkle at 0.3 to 1.2 Hz (2 Hz or less), at most 10 per cent alpha, 120 stars staggered so no large area changes together.
+  - Aurora ribbons undulate with 20 to 40 s periods at 15 per cent alpha.
+  - Distant birds at 20 px/s with a 1.5 Hz wing-beat (small sprites).
+  - Spindrift in the lower band at 30 to 60 px/s.
+  - Sparkles drift up at 6 px/s.
+  - The frozen Calm state: stars and clouds at a chosen pose, aurora static, no birds, no spindrift, no sparkles.
+  - No large-area luminance change over 0.05 per 100 ms.
+- **Audio (Room sound, off by default, available):** wind, synthesised: band-passed noise centred 300 to 700 Hz with slow gusts (LFO 0.05 to 0.15 Hz, attack at least 3 s), at most 24 dB below nominal, plus a very faint high airy layer. Nothing sudden. Audible only while the video is muted or none plays; muted in Calm.
+- **Mobile and focus mode:**
+  - Focus layout as 2.4: the player full width at the top, at least 240 px tall.
+  - The backdrop is the mountain sky seen in portrait, dimmed to 0.6: stars, cloud sea in the lower half, a ridge line, no ledge detail.
+  - Idle (no channel) on a phone frames the room in portrait: the screen at 92 per cent of the width, centred at 34 per cent of the height, the cloud sea in the lower 38 per cent, the aurora and sparkles hidden.
+  - Mobile quality: render scale 0.75, 60 stars, two cloud rows, no birds or spindrift, cloud drift at half speed (still frozen in Calm).
+  - The room is the best-looking idle screen on phones because it is mostly gradient and soft shapes.
+- **2D skin:** a dusk gradient from deep navy at the top to peach at the bottom edge, with a row of soft cloud blobs along the bottom (B&W grey gradient; Colour tint indigo to peach).
+- **Budget (per ADR 0011):** JS 38 kB gzip (sky shader, cloud impostors, ridge generator, keep-out fade); assets about 260 kB on desktop and 190 kB on mobile (a cloud puff atlas 1024 at about 120 kB KTX2, a noise tile 512 at about 60 kB, bird and spindrift sprites 64, cairn and pole as inline meshes under 10 kB); 28 draw calls (instancing for puffs and stars); 18k triangles. All art original and procedural, no photographs, no real mountain, no NASA or other imagery; `LICENCES.md` records that.
+- **Build complexity: Medium.** Technical-artist notes:
+  - **Procedural sky:** one gradient shader on a large background sphere (zenith to horizon, a glow band, 120 star points with twinkle in the vertex stage). It is background only. Never map the video or anything video-like to it.
+  - **Low-poly peaks:** three flat-shaded ridge silhouettes as extruded polylines from seeded noise, fogged toward the horizon colour with distance. About 400 triangles in total.
+  - **Cloud sea impostors:** soft puff quads (a 1024 atlas of 8 puffs, noise-based, baked or generated at load) in 3 to 4 depth rows, billboarded and tinted by height (lit tops, shadowed undersides); they scroll in a shader (no CPU per puff) and fade by `uKeepOut`.
+  - **Aurora:** two additive ribbon meshes with scrolling noise in the upper side columns only, capped at 15 per cent alpha.
+  - **Portal:** the frame, hairline, brackets, pillar, glow pool and halo as a handful of unlit quads attached to the anchor; none overlaps the rect plane's area.
+  - **Hard part to get right:** the sea of clouds has to look soft and deep without costly volumetrics, and every moving element has to fade before the keep-out.
+- **Recommendation: feature it.** It is the strongest first impression for a "watch in a place" site, it is cheap on phones, it has the safest composition for the no-overlay rule (open space around a flat screen), and it showcases the Colour switch best (the dusk gradient). Feature it in the picker (first row, larger, "Featured") and on the start screen's "Change the room" key, and make `?env=mountain-sky` the shareable link. Keep the 1970s TV as the landing room because channel 0 is the site's identity.
+
+### 5.10 Summary tables
 
 | Room | Fill (desktop) | Anchor | Watch pose special | Build | JS (gz) | Assets (desktop) |
 |---|---|---|---|---|---|---|
+| mountain-sky | 0.72, centre, vAlign upper | 16:9 | huge, horizon below rect, portal frame | Medium | 38 kB | 260 kB |
 | tv-room | 0.55 (glass), set fits 95% | 4:3 | camera translated, set in frame | Low | v1 + 0 | 0 |
 | cinema | 0.72 | 16:9 | centred | Low-medium | 35 kB | 320 kB |
 | car / drive-in | 0.66 | 16:9 | windscreen clear | Medium | 45 kB | 520 kB |
@@ -470,7 +538,7 @@ Contrast: all site text 4.5:1 on its own opaque or scrim plate (v1 9.2 tokens). 
 | train | 0.60 | 16:9 | fixed to viewer | Medium | 45 kB | 560 kB |
 | space deck | 0.64 | 16:9 | windows either side | Low | 30 kB | 90 kB |
 
-2D skins (backdrop and frame, B&W with the Colour tint in brackets): tv-room dark grey, walnut frame (warm brown); cinema near-black with maroon edges (maroon); car dark blue-black with a thin amber line (amber); open air deep navy with a dotted string-light top edge (warm white dots); bedroom indigo with a lamp-glow corner (amber glow); chai stall brick-brown with a blue lower band (brick, blue); train blue-grey with a sunset strip (orange to blue); space black with a faint arc (blue arc).
+2D skins (backdrop and frame, B&W with the Colour tint in brackets): tv-room dark grey, walnut frame (warm brown); cinema near-black with maroon edges (maroon); car dark blue-black with a thin amber line (amber); open air deep navy with a dotted string-light top edge (warm white dots); bedroom indigo with a lamp-glow corner (amber glow); chai stall brick-brown with a blue lower band (brick, blue); train blue-grey with a sunset strip (orange to blue); space black with a faint arc (blue arc); mountain sky a dusk gradient from deep navy to peach with soft cloud blobs along the bottom (indigo to peach).
 
 ## 6. YouTube compliance as design rules
 
@@ -493,7 +561,7 @@ Contrast: all site text 4.5:1 on its own opaque or scrim plate (v1 9.2 tokens). 
 
 ### 6.2 Third-party disclosure
 
-A "Third parties" section on the Privacy page lists origins, purpose and timing in a table: `www.youtube.com` (the player loader script, after Continue), `www.youtube-nocookie.com` (the player frame, after Continue), `i.ytimg.com` (thumbnails, only if the site ever shows them, which the current design does not unless the user opts in, Q-D1). Plain text, 16 px, 4.5:1.
+A "Third parties" section on the Privacy page lists origins, purpose and timing in a table: `www.youtube.com` (the player loader script, after Continue) and `www.youtube-nocookie.com` (the player frame, after Continue). No image host is listed because the site loads no thumbnails. Plain text, 16 px, 4.5:1.
 
 ### 6.3 Privacy page copy (`privacy.html`, for product-manager approval)
 
@@ -511,9 +579,10 @@ A "Third parties" section on the Privacy page lists origins, purpose and timing 
 > |---|---|
 > | www.youtube.com | the player loader script |
 > | www.youtube-nocookie.com | the player itself |
-> | i.ytimg.com | thumbnails, only if shown (not at present) |
 >
-> **Channels.** The channel guide lists channels that publish live video on YouTube. Names are used only to identify the source. This site does not host, copy, record, relay or change any video. State-run channels are labelled. Doordarshan and Sansad TV channels are shown through their official YouTube embeds. NASA material, if listed, is credited to NASA and does not imply its endorsement.
+> **Room sound.** The optional room sound is made in your browser and downloads nothing. It is off until you turn it on.
+>
+> **Channels.** The channel guide lists channels that publish live video on YouTube. Names are used only to identify the source. This site does not host, copy, record, relay or change any video. State-run channels are labelled. Not affiliated with or endorsed by YouTube, Prasar Bharati, Doordarshan, Sansad TV or any listed channel. [Shown only while those entries are enabled: Doordarshan and Sansad TV channels are shown through their YouTube embeds.] NASA material, if listed, is credited to NASA and does not imply its endorsement.
 >
 > **Flashing and accessibility.** We make the site to WCAG 2.2 level AA. We cannot change or check the video that YouTube plays, so third-party video is outside our conformance claim: it may be loud or contain flashing. Calm mode starts nothing by itself, freezes the rooms, and asks for captions where the player allows. You can stop any video with Stop at any time. Captions and other controls are in the player.
 >
@@ -591,12 +660,12 @@ This pass is docs only; the tokens are proposed here and I will add them when th
 
 | # | Question | Default |
 |---|---|---|
-| Q-D1 | The Calm still card is meant to be a "thumbnail card" (V2-FR-29), but ADR 0011's CSP allows no `i.ytimg.com` image. Use a site-drawn card (no YouTube image), or allow thumbnails after the notice? | Site-drawn card, no thumbnail |
+| Q-D1 | Closed: the Calm still card is site-drawn, with no thumbnail and no `i.ytimg.com` request. | Accepted |
 | Q-D2 | If scope must shrink, the requirement keeps tv-room, cinema, car and open air first. Bedroom and space deck are the cheapest and best on phones, chai stall and train the dearest. Swap the car for bedroom? | Keep the requirement's four; cut chai stall and train first |
-| Q-D3 | V2-FR-7 lists playlist links; ADR 0011 accepts only single-video forms. Reject playlists with a message? | Reject, as the ADR |
+| Q-D3 | Closed: playlists are rejected with a message, as the ADR. | Accepted |
 | Q-D4 | In tv-room with a YouTube channel, should a Colour variant exist (warm 1970s tints, no new assets), or stay B&W only like the ADR's note ("TV room stays greyscale")? | Colour variant with tints; channel 0 stays B&W |
 | Q-D5 | Resuming a paused video after a room switch needs the browser to allow `playVideo()` without a fresh gesture. If a browser refuses, the player shows YouTube's play button inside the player. OK? | Yes; no site overlay on the player in that case |
-| Q-D6 | Guide-channel naming, "OFFICIAL EMBED" tag on DD and Sansad, and the privacy copy need product-manager review of terms (ADR owner list). | Review before launch |
+| Q-D6 | Closed: the product-manager reviewed the privacy copy and guide labels (notes in `docs/handoffs/product-manager.md`); applied: tag renamed "VIA YOUTUBE EMBED", non-affiliation line added, DD/Sansad sentence shown only while enabled, `i.ytimg.com` removed, room-sound line added. | Applied |
 | Q-D7 | The tv-room channel knob keeps v1's "next diary page" behaviour on channel 0 until the last page, then goes to channel 1. This preserves v1 tests but is slightly odd. Alternative: knob always changes channel and page nav stays on the dock. | Keep v1 behaviour first |
 | Q-D8 | Room sound (ambient audio) is separate from the video sound and off by default; it plays only when the video is muted or stopped. OK, or drop it from the first release (it is a Could)? | Keep, behind More |
 
