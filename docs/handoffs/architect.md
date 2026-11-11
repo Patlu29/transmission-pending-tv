@@ -75,58 +75,55 @@ Chose the stack (Vite 8, React 19.3, R3F 9.8, drei 10.7, three 0.187, zustand 5.
 
 ---
 
-## v2: channels (decisions accepted 2026-11-11)
+## v2: environment player (ADR 0011, 2026-11-11)
 
 ### Summary
-The user's v2 decisions are recorded. ADR 0009 is now Accepted: public archive channels plus a private satellite relay, a Colour/B&W switch defaulting to B&W, the runtime flash limiter, and Git LFS media hosting at USD 0 a month. New ADR 0010 specifies the private, login-only relay backend: Tvheadend, MediaMTX with ffmpeg, Fastify, household accounts, Tailscale HTTPS, a `VITE_RELAY=1` private build, Docker Compose, and CI checks that keep relay code and private network data out of the public site. Documents only: no code, config or architecture.md changes until v1 is tagged.
+The archive and private-relay plan is replaced: ADR 0009 and ADR 0010 are marked "Superseded by 0011", with their text kept for the record. New ADR 0011 (Accepted) specifies v2 as a multi-environment player for official YouTube embeds:
+- compositing (a face-on DOM player above the canvas, with no depth hole);
+- environments as lazy chunks behind a shared screen-anchor contract, with per-environment budgets;
+- a scheduled GitHub Action that resolves live video IDs into a same-origin `guide.json`;
+- privacy and CSP;
+- bundle impact and a phased plan.
+
+Documents only: no code, config or `docs/architecture.md` changes until v1 is tagged.
 
 ### Files changed
-- docs/decisions/0009-live-channels-feasibility.md: rewritten, status Accepted
-- docs/decisions/0010-private-relay-backend.md: new, Accepted
-- docs/handoffs/architect.md: this section (replaces the Proposed-era v2 section)
+- docs/decisions/0011-environment-player.md: new, Accepted
+- docs/decisions/0009-live-channels-feasibility.md, docs/decisions/0010-private-relay-backend.md: status set to "Superseded by 0011"
+- docs/handoffs/architect.md: this section (replaces the archive and relay v2 section)
 
 ### Decisions
-- Two deployment targets from one repo: the public static site (channels 0 to 5) and the private relay (adds live channels from 10). Reason: the user's "public archive + private backend" shape; live retransmission can never be public.
-- Archive media on Git LFS with an Actions deploy to Pages, capped at 600 MB. Cost: USD 0 a month (GitHub Free LFS is 10 GiB storage and 10 GiB bandwidth; Pages allows a 1 GB site, about 100 GB a month soft, checked 2026-11-11). Reason: same origin (no CORS, no NFR-7 change), media versioned with the commit. The build refuses LFS pointer files. Move to a bucket under a domain we own only past 600 MB or near 100 GB a month.
-- Plain MP4 with clock-scheduled seeking for archive channels: Pages answers byte-range requests (checked, `206`), so the public build needs no HLS library.
-- Video pre-pass (luminance or colour, flash limiter, on-screen channel number, mipmaps) feeding `uMap`; `uColour` is forced to 0 for all teletext content; the chrome is always greyscale.
-- The limiter clamps each linear RGB channel, so it covers the general flash rule and, in colour mode, the red-flash rule. It is stated as a computed bound, not a certification. Live content plays only in 3D, never in Calm or 2D.
-- Relay: Tvheadend (tuner manager, DVR off), MediaMTX with on-demand ffmpeg (deinterlace, H.264 and AAC, low-latency HLS, RAM-only segments), Node and Fastify API and proxy, SQLite, Argon2id, admin-provisioned accounts, `__Host-` session cookies. Every service is on loopback, and the only way in is `tailscale serve` (Funnel never enabled).
-- The private frontend is served by the relay itself on the same origin, so no relay URL exists in the repo, the build or run-time config.
-- `server/` is a separate npm project (not a workspace), and `hls.js` is never in `STACK_PACKAGES`: the channel 0 intro template and stack facts are untouched.
+- **The iframe sits above the canvas, positioned in plain 2D CSS from the screen anchor's projected corners, only in a static face-on watch pose.** Reason: stacking order guarantees that nothing WebGL covers the player. The depth-mask hole of `CSS3DRenderer` and drei `occlude="blending"` exists only to let WebGL cover parts of the iframe, which YouTube forbids. Both were also rejected for Firefox `matrix3d` iframe problems and, for drei, a global canvas `pointer-events: none`.
+- **Focus mode** whenever the in-scene rectangle is under 480 x 270, and always on phones: the player sits in DOM layout at full width, with the environment as backdrop.
+- **One `YT.Player` for the visit:** `loadVideoById` for channel changes, never re-parented, destroyed on channel 0, paused in the browse pose and in hidden tabs.
+- **Colour/B&W** is a CSS `grayscale(1)` on the canvas element only. No ancestor of the iframe may carry a filter, opacity, blend mode, mask or 3D transform.
+- **TV room:** `tv-room` wraps v1 unchanged for channel 0. YouTube channels use the flat bezel opening, with the CRT glass off and the haunting kept away from the screen.
+- **Guide:**
+  - runs every 30 minutes, built from the latest `v*` tag, deployed to Pages and never committed (it would flood the diary and change `git.commitCount`);
+  - cheap re-validation with `videos.list`, `playlistItems.list` before `search.list`, and a daily spend ledger capped at 8,000 units;
+  - stale entries are kept on failure and dropped after 30 days;
+  - the client re-validates every field.
+- **Network:** `youtube-nocookie.com` for the player; `strict-origin-when-cross-origin` referrer; a meta-tag CSP allowing `https://www.youtube.com` (script) and `https://www.youtube-nocookie.com` (frame); no third-party request of any kind before the first pick.
+- **v1 facts untouched:** no runtime npm dependency, `STACK_PACKAGES` unchanged, and `guide.json` kept outside the facts pipeline.
 
 ### Assumptions
-- The relay box runs Linux with Docker Engine (ADR 0010, section 7). Host networking is required for SAT>IP discovery and RTP over UDP.
-- Household devices can install Tailscale. The LAN fallback through a local CA is opt-in.
-- GitHub Pages stays the public host (devops proposal pending).
-- Free-to-air channel codecs are confirmed by the user's first Tvheadend scan.
+- GitHub Pages is the host, because the guide workflow deploys through Pages with Actions.
+- The 8 environments in the approval are the full first-release list.
+- The default Data API quota (10,000 units a day) is enough; no quota increase or audit is needed.
 
 ### Open questions (user)
-- Q1: Does the relay box run Linux, and does it have an Intel or AMD GPU for hardware transcoding? (A Windows or macOS box needs a different Compose setup; a CPU without hardware encoding handles about one or two SD channels.)
-- Q2: Will every household device run Tailscale, or does one (for example a smart TV) need the local-CA LAN fallback?
-- Q3: How many tuners does the SAT>IP box or PC tuner have? This sets how many people can watch different live channels at once.
-
-### v2 build plan (starts after the v1.0 tag)
-
-| Step | Work | Agents |
-|---|---|---|
-| 0. Freeze v1 | Finish v1 QA fixes and delivery; tag `v1.0`; create the v2 branch; keep the whole v1 suite in v2 CI | tech lead, qa-engineer, devops-engineer |
-| 1. Requirements | Revise `v2-live-channels.md` to the user's decisions: two targets, archive only on the public site, Colour/B&W, limiter policy, NFR-7 unchanged for the public site, FR-2 amended for video in colour mode, captions and description policy | product-manager |
-| 2. Architecture | Update `docs/architecture.md` (targets, pre-pass, `channelStore`, ownership of `server/`, `src/relay/`, `infra/relay/`); channel lineup schema and validator in `scripts/facts/`; `check-private-data.ts` and `check-public-bundle.ts`; `.gitignore` entries; `.gitattributes` for LFS. Checkpoint: user approves | architect |
-| 3. Design | Channel input (knob, keys, touch, digits without the P100 clash), channel guide page, on-screen channel number, tuning, busy, no-signal and signed-out pages, Colour/B&W switch placement, sign-in screen in teletext style, limiter rate within the bound. Checkpoint: user approves | ux-ui-designer |
-| 4a. Content | Curate 3 to 5 openly licensed clips, record licence evidence, encode (H.264, 640 x 480, about 400 kbps, 600 MB total), offline flash analysis, descriptions or captions, write `src/content/channels.json`. User signs off each licence | technical-artist, ux-ui-designer (labels, descriptions), user |
-| 4b. Rendering | Video pre-pass (colour or B&W, per-channel limiter, on-screen number, mipmaps); `uColour` path in the CRT shader; 2D `grayscale(1)` class | technical-artist |
-| 4c. Scene | `VideoTexture` lifecycle, `uMap` switching on `screenSource`, frame cap while video plays, the channel knob as a real control, haunt zeroing on video | scene-developer |
-| 4d. Frontend | `channelStore`, `displayStore.screenSource` and `colour`, clock-scheduled archive playout, autoplay and unmute rules, Calm and 2D blocking for live, `src/relay/` (sign-in, live adapter, lazy hls.js, session expiry) | frontend-developer |
-| 4e. Backend | `server/`: Fastify app, accounts and sessions, rate limits, CSRF and origin checks, Tvheadend client, tuner arbitration, HLS proxy, admin CLI, auth-matrix tests, `docs/api.md` | backend-developer |
-| 4f. Relay box | `infra/relay/` Compose (tvheadend, mediamtx with ffmpeg, relay), `Dockerfile.relay`, `mediamtx.yml`, `doctor.sh`, `update.sh`, runbook in `docs/deployment.md`; CI: LFS cache and Actions Pages deploy, gitleaks, the two bundle checks, server jobs | devops-engineer |
-| 4g. Integration | `npm run build` and `build:relay` pass; route every handoff request | tech lead |
-| 5. Performance | Archive video plus pre-pass at 30 FPS on a real mid-range phone and 60 FPS on desktop; relay transcode CPU on the box; channel-change times (V2-NFR-1) | performance-optimiser |
-| 6. QA | Greyscale sampling in B&W and outside the picture in Colour; flash and red-flash tests with deliberately flashing clips through the limiter; Calm and 2D blocking; iOS and Android autoplay; the public-bundle check (with the sentinel); auth matrix end to end over Tailscale; v1 regression | qa-engineer, backend-developer (fixes) |
-| 7. Delivery | Public deploy to Pages from the v2 tag; the user installs the relay box with the runbook, creates accounts and runs `doctor.sh` | devops-engineer, user |
+- Q1: Calm mode with unfilterable YouTube video: block it, or (recommended) allow it after a per-visit flash warning with environment motion frozen?
+- Q2: DD and Sansad channels: go live once the permission emails are sent, or stay disabled until written permission arrives?
 
 ### Requests for other agents
-- tech lead: create the v2 branch only after `v1.0` is tagged; keep v1 documents unchanged on main until then. Add backend-developer to the v2 delegation list.
-- product-manager: align `docs/requirements/v2-live-channels.md` with ADR 0009 and 0010. In particular, the public list holds archive clips only (V2-FR-3 and V2-FR-20 become a licence allow-list); "third-party live streams" (V2-FR-8, V2-NFR-5) no longer apply to the public site; and FR-2 is amended for video in colour mode.
-- devops-engineer: confirm that Pages through an Actions deploy accepts a 600 MB artefact within the 10-minute deploy limit; set an LFS budget of USD 0 (no overage) so exceeding the quota fails rather than bills.
-- backend-developer: before implementation, check `node:sqlite` stability and `crypto.argon2` availability on the pinned Node (ADR 0010, section 2).
+- product-manager: v2 requirements must:
+  - amend NFR-7 to "no third-party requests before a channel is picked; after a pick, only the YouTube origins in ADR 0011, section 6";
+  - require the privacy page and the partial-conformance statement for third-party video;
+  - drop the limiter, archive and relay requirements.
+- qa-engineer (v2, phase 6): replace the "every request is same-origin" production test with the two-stage test in ADR 0011, section 6. Add the no-overlay hit-test and ancestor-style checks, and the one-iframe and minimum-size checks.
+- devops-engineer: plan `guide.yml` (schedule, tag checkout, quota cache, secret masking, the `dist/` key check), and note the 60-day schedule-disable risk in the runbook.
+- tech lead: owns `src/content/guide-sources.json` entries (the product manager reviews terms). The user creates the Google Cloud project and API key in phase 7 (manual step).
+- backend-developer: no longer needed for v2.
+
+### v2 build plan
+See the phased table at the end of ADR 0011: phase 0 freeze v1, phase 1 the product manager, phase 2 the architect, phase 3 the ux-ui-designer, phases 4a to 4e (technical-artist, scene-developer, frontend-developer, devops-engineer, then tech lead integration), phase 5 the performance-optimiser, phase 6 the qa-engineer, phase 7 delivery with the user.

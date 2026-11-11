@@ -1,7 +1,9 @@
 # 0009: Channels for v2: public archive channels and a private satellite relay
 
 ## Status
-Accepted (2026-11-11). It replaces the Proposed feasibility version of the same date.
+Superseded by 0011 (2026-11-11). The user replaced the archive and private-relay plan with a multi-environment player for official YouTube embeds; see `0011-environment-player.md`. Nothing in this ADR was built. Kept for the record.
+
+Previously: Accepted (2026-11-11). It replaces the Proposed feasibility version of the same date.
 
 It amends three earlier decisions:
 - ADR 0002 (no backend): adds a separate private deployment target, specified in ADR 0010. The public site stays static.

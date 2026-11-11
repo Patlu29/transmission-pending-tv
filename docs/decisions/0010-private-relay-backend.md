@@ -1,7 +1,9 @@
 # 0010: Private satellite relay backend for the household
 
 ## Status
-Accepted (2026-11-11). Implementation starts after the `v1.0` tag, on the v2 branch (ADR 0009). Package versions are chosen at implementation time from current releases, not from this document.
+Superseded by 0011 (2026-11-11). The user replaced the archive and private-relay plan with a multi-environment player for official YouTube embeds; see `0011-environment-player.md`. Nothing in this ADR was built. Kept for the record.
+
+Previously: Accepted (2026-11-11). Implementation starts after the `v1.0` tag, on the v2 branch (ADR 0009). Package versions are chosen at implementation time from current releases, not from this document.
 
 ## Context
 The user decided that the household gets a private, login-only backend:
