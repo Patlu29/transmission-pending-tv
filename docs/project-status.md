@@ -1,6 +1,6 @@
 # Project status
 
-- **Current phase:** v1 complete; awaiting user's release steps. v2 (ADR 0011) next, on a branch.
+- **Current phase:** v2 on branch `v2`: Phase 2 (architecture scaffold) and Phase 3 (design) in progress. v1 on `main` awaits the user's release steps.
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
