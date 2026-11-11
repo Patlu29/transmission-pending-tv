@@ -15,6 +15,7 @@
   - Shape: public site = channel 0 (the Occupant's story) + openly licensed archive channels; plus a private, login-only backend for the user's household that relays the user's own SAT>IP / PC tuner (DD Free Dish, India) for personal viewing. Live channels are never streamed from the public site.
   - Colour: both. A Colour/B&W switch on the set, default B&W.
   - Flash: runtime brightness-change limiter accepted; Calm and 2D modes play pre-checked clips only.
+- **v2 pivot (2026-11-11), replaces the archive + private relay plan:** v2 is a multi-environment player for streams from other sites. No hosting, relaying or re-encoding of any stream; play only through official embeds/players or openly published streams. Sources: a curated guide of verified official streams plus paste-a-link. Environments: 1970s TV (v1, channel 0 stays the Occupant), cinema theatre, car, open space, plus more from research into where people like to watch. Colour/B&W is a viewer option in every environment. ADR 0009 and 0010 to be superseded.
 - **Open questions:** hosting target (devops will propose; GitHub Pages fits the public repo)
 - **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
 - **Performance decisions (tech lead):** first-view JS of 380.8 kB gzip accepted (over the 350 kB architecture target, well inside NFR-3's 5 MB); adaptive DPR step-down accepted. Real-device FPS is unmeasured (headless SwiftShader only).

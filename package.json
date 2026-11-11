@@ -19,7 +19,13 @@
     "format:check": "prettier --check .",
     "typecheck": "npm run facts && tsc -b",
     "test": "npm run facts && vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test --project=chromium --project=webkit --project=mobile-portrait --project=mobile-landscape --project=ios-portrait",
+    "build:test": "npm run facts && vite build --mode test --outDir test-results/build --emptyOutDir",
+    "test:e2e:chromium": "playwright test --project=chromium --project=mobile-portrait --project=mobile-landscape",
+    "test:e2e:update": "playwright test --project=chromium tests/e2e/visual.spec.ts --update-snapshots",
+    "test:qa": "npm test && npm run test:e2e",
+    "test:e2e:firefox": "playwright test --project=firefox",
+    "test:e2e:all": "playwright test"
   },
   "dependencies": {
     "@react-three/drei": "10.7.9",
