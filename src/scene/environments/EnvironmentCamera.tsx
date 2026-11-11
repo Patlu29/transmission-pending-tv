@@ -128,7 +128,11 @@ export function EnvironmentCamera({
   const reportCorners = (corners: ScreenCorners | null) => {
     usePlayerStore
       .getState()
-      .reportCorners(corners, { width: sizeRef.current.w, height: sizeRef.current.h });
+      .reportCorners(
+        corners,
+        { width: sizeRef.current.w, height: sizeRef.current.h },
+        getAnchor()?.spec.inset ?? 0,
+      );
   };
 
   /** Local copy of the classification, for the test hook only. */
