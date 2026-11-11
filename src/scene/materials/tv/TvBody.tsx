@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, type ReactNode, type RefObject } from 'reac
 import type { Mesh } from 'three';
 import { TV_LAYOUT } from './layout.ts';
 import { buildTvGeometries } from './tvGeometry.ts';
-import { createTvMaterials } from './tvMaterials.ts';
+import { applyTvTint, createTvMaterials } from './tvMaterials.ts';
 import { createPlateTexture, createWoodTexture } from './tvTextures.ts';
 
 /** The four named nodes the scene uses for picking and for the screen material. */
@@ -32,6 +32,8 @@ export interface TvBodyProps extends Omit<ThreeElements['group'], 'children' | '
   powerHandlers?: KnobHandlers;
   channelHandlers?: KnobHandlers;
   volumeHandlers?: KnobHandlers;
+  /** Colour-era tint, 0 (v1 greys, default) to 1 (warm walnut). Pass 1 only with Colour on and a live channel, never on channel 0. */
+  tint?: number;
   /** Filled after mount with the four named meshes. */
   nodesRef?: RefObject<TvNodes | null>;
 }
@@ -52,6 +54,7 @@ export function TvBody({
   channelHandlers,
   volumeHandlers,
   nodesRef,
+  tint = 0,
   ...groupProps
 }: TvBodyProps) {
   const geometries = useMemo(() => buildTvGeometries(), []);
@@ -70,6 +73,10 @@ export function TvBody({
     },
     [geometries, materials, textures],
   );
+
+  useEffect(() => {
+    applyTvTint(materials, tint);
+  }, [materials, tint]);
 
   const screen = useRef<Mesh>(null);
   const power = useRef<Mesh>(null);

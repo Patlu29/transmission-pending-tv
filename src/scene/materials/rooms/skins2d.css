@@ -1,0 +1,52 @@
+/*
+ * 2D room skins (design-spec-v2 section 5.10). Owner: technical-artist. Backdrop and frame only, drawn in colour;
+ * the frontend applies `filter: grayscale(1)` (B&W) to the same element as it does to the canvas.
+ * Use: <div class="room2d room2d--mountain-sky"> ...focus layout... </div>. No animation, so nothing to freeze in Calm.
+ */
+.room2d {
+  background-color: #0a0a0a;
+  background-repeat: no-repeat;
+}
+.room2d--mountain-sky {
+  background-image:
+    radial-gradient(ellipse 60% 14% at 20% 100%, rgba(242, 201, 168, 0.55), transparent 70%),
+    radial-gradient(ellipse 50% 12% at 70% 100%, rgba(242, 201, 168, 0.5), transparent 70%),
+    radial-gradient(ellipse 40% 10% at 45% 98%, rgba(224, 132, 90, 0.5), transparent 70%),
+    linear-gradient(to bottom, #0b1030 0%, #3a2f6b 55%, #e0845a 88%, #f2c9a8 100%);
+}
+.room2d--tv-room {
+  background-image: linear-gradient(to bottom, #1c1c1c, #0f0f0f);
+  box-shadow: inset 0 0 0 12px #3a281a;
+}
+.room2d--cinema {
+  background-image: linear-gradient(to right, #4a1620 0, #0b080a 14%, #0b080a 86%, #4a1620 100%);
+}
+.room2d--drive-in {
+  background-image: linear-gradient(
+    to bottom,
+    #0b1226 0,
+    #14161a 92%,
+    #ffb347 92%,
+    #ffb347 93%,
+    #14161a 93%
+  );
+}
+.room2d--open-air {
+  background-image:
+    radial-gradient(circle at 5px 5px, #ffd9a0 2px, transparent 3px) 0 0 / 28px 14px repeat-x,
+    linear-gradient(to bottom, #101830, #1a2a1a);
+}
+.room2d--bedroom {
+  background-image:
+    radial-gradient(circle at 100% 100%, rgba(255, 184, 107, 0.45), transparent 45%),
+    linear-gradient(#2f3350, #3a3f5c);
+}
+.room2d--chai-stall {
+  background-image: linear-gradient(to bottom, #8a4b3a 0, #8a4b3a 82%, #2f5f7a 82%);
+}
+.room2d--train {
+  background-image: linear-gradient(to bottom, #2d4a7a 0, #6a6f8a 78%, #e9a05a 92%, #2b3a6b 100%);
+}
+.room2d--space-deck {
+  background-image: radial-gradient(circle at 50% 135%, #2f6fb5 0 38%, transparent 38.5%), #05060a;
+}

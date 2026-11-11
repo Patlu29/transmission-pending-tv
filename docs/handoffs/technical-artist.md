@@ -256,3 +256,92 @@ All procedural, greyscale, about 0 kB, all textures disposed on unmount.
 - performance-optimiser: the ghost adds one extra mip fetch, one sprite fetch and a few noise evaluations per fragment only while `uGhost` is above 0 (a uniform branch); the roll adds one derivative-based fetch. Please check a DPR 2 full-screen frame on a real GPU.
 
 Integration pass: confirmed `TELETEXT_FONT` in `drawTestCard.ts` is VT323 (done in round 2; caption layout is centred and independent of cell width, so the baked PNG is unchanged); no code or CSS in my folders names Bedstead.
+
+---
+
+# v2 (Phase 4a): the nine rooms
+
+`npm run build`, `npm run lint`, `npx tsc -b` and `npm test` (12 files, 144 tests) all pass. Nothing is committed. Verified in headless Chrome (ANGLE and SwiftShader) with a stand-in projector (fill, vAlign, height rule, camera translated parallel to the anchor) at 1440 x 900, 1024 x 640 and a 390 x 844 phone; Safari, Firefox and real GPUs are untested.
+
+## How to mount a room (scene-developer)
+Everything is procedural: **0 bytes of assets** in `public/`, no decoder to self-host, no per-room `public/models/<id>/` or `public/textures/<id>/` folder (the three existing `LICENCES.md` files state this). Import from `@/scene/materials/rooms` (`src/scene/materials/rooms/index.ts`).
+
+```tsx
+// src/scene/environments/mountain-sky/index.tsx
+import { MountainSkyRoom, MOUNTAIN_SKY_SCREEN, setKeepOut, type RoomUniforms } from '@/scene/materials/rooms';
+function Scene({ calm, colour, pose }: EnvironmentSceneProps) {
+  const uniforms = useMemo(createRoomUniforms, []);          // shared by every material in the room
+  // whenever the projector updates (and null in browse pose): setKeepOut(uniforms, placementRect | null)  // adds the 24 px halo
+  return (<>
+    <ScreenAnchor ... />
+    <MountainSkyRoom calm={calm} colour={colour} pose={pose} uniforms={uniforms} watchDistance={solverDistance} quality={phone ? 'low' : 'high'} dim={focusBackdrop ? 0.6 : 1} />
+  </>);
+}
+export default { id: 'mountain-sky', Scene, screen: MOUNTAIN_SKY_SCREEN } satisfies EnvironmentModule;
+```
+
+- **Anchor space:** a room is authored in the same space as `<ScreenAnchor/>`: origin at the screen centre, +Z towards the viewer, +Y up, units of `widthM`. Mount the room as a sibling of the anchor (same transform). Do not move the anchor to suit the room.
+- **`RoomProps`** (all rooms): `calm` (required), `colour?` (information only), `pose?`, `uniforms?` (`RoomUniforms`, else a private set), `widthM?` (default = the room's `*_SCREEN.widthM`), `watchDistance?` (**camera to anchor-plane distance in the watch pose, metres; pass the solver's value**, default 1.6 x widthM; the scenery is placed by angle from that camera, so a wrong value shifts it), `quality?: 'high' | 'low'`, and on every room except tv-room `dim?` (0..1 brightness of the whole canvas, 0.6 for the focus backdrop; draws a last full-screen black quad).
+- **`uKeepOut`:** `createRoomUniforms()` returns `{ uTime, uCalm, uSpill, uKeepOut, uView }`. `setKeepOut(u, rect, halo = 24)` takes the player rect in CSS px relative to the canvas top-left (the same rect as `playerStore.placement.rect`) and stores rect plus halo. Pass `null` when the player is hidden (browse pose). Moving and ambient sprites (clouds, birds, aurora, steam, dust, motes, fireflies, sparkles, spindrift, beam) multiply their alpha by `smoothstep(0, 40 px, distance outside the keep-out)` in their fragment shader (`keepFade()` in `src/scene/shaders/room/common.ts`). `uView` (CSS size and pixel ratio) is kept up to date by the room itself.
+- **Clock and Calm:** each room calls `useRoomClock(uniforms, calm)`: time advances normally, and in Calm it is held at a per-room fixed frame, `uSpill` is 1, and birds, spindrift, sparkles, steam, dust, motes, fireflies, moths and crowd sway are not rendered or are still. Light spill is the shared `spill(t)` (1 + 0.08 sin(2 pi 0.6 t) + 0.05 sin(2 pi 1.3 t + 1.7)), never driven by the video, applied to surround lights and glows only.
+- **Camera requirements:** `far` must be at least **60 x widthM** (the mountain sky dome has radius 50 x widthM); set `near` to about 0.01 x widthM. No camera motion in the watch pose.
+- **Colour:** rooms are authored in colour; the greyscale is the CSS filter. Palettes are exported (`*_PALETTE` in `rooms/specs.ts`). Greyscale check (luma on sRGB, difference over the lighter): every prop pair that must read apart is at least 25 per cent apart (mountain sky zenith/horizon, cloud top/shadow, ridge steps, seats/curtains, beanbags, crowd clothes, window/wall roles). I changed three palette hexes to get there: beanbag blue `#3f6f8a` to `#2a4a63`, bedroom wood `#4a3526` to `#33241a`, chai indigo `#2e3f7a` to `#4a5fa8`. The one pair still under 25 per cent is space deck sunrise limb against the hull (9 per cent); they are never adjacent (limb is inside a window).
+
+## Contract values to use (`rooms/specs.ts`, exported as `*_SCREEN`)
+
+| Room | `aspect` | `widthM` | `fill` | `align` | `vAlign` | Notes |
+|---|---|---|---|---|---|---|
+| mountain-sky | 16/9 | **12** (spec says 120) | 0.72 | centre | upper | Scale is arbitrary: 12 keeps every distance inside the default camera far plane. Anchor stays 16:9 flat |
+| tv-room | 4/3 | 0.58 (`TV_LAYOUT`) | 0.55 | left | centre | |
+| cinema | 16/9 | 6 | 0.72 | centre | centre | |
+| drive-in | 16/9 | 14 | 0.66 | centre | **upper** | The spec says the screen is high in the frame and the camera low; `upper` does that. Needs the designer's nod |
+| open-air | 16/9 | 8 | 0.70 | centre | centre | |
+| bedroom | 16/9 | 1.2 | 0.60 | centre | centre | |
+| chai-stall | 16/9 | 0.7 | 0.58 | centre | centre | |
+| train | 16/9 | 0.45 | 0.60 | centre | centre | |
+| space-deck | 16/9 | 3 | 0.64 | centre | centre | |
+
+## Components per room
+
+| Room | Component and path | Extra props | Budget measured |
+|---|---|---|---|
+| mountain-sky (hero, built first) | `MountainSkyRoom`, `rooms/mountainSky/MountainSkyRoom.tsx` | | JS 5.0 kB gzip own plus 7.1 kB shared kit, 0 kB assets, 24 draw calls (limit 28), 2.9k triangles (18k), mobile 14 calls |
+| tv-room | `TvRoomExtras`, `rooms/tvRoom/TvRoomExtras.tsx`; plus `TvBody tint` | `colourActive?: boolean` (pass `useColourActive()`), `burst?: number` | JS 1.6 kB, 0 assets, lamp, doily, rug and bezel ring in 2 draw calls |
+| cinema | `CinemaRoom` | | JS 2.0 kB, 8 calls, 0.9k tris |
+| drive-in | `DriveInRoom` | | JS 1.9 kB, 13 calls, 2.9k tris |
+| open-air | `OpenAirRoom` | | JS 1.9 kB, 10 calls, 2.4k tris |
+| bedroom | `BedroomRoom` | | JS 3.1 kB, 10 calls, 0.5k tris |
+| chai-stall | `ChaiStallRoom` | | JS 2.8 kB, 19 calls, 1.2k tris |
+| train | `TrainRoom` | | JS 2.4 kB, 8 calls, 0.3k tris |
+| space-deck | `SpaceDeckRoom` | | JS 2.7 kB, 7 calls, 0.5k tris |
+
+Draw calls and triangles are `renderer.info` after one frame (including the harness's one-quad stand-in anchor). JS is gzip of a lib build with three, react, R3F and drei external, so it is the chunk cost on top of the shared core. Every room is at most about 12 kB with the shared kit (limit 60 kB). All assets: 0 kB (limits 1.5 and 2 MB). `ROOMS` in `index.ts` maps id to `{ Room, screen }` for the registry.
+
+### Mountain sky (placement, as built)
+- Sky: one gradient sphere around the camera (`SkyDome`, never any video), horizon band 9 degrees below eye level, glow, two aurora ribbons in the upper side columns only (15 per cent alpha cap, fade by `uKeepOut`), stars (120 high, 60 low) twinkling 0.3 to 1.2 Hz at 10 per cent.
+- Three ridge layers with peaks only in the outer columns; inner tops stay under the cloud line. Cloud sea: six rows of soft puff quads generated in the fragment shader (two rows on `low`), drifting at 3 and 7 px/s equivalent, tinted from lit top to shadow, fading to horizon colour with distance; plus mid clouds in the side columns. Ledge, cairn and trekking pole below the horizon (high quality only). Birds (8, 1.5 Hz wing-beat), spindrift and sparkles hidden in Calm and on `low`.
+- Portal (children of the anchor space, behind the rect plane by 0.0008 x widthM): dark frame (about 1 per cent), 2 px hairline, four L-shaped corner brackets, light pillar, glow pool on the sea, halo. Pool, pillar and halo follow `spill`.
+- Measured, keep-out: with the anchor hidden and the clock at two different times, **0 changed pixels inside the player rect and 0 in its 24 px halo ring** in all eight rooms tested (while 15,000 to 212,000 other pixels changed), so nothing moves into the zone.
+- Spill-driven glows are at most base 0.30 x 13 per cent, so about 0.012 relative luminance per 100 ms, under the 0.05 limit.
+
+### tv-room additions
+- `TvBody` now takes `tint` (0 default, 1 = warm walnut). Pass `tint={colourActive ? 1 : 0}`, never 1 on channel 0. The wall paper tint is `WallPaper color` (use `TV_ROOM_PALETTE.wallpaper`, accent line `#b0561e`); I did not change v1's room.
+- `TvRoomExtras`: table lamp with doily to the right of the set (shade top under the glass top), rug edge at the bottom of frame, bezel-ring shader (scanline texture at low alpha and an inner glow at the opening edge only, none over the glass) with the 300 ms channel-change static burst (`burst` 0..1; ignored in Calm), a generic spill point light, warm or grey lamp by `colourActive`. At the "set fits 95 per cent of the width" watch pose the lamp is outside the frame; it shows in browse and idle framing.
+- Not done here: the swap of the dome for a flat black backing, and zeroing the Occupant near the screen; those are scene wiring (set `uGhost` and `uRoll` to 0 on live channels).
+
+## 2D skins
+`src/scene/materials/rooms/skins2d.css`: `.room2d` plus `.room2d--<id>` backdrops (mountain sky dusk gradient with soft cloud blobs, cinema maroon edges, drive-in amber line, open-air string-light dots, bedroom lamp-glow corner, chai brick and blue band, train sunset strip, space black with a blue arc, tv-room walnut frame). Colour only: the frontend applies the same `grayscale(1)` filter as on the canvas. Static, so nothing to freeze.
+
+## Not done in this pass
+- **Room sound** (synthesised ambient audio, spec 5.0 to 5.9): not written. It belongs in the frontend's Web Audio engine (`src/hooks/`, not my folder); recipes are in the spec. I can supply a pure `createRoomSound(ctx, id)` module if wanted.
+- **Site-made cards** (idle test card on non-tv rooms, paused card, still card, no-signal card): not made; `drawTestCard` already exists for the idle card.
+- The tv-room dome swap and flat backing; the portrait idle framing (screen at 92 per cent width, centred at 34 per cent height) and the mountain-sky arrival tween (scene-developer).
+- Visual polish still open: drive-in dashboard and steering wheel read as dark wedges, not detail (the camera sits low and they are mostly below the frame); the wall paper pattern on the tv-room and the open-air grass sway are subtle by design. Cinema beam is faint (0.16 alpha).
+- Real-device checks (phone GPU, Safari, Firefox) and the 100 ms luminance-change frame analysis; the numbers above are from Chrome on SwiftShader.
+
+## Requests for other agents (v2)
+- scene-developer: mount each room as above (one `createRoomUniforms()` per scene; `setKeepOut` on every projector update and `null` in browse); pass `watchDistance` from the solver and `quality="low"` on phones; set camera `far >= 60 x widthM`; use the `*_SCREEN` values (mountain-sky `widthM` 12, drive-in `vAlign: 'upper'`). Pass `dim={0.6}` for the focus backdrop. The anchor must be flat and at z = 0; rooms put dressing at about z = -0.001 x widthM behind it. Keep the arrival tween and portrait idle framing in your code. The registry's per-room `Scene` should call `useColourActive()` and pass `colourActive` and `tint` for tv-room.
+- frontend-developer: import `rooms/skins2d.css` for 2D mode and apply the same CSS grayscale filter to it; the Room sound engine (recipes in spec 5.0 to 5.9) is yours, I can supply a module on request. Colour prop: rooms ignore `colour` (the CSS filter does the work), so nothing needs passing.
+- ux-ui-designer: confirm drive-in `vAlign: 'upper'`, mountain-sky `widthM` 12 (scale only), and the three palette hex changes above.
+- qa-engineer: overlap grid on all nine rooms with the rect and halo (the harness test above is a starting point: hide the anchor, render at two times, diff inside the rect and halo); frozen-Calm frame check (birds, spindrift, sparkles, steam, moths, dust absent); greyscale reads with the CSS filter; draw calls and triangle counts in the table.
+- performance-optimiser: the cloud sea is six alpha-blended rows of large noise quads (fill-rate heavy at DPR 2); `quality="low"` halves them. Please measure on a real phone.

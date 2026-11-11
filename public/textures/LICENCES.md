@@ -13,3 +13,9 @@ VT323 under SIL OFL 1.1). The baked PNG contains rendered glyphs only, not font 
 
 Procedural textures built at run time (nothing to download): the grey walnut grain and the control plate with etched
 labels and grille, in `src/scene/materials/tv/tvTextures.ts`.
+
+## v2 rooms (added 2026-11-11)
+No texture files are added for the nine v2 rooms. Every room texture is drawn at run time on a canvas or computed in a
+shader (cloud puffs, Earth, rain and bokeh, parallax strips, the "CHAI" and "EXIT" signs, the wall paper and dust
+tiles). Original work, no photographs, no real mountain, no NASA or other imagery, no brand marks. The sign text is
+generic and set in Barlow Condensed (SIL OFL 1.1, see `public/fonts/LICENCES.md`).

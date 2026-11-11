@@ -1,4 +1,5 @@
 import {
+  Color,
   MeshPhysicalMaterial,
   MeshStandardMaterial,
   type CanvasTexture,
@@ -56,4 +57,12 @@ export function createTvMaterials(woodMap: Texture, plateMap: CanvasTexture): Tv
       metalness: 0,
     }),
   };
+}
+
+const WARM_WOOD = new Color('#ffb070');
+const WHITE = new Color('#ffffff');
+
+/** Colour-era tint for the cabinet (design-spec-v2 5.1): 0 = v1 greys, 1 = warm walnut. Only for live channels with Colour on. */
+export function applyTvTint(materials: TvMaterials, tint: number): void {
+  materials.wood.color.lerpColors(WHITE, WARM_WOOD, Math.min(1, Math.max(0, tint)));
 }
