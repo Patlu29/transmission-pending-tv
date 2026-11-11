@@ -1,5 +1,6 @@
 /// <reference types="vitest/config" />
-import { readFileSync, existsSync } from 'node:fs';
+import { readFileSync, existsSync, readdirSync, rmSync } from 'node:fs';
+import { join } from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
@@ -40,9 +41,34 @@ function emitFactsArtefacts(): Plugin {
   };
 }
 
+/**
+ * BUG-6 (devops): public/ folders are kept in git with empty `.gitkeep` files, and Vite copies them into dist/.
+ * Remove them after the bundle is written so they never ship.
+ */
+function dropGitkeep(): Plugin {
+  let outDir = 'dist';
+  const walk = (dir: string): void => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) walk(path);
+      else if (entry.name === '.gitkeep') rmSync(path);
+    }
+  };
+  return {
+    name: 'transmission-pending:drop-gitkeep',
+    apply: 'build',
+    configResolved(config) {
+      outDir = config.build.outDir;
+    },
+    closeBundle() {
+      if (existsSync(outDir)) walk(outDir);
+    },
+  };
+}
+
 export default defineConfig({
   base: resolveBase(),
-  plugins: [react(), emitFactsArtefacts()],
+  plugins: [react(), emitFactsArtefacts(), dropGitkeep()],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
@@ -50,7 +76,8 @@ export default defineConfig({
   },
   build: {
     target: 'es2023',
-    sourcemap: true,
+    // BUG-6: no source maps in the published bundle (they were 6 MB and exposed the source).
+    sourcemap: false,
   },
   test: {
     include: ['tests/unit/**/*.test.{ts,tsx}'],

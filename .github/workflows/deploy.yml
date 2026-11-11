@@ -1,0 +1,109 @@
+# Deploys the static site to GitHub Pages.
+#
+# It runs ONLY on a pushed tag matching v* and on manual dispatch. Ordinary pushes and pull requests never
+# deploy, so committing this file deploys nothing. Pages must first be enabled with source "GitHub Actions"
+# (docs/deployment.md).
+#
+# Facts are strict (CI=true): full clone, clean tree. The tag commit itself is counted in the facts.
+#
+# Reserved for v2 (ADR 0011): a separate guide.yml will check out the latest v* tag on a schedule and deploy to
+# the same Pages environment. The shared concurrency group below makes the two serialise rather than collide.
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# One Pages deployment at a time. Never cancel a deployment part-way through.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+env:
+  CI: 'true'
+  NPM_CONFIG_FUND: 'false'
+  NPM_CONFIG_UPDATE_NOTIFIER: 'false'
+
+jobs:
+  build:
+    name: Build site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Refuse anything that is not a branch or tag push
+        run: |
+          case "${GITHUB_REF}" in
+            refs/tags/v*|refs/heads/main) ;;
+            *) echo "::error::Deploys run only from a v* tag or main (got ${GITHUB_REF})"; exit 1 ;;
+          esac
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Guard - the deployed commit must be on main and not a PR merge ref
+        run: |
+          git fetch origin main --quiet
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "::error::$(git rev-parse --short HEAD) is not on main. Tag a commit that is on main."
+            exit 1
+          fi
+          case "${GITHUB_REF}" in refs/pull/*) echo "::error::PR merge ref"; exit 1 ;; esac
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      # Build before the unit tests: the facts test compares dist/facts.json with a fresh recomputation.
+      - name: Build (strict facts)
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Check dist/ is clean
+        run: |
+          test -f dist/index.html
+          test -f dist/facts.json
+          if find dist \( -name '*.map' -o -name '.gitkeep' \) | grep -q .; then
+            echo "::error::dist/ contains source maps or .gitkeep files"
+            exit 1
+          fi
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist
+
+  deploy:
+    name: Deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Smoke test (trailing slash and MIME types)
+        env:
+          URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          base="${URL%/}"
+          sleep 10
+          echo "Without slash (expect a redirect to the slash form):"
+          curl -sI "$base" | head -n 5
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$base/")
+          test "$code" = "200"
+          for f in facts.json fonts/vt323-regular.woff2 textures/noise-tile-64.png; do
+            echo "$f"; curl -sfI "$base/$f" | grep -i -E '^(HTTP|content-type|cache-control)'
+          done
+          curl -sf "$base/facts.json" | node -e "JSON.parse(require('fs').readFileSync(0,'utf8')); console.log('facts.json parses')"

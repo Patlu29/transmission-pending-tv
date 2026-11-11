@@ -1,0 +1,164 @@
+# Continuous integration for Transmission Pending.
+# Runs on pushes to main and on pull requests. It never deploys (see deploy.yml).
+#
+# Facts: `npm run facts` reads git history and is STRICT when CI=true (set automatically by Actions).
+# It stops on a shallow clone or a dirty tree, so every checkout uses fetch-depth: 0 and no step may leave
+# tracked or unignored files behind (dist/, test-results/ and playwright-report/ are gitignored).
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  # Belt and braces: Actions already sets CI=true.
+  CI: 'true'
+  # Keeps npm quiet and stops it from asking about funding or updates.
+  NPM_CONFIG_FUND: 'false'
+  NPM_CONFIG_UPDATE_NOTIFIER: 'false'
+
+jobs:
+  checks:
+    name: Build, lint, types, unit tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          # On pull requests, test the PR head, not the synthetic merge commit, so the facts describe a real commit.
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      # Build first: tests/unit/facts.test.ts compares dist/facts.json with an independent recomputation.
+      - name: Build (strict facts)
+        run: npm run build
+      - name: Lint
+        run: npm run lint
+      - name: Format check
+        run: npm run format:check
+      - name: Type check
+        run: npm run typecheck
+      - name: Unit tests
+        run: npm test
+      - name: Check the tree is still clean
+        run: |
+          git status --porcelain
+          test -z "$(git status --porcelain)"
+      - name: Check dist/ for source maps and placeholders
+        run: |
+          if find dist \( -name '*.map' -o -name '.gitkeep' \) | grep -q .; then
+            find dist \( -name '*.map' -o -name '.gitkeep' \)
+            echo "::error::dist/ contains source maps or .gitkeep files (BUG-6 regression)"
+            exit 1
+          fi
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
+          retention-days: 7
+          if-no-files-found: error
+
+  e2e:
+    name: E2E ${{ matrix.name }}
+    needs: checks
+    runs-on: ubuntu-latest
+    # The whole suite is about 20 minutes on a laptop; jobs are split so each is shorter. Each job builds the
+    # test build and the production build itself (playwright.config.ts webServer), then runs its projects.
+    timeout-minutes: 60
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: chromium
+            projects: --project=chromium
+            browsers: chromium
+            # Every spec except visual.spec.ts, which has its own job.
+            specs: 'exclude-visual'
+            experimental: false
+          - name: webkit
+            projects: --project=webkit
+            browsers: webkit
+            specs: ''
+            experimental: false
+          - name: mobile
+            projects: --project=mobile-portrait --project=mobile-landscape --project=ios-portrait
+            browsers: chromium webkit
+            specs: ''
+            experimental: false
+          # The visual baselines were captured on macOS with SwiftShader; Linux pixels can differ.
+          # Informational until baselines are regenerated on the runner (see docs/deployment.md).
+          - name: visual (chromium)
+            projects: --project=chromium
+            browsers: chromium
+            specs: 'tests/e2e/visual.spec.ts'
+            experimental: true
+          # Firefox has no GPU in headless mode and software WebGL is unproven; informational only.
+          - name: firefox
+            projects: --project=firefox
+            browsers: firefox
+            specs: ''
+            experimental: true
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - name: Install
+        run: npm ci
+      - name: Read Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('@playwright/test/package.json').version")" >> "$GITHUB_OUTPUT"
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}-${{ matrix.browsers }}
+      - name: Install browsers and system libraries
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps ${{ matrix.browsers }}
+      - name: Install system libraries only (browsers cached)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps ${{ matrix.browsers }}
+      - name: Resolve spec list
+        id: specs
+        run: |
+          if [ "${{ matrix.specs }}" = "exclude-visual" ]; then
+            echo "files=$(ls tests/e2e/*.spec.ts | grep -v 'visual.spec.ts' | tr '\n' ' ')" >> "$GITHUB_OUTPUT"
+          else
+            echo "files=${{ matrix.specs }}" >> "$GITHUB_OUTPUT"
+          fi
+      # Chromium and the mobile Chrome projects already pass the SwiftShader flags in playwright.config.ts.
+      - name: Run Playwright
+        run: npx playwright test ${{ matrix.projects }} ${{ steps.specs.outputs.files }}
+      - name: Upload Playwright report and artefacts
+        if: failure() || cancelled()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-${{ strategy.job-index }}
+          path: |
+            test-results/report
+            test-results/artifacts
+            test-results/results.json
+          retention-days: 7
+          if-no-files-found: ignore
