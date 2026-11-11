@@ -76,5 +76,34 @@ Full detail: docs/design-spec.md section 16. Verify first: the tech lead should 
 - **devops-engineer**
   - None.
 
+## v2 design (branch `v2`, 2026-11-11)
+
+Delivered `docs/design-spec-v2.md` (draft for user approval). `docs/design-spec.md` (v1) is unchanged except a pointer line. No code or tokens were written this pass (docs only); proposed v2 tokens are in section 9 of the v2 spec. Open questions Q-D1 to Q-D8 are in section 10 of the v2 spec.
+
+Requests for other agents:
+
+- **scene-developer**
+  - `ScreenProjector` and watch pose (v2 spec 2.2, 5.0): the pose function takes the anchor, `fill` (0.55 to 0.72 per room), a max height of `min(0.78 vh, vh - 40 - 64 - 2 x 24)`, and an optional "include box" so the tv-room pose can fit the whole set at 95 per cent of the width with the glass left of centre. The camera is translated parallel to the glass plane (never rotated) so the face-on check holds. Show the iframe only when the projected rect is axis-aligned within 1 px, inside the viewport, and at least 480 x 270 (else request focus layout from the frontend).
+  - `clearHalo`: every prop's projected bounds (animated props: swept bounds) stay 24 CSS px outside the rect in the watch pose at every supported viewport; throw in development, hide the prop in production.
+  - Browse pose (Look around): orbit azimuth plus or minus 35 degrees, elevation -5 to +12, distance 0.85 to 1.15, no pan; pause and hide the player when entering; none under Calm.
+  - Shared `spill(t) = 1 + 0.08 sin(2 pi 0.6 t) + 0.05 sin(2 pi 1.3 t + 1.7)` for all light spill (constant 1 under Calm), applied only to surround lights. Channel-change cue: tv-room static burst on the bezel ring and the cabinet strip only (300 ms, at most once per 1000 ms); other rooms a 300 ms edge-vignette dip of at most 15 per cent; none under Calm.
+  - Room switch: keep the `<Canvas>`, swap the scene in `Suspense`, 300 ms cross-dissolve (instant in Calm); loading progress to `environmentStore`.
+  - tv-room: channel 0 path untouched; for live channels swap the dome glass for a flat black backing, anchor 4:3 at the glass plane, v1 haunting forced to 0 on and around the screen (wall decal at most 0.04, static). Channel knob: click next, Shift-click previous, wheel plus or minus one; on channel 0 with the diary shown keep v1 (next page) until the last page, then channel 1 (Q-D7).
+  - Per-room placement rules and motion limits in v2 spec 5.2 to 5.8; the paused card (channel name, "Paused") on the anchor mesh in the browse pose.
+- **technical-artist**
+  - The seven new rooms within ADR 0011's budgets, following 5.2 to 5.8: palettes (colour hexes, B&W reads checked after grayscale with at least 25 per cent luminance separation where props must read apart), props, procedural-first (Earth, stars, rain, parallax strips, crowd silhouettes as vector cut-outs, instanced seats and grass), no real brands or logos, generic text only ("CHAI", "EXIT"), `LICENCES.md` per folder.
+  - tv-room additions: table lamp, doily, rug edge, a bezel-ring shader (low-alpha scanline texture and soft inner glow at the opening edge only), warm tint uniforms for the Colour variant (5.1).
+  - Ambient motion shaders (rain, steam, grass sway, parallax) with a frozen state under Calm; ambient audio synthesised in the existing Web Audio engine (5.0, 5.2 to 5.8), off by default.
+  - Site-made cards (idle test card on non-tv rooms, paused card, still card, no-signal card) as DOM or canvas art, greyscale, static; 2D room skins as CSS (5.9).
+- **frontend-developer**
+  - Stores: `environmentStore`, `channelStore`, `playerStore`, `guideStore` per ADR 0011; session-storage persistence for room, colour, focus mode, notice accepted (V2-FR-24).
+  - `PlayerHost` (one `YT.Player`, `host: https://www.youtube-nocookie.com`, `origin`, `playsinline=1`, `cc_load_policy=1` in Calm, iframe `title`, `referrerpolicy`), 8 s `onReady` timeout, error map in 1.9, Stop within 1 s, pause on hide and on browse pose, no 3D transform and no ancestor filter, opacity, blend, mask or clip-path.
+  - UI: room picker (radiogroup, prefetch on hover or focus, progress text), teletext guide panel in DOM (grouping, filters, status labels, Find field, last refreshed), paste-a-link with the messages in 1.5, first-play notice (modal, once per visit, Calm line), still card with Play, info row (name, owner tag, Watch on YouTube, Stop, Back to controls, skip link before the iframe), HUD channel readout, focus layout (2.4, header Exit key, min height 240 on phones, landscape strip), dock changes (2.3, Calm always on the bar), More sheet, Keyboard help with the context map (3), Credits panel, footer links, `privacy.html` static page with the copy in 6.3 once the product-manager approves.
+  - Keyboard contexts and digit handling exactly as the table in 3 (diary digits stay v1; elsewhere channel numbers with a 1.5 s timeout); letter shortcuts G, E, C, F, L, V, W, A, S only inside the stage or dock focus and never in a text field.
+  - Live region messages in the accessibility table (7); `role="alert"` once for errors.
+- **architect**: confirm the CSP decision against Q-D1 (thumbnails need `img-src https://i.ytimg.com` after the notice; default design needs none); add `privacy.html` to the static build; confirm session storage is acceptable under the v2 privacy copy; confirm the contract's `screen.aspect` accepts 4/3 for tv-room.
+- **product-manager**: review the privacy copy (6.3), the notice (1.6), the guide labels (OFFICIAL EMBED, STATE MEDIA) and the Credits wording.
+- **qa-engineer**: no-overlap grid test and ancestor-style test per room in B&W and Colour; the 24 px halo; minimum size at 360 and 1280 wide; keyboard map contexts; first-play notice before any YouTube request; error cards via fixtures; Calm click-to-play; v1 flash tests per room with the iframe region excluded; v1 suite on channel 0.
+
 ## Earlier requests (Phase 3), still valid except where section 16 supersedes them
 - Camera poses and limits, knob picking, dock and transcript behaviour, shortcuts only inside the television region, flash rules in section 7, and the TV body in section 10 are as built.

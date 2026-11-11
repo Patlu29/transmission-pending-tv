@@ -1,5 +1,7 @@
 # Design spec: Transmission Pending
 
+v2 (environments and YouTube channels, branch `v2`) is specified in `docs/design-spec-v2.md`. This file is the v1 spec and is unchanged except for this pointer.
+
 Owner: ux-ui-designer. Status: Phase 3 deliverable (2026-11-10), revised the same day for the ghost-story scope change (section 16 is new; sections 1, 2, 6, 7, 10, 14 and 15 were revised). Tokens: `src/styles/tokens.css`. Copy: `src/content/intro.tmpl`. Fonts: `public/fonts/LICENCES.md`.
 
 Terms: "set" is the 3D TV model. "Screen" is the CRT picture, drawn from one teletext canvas (ADR 0005). "Dock" is the DOM control strip. "Safe screen width" (W) is the screen's on-screen width in CSS px multiplied by `--tt-safe-area` (0.92), which removes the edge lost to curvature.
