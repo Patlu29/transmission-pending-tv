@@ -15,7 +15,7 @@ import {
 export const ENVIRONMENTS: Readonly<Record<EnvironmentId, EnvironmentEntry>> = {
   'tv-room': {
     id: 'tv-room',
-    label: '1970s TV room',
+    label: 'Holo room',
     budget: DEFAULT_BUDGET,
     load: () => import('./tv-room/index.tsx'),
   },

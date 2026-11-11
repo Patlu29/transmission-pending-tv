@@ -15,7 +15,7 @@ import { useScreenTexture } from './useScreenTexture';
 
 const rollScratch = { active: false, startedAt: 0, dur: 0 };
 
-export function useCrtMaterial(aspect: number, curvature: number) {
+export function useHoloMaterial(aspect: number, curvature: number) {
   const map = useScreenTexture();
   const invalidate = useThree((s) => s.invalidate);
   const material = useMemo(

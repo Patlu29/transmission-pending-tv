@@ -18,7 +18,7 @@ const IDS = Object.keys(NODE) as KnobId[];
 const OUTLINE_MS = 100; // full strength within 100 ms (spec 4.3)
 const KNOB_TURN = (40 * Math.PI) / 180; // power knob turns 40 degrees
 const KNOB_TURN_MS = 150;
-const HULL = 0.006;
+const HULL = 0.004;
 const HAUNT_OVERSHOOT_DEG = 1;
 
 interface KnobTurn {
@@ -26,7 +26,7 @@ interface KnobTurn {
   to: number; // degrees at rest after the turn
   elapsed: number;
   dur: number; // seconds
-} // outline thickness, in the knob's local units
+}
 
 function idFromObject(obj: Object3D | null): KnobId | null {
   for (let o = obj; o; o = o.parent) {
@@ -37,12 +37,13 @@ function idFromObject(obj: Object3D | null): KnobId | null {
 }
 
 /**
- * Wraps the TV model. Finds the knob nodes by name, handles hover and click,
+ * Wraps the Holo display (was KnobLayer). The rings are `knob-channel` (outer) and `knob-volume` (inner), the power
+ * dimple is `knob-power`; the node names are unchanged. Wraps the display model. Finds the knob nodes by name, handles hover and click,
  * draws an inverted-hull outline (no post-processing), shows an anchored DOM tag,
  * and turns the power knob. Works for the placeholder body and the real glTF alike
  * as long as the nodes are named `knob-power`, `knob-channel` and `knob-volume`.
  */
-export function KnobLayer({ children }: { children: ReactNode }) {
+export function ControlRings({ children }: { children: ReactNode }) {
   const root = useRef<Object3D>(null);
   const invalidate = useThree((s) => s.invalidate);
   const scene = useThree((s) => s.scene);
@@ -85,13 +86,13 @@ export function KnobLayer({ children }: { children: ReactNode }) {
   useEffect(() => {
     // Degrees clockwise seen from the front (0 at rest).
     const deg = (id: KnobId) => (-(nodes.current[id]?.rotation.z ?? 0) * 180) / Math.PI;
-    publishSceneTest({
-      knobAngles: () => ({
-        power: deg('power') - (-(baseZ.current.power ?? 0) * 180) / Math.PI,
-        channel: deg('channel') - (-(baseZ.current.channel ?? 0) * 180) / Math.PI,
-        volume: deg('volume') - (-(baseZ.current.volume ?? 0) * 180) / Math.PI,
-      }),
+    const angles = () => ({
+      power: deg('power') - (-(baseZ.current.power ?? 0) * 180) / Math.PI,
+      channel: deg('channel') - (-(baseZ.current.channel ?? 0) * 180) / Math.PI,
+      volume: deg('volume') - (-(baseZ.current.volume ?? 0) * 180) / Math.PI,
     });
+    // `knobAngles` is the pre-2050 name, kept as an alias for one release.
+    publishSceneTest({ ringAngles: angles, knobAngles: angles });
   }, []);
 
   // Locate knob nodes, attach hull meshes and compute tag anchors.

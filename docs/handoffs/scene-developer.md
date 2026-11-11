@@ -166,3 +166,29 @@ Registry, nine room modules, `ScreenAnchor`, the watch-pose solver and projector
 - Real iframe playback in a live TV room was not run through the scene; the rect and keep-out were checked in the test hook and screenshot.
 - Look around (browse) orbit was not exercised in this pass.
 - Channel knob handover: `isLastDiaryPage()` in `seam.ts` now re-exports `introStore`'s (checked in the browser: false before the story, true on the last commit page, false on the index), so the knob moves from the diary's last page to channel 1.
+
+## 2050 (Holo room)
+
+### Done
+- **Device:** `objects/HoloDisplay.tsx` is the Lumen pane (16:9, 1.2 m glass, ceramic border, steady edge light in the 1.5 per cent ring outside the player rect) over a graphite puck with two light rings and a power dimple, with the spec's node names (`screen`, `bezel`, `trim`, `cabinet`, `control-plate`, `knob-channel` outer ring, `knob-volume` inner ring, `knob-power`). `TvSet` (channel 0, holo material on the glass, no curvature) and `TvSetLive` (dark glass, no haunt or holo material on the player area, edge light pulses 1.4 x for 300 ms on a channel change through `useChannelBurst`). The dome logic, `TvBody`, `TvRoomExtras` and the colour-era tint are no longer used by the scene.
+- **Anchor and framing:** facade `tv-room`: `{ aspect: 16/9, widthM: 1.164, fill: 0.60, align: 'centre' }` (the 1.2 m glass inset 1.5 per cent a side). The watch pose frames the whole device (pane plus puck, `SET_BOX` from `holoLayout.ts`) centred, with the device at 60 per cent of the width (height limits unchanged). Channel 0 uses the same pose with v1's creep (bounded by the glass height, the whole device and the viewport) and orbit. At 1440x900 on a live channel: rect 864x486, inline. The optional lean (2 degrees or less on a `knob` cue) is not built.
+- **`ControlRings`** (was `KnobLayer`, same contract): picking, outline, tag ("Channel", "Sound", "Power"), the v2 channel-knob rules (live: click next, Shift-click previous, wheel one step; channel 0 diary hands over to channel 1 on its last page), haunt `knob` cues turning the channel and volume rings (never while hovered, 3d-set only, back to rest on power-off or Calm). Each ring carries a light dot so the turn shows.
+- **Shader seam:** `integration/useHoloMaterial.ts` (was `useCrtMaterial.ts`) drives the same uniforms; it still builds the CRT material as the placeholder shader, with curvature 0.
+- **Room:** `objects/HoloRoom.tsx`: ink floor, frosted back-lit wall panel, overhead ring light and wall back-light that follow `dim` (x (1 - dim x 0.65), 2 Hz low-pass), light cushion under the puck, the Occupant decal (alpha at most 0.10 on channel 0, 0.04 static on live channels, none in Calm), shared `spill(t)` on live channels.
+- **3d-screen:** `ScreenOnly` is ink with a 2 px lumen edge light; no camera motion. 2D stays the frontend's.
+- **Test hook:** `__SCENE_TEST__.ringAngles()` (alias `knobAngles()` kept for one release) and `cameraPose()`.
+
+### Placeholders (to swap for the technical-artist's pieces as they land)
+- `HoloDisplay.tsx` and `holoLayout.ts` (pane, puck, rings, edge light): swap for `HoloDisplay` and its layout.
+- The holo shader (the CRT material still runs behind `useHoloMaterial`: scanlines and grain remain on channel 0).
+- `HoloRoom.tsx` and `GreyEnvironment` (still mounted): the coloured environment.
+- `Occupant` decal still uses the v1 silhouette component.
+- Tone mapping is unchanged (`NoToneMapping`); the spec recommends `NeutralToneMapping` for the Holo room.
+
+### Not done
+- Pane lean on a channel 0 `knob` cue; the `glitch` cue (frontend's chrome); the vertical placement keeps the device centred, so the info row and dock cover most of the puck on live channels.
+
+### Requests
+- technical-artist: `HoloDisplay` with the node names above (rings turn about local z), its layout export, the holo shader on the `useHoloMaterial` uniforms, the coloured environment, `drawStandby`.
+- frontend-developer: the build is blocked by `src/ui/teletext/draw.ts` (`Frame.chromeAlpha` missing) and lint by `src/state/derived.ts` (unused names); not my files. The facts tests fail on a stale `dist` until the build passes.
+- architect: the `tv-room` facade now has `widthM: 1.164`; update any doc or test that expects 4:3 or 0.58.

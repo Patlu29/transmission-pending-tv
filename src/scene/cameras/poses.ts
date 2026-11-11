@@ -1,6 +1,6 @@
 // Camera poses and limits from design-spec 4. Distances are multiples (k) of the
 // watch distance D, so they stay correct on every window size.
-import { TV_LAYOUT } from '../materials';
+import { HOLO_LAYOUT } from '../objects/holoLayout';
 
 const deg = (d: number) => (d * Math.PI) / 180;
 
@@ -32,15 +32,15 @@ export const OFF_WATCH_ANGLE = deg(2);
 export const OFF_WATCH_K = 0.05;
 
 /**
- * The whole set (cabinet including the knob panel and the feet), not just the glass.
- * Tech-lead decision (QA BUG-1): "the set at about 56% of the viewport width" means this box.
- * Model coordinates: origin at the screen centre, cabinet centre at x = originOffsetX.
+ * The whole device (pane plus puck), not just the glass. The Holo room is framed so this box is centred, at
+ * about 60 per cent of the viewport width (design-spec-2050 3.2), within the height limits below.
+ * Model coordinates: origin at the glass centre.
  */
 export const SET_BOX = {
-  width: TV_LAYOUT.cabinet.width,
-  height: TV_LAYOUT.cabinet.height / 2 - TV_LAYOUT.shelfY,
-  cx: TV_LAYOUT.originOffsetX,
-  cy: (TV_LAYOUT.cabinet.height / 2 + TV_LAYOUT.shelfY) / 2,
+  width: HOLO_LAYOUT.device.width,
+  height: HOLO_LAYOUT.device.height,
+  cx: HOLO_LAYOUT.device.cx,
+  cy: HOLO_LAYOUT.device.cy,
 };
 /** Camera look-at point at every pose: the centre of the set's front plane. */
 export const SET_CENTRE: readonly [number, number, number] = [SET_BOX.cx, SET_BOX.cy, 0];
@@ -61,7 +61,7 @@ export function heightFraction(worldHeight: number, dist: number): number {
  * The set stays centred, with the dock clear of it.
  */
 export function watchDistance(vw: number, vh: number): number {
-  const wantW = 0.56 * vw;
+  const wantW = 0.6 * vw;
   const maxH = Math.min(0.82 * vh, vh - 2 * DOCK_RESERVE_PX);
   const dW = (SET_BOX.width * vh) / (2 * tanHalf() * wantW);
   const dH = (SET_BOX.height * vh) / (2 * tanHalf() * Math.max(1, maxH));

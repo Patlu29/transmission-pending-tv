@@ -49,10 +49,24 @@ export function ScreenOnly() {
       <OrthographicCamera makeDefault position={[0, 0, 10]} near={0.1} far={50} zoom={1} />
       <mesh position={[0, 0, -1]}>
         <planeGeometry args={[size.width, size.height]} />
-        <meshBasicMaterial color="#141414" toneMapped={false} />
+        <meshBasicMaterial color="#05080f" toneMapped={false} />
       </mesh>
       <group position={[cx, cy, 0]}>
         <ScreenSurface width={w} height={h} />
+        {/* 2 px edge light round the pane (design-spec-2050 3.6), just outside the picture */}
+        {(
+          [
+            [0, h / 2 + 1, w + 4, 2],
+            [0, -h / 2 - 1, w + 4, 2],
+            [-w / 2 - 1, 0, 2, h],
+            [w / 2 + 1, 0, 2, h],
+          ] as const
+        ).map(([x, y, sx, sy], i) => (
+          <mesh key={i} position={[x, y, 0.1]}>
+            <planeGeometry args={[sx, sy]} />
+            <meshBasicMaterial color="#8fe3ff" toneMapped={false} />
+          </mesh>
+        ))}
       </group>
     </>
   );

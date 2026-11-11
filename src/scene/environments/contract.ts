@@ -46,7 +46,7 @@ export interface EnvironmentSceneProps {
 }
 
 export interface ScreenAnchorSpec {
-  /** Player rectangle aspect, width / height. 16 / 9 everywhere except tv-room (4 / 3), design spec v2 §2.2. */
+  /** Player rectangle aspect, width / height. 16 / 9 in every room (the 2050 Holo room too, design spec 2050 §3.2). */
   aspect: number;
   /** Physical screen width in scene units (metres). */
   widthM: number;
@@ -60,6 +60,12 @@ export interface ScreenAnchorSpec {
   align: 'centre' | 'left' | 'right';
   /** Vertical placement in the watch pose. Default 'centre'; 'upper' sits the rect high (mountain-sky). */
   vAlign?: 'centre' | 'upper';
+  /**
+   * Fraction of the glass removed from EACH edge to get the player rect (default 0). The Holo room
+   * uses 0.015: the ceramic border and edge light lie outside the player (design spec 2050 §3.2).
+   * Pass it to classifyPlacement as `inset`.
+   */
+  inset?: number;
 }
 
 /** Declared budget, checked by CI against the built chunk and the environment's asset folders. */
@@ -167,7 +173,14 @@ export interface ScreenProjectorApi {
 export function classifyPlacement(
   corners: ScreenCorners | null,
   viewport: Viewport,
-  options: { pose: CameraPose; phone: boolean; userFocus: boolean; mode2d: boolean },
+  options: {
+    pose: CameraPose;
+    phone: boolean;
+    userFocus: boolean;
+    mode2d: boolean;
+    /** ScreenAnchorSpec.inset: fraction removed from each edge of the projected glass. Default 0. */
+    inset?: number;
+  },
 ): PlayerPlacement {
   if (options.mode2d) return { kind: 'focus', reason: '2d' };
   if (options.userFocus) return { kind: 'focus', reason: 'user' };
@@ -188,12 +201,10 @@ export function classifyPlacement(
 
   const x = Math.min(tl.x, bl.x);
   const y = Math.min(tl.y, tr.y);
-  const rect: Rect = {
-    x,
-    y,
-    width: Math.max(tr.x, br.x) - x,
-    height: Math.max(bl.y, br.y) - y,
-  };
+  const rect = insetRect(
+    { x, y, width: Math.max(tr.x, br.x) - x, height: Math.max(bl.y, br.y) - y },
+    options.inset ?? 0,
+  );
   const inside =
     rect.x >= 0 &&
     rect.y >= 0 &&
@@ -205,4 +216,17 @@ export function classifyPlacement(
     return { kind: 'focus', reason: 'too-small' };
   }
   return { kind: 'inline', rect };
+}
+
+/** Shrinks a rect by `fraction` of its width and height on each edge (0 returns it unchanged). */
+export function insetRect(rect: Rect, fraction: number): Rect {
+  const f = Math.min(Math.max(fraction, 0), 0.25);
+  const dx = rect.width * f;
+  const dy = rect.height * f;
+  return {
+    x: rect.x + dx,
+    y: rect.y + dy,
+    width: rect.width - 2 * dx,
+    height: rect.height - 2 * dy,
+  };
 }

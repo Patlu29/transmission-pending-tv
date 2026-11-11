@@ -4,7 +4,7 @@ import { useEffect, useRef } from 'react';
 import { MathUtils, Vector3 } from 'three';
 import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
 import { publishSceneTest } from '../integration/testHook';
-import { TV_LAYOUT } from '../materials';
+import { HOLO_LAYOUT } from '../objects/holoLayout';
 import {
   DAMPING,
   easeCamera,
@@ -279,7 +279,7 @@ export function SetCameraRig() {
     // Camera creep (spec 16.6.4): multiplies the visitor's distance by 1 - creep x creepMax.
     const watchD = D.current;
     // Bounds: glass at most 0.86 vh (spec 16.6.4), and the whole set stays in the viewport.
-    const hScreenFrac = heightFraction(TV_LAYOUT.screen.height, watchD);
+    const hScreenFrac = heightFraction(HOLO_LAYOUT.pane.height, watchD);
     const hSetFrac = heightFraction(SET_BOX.height, watchD);
     const wSetFrac = (heightFraction(SET_BOX.width, watchD) * size.height) / size.width;
     const creepMax = Math.max(
