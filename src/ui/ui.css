@@ -551,10 +551,10 @@ body {
   color: var(--tt-0);
 }
 
-/* Cross-fade on a screen cut (fixed 250 ms, also under Calm: a gentle fade, not a 10 per cent tile step). */
+/* Cross-fade on a screen cut (fixed 500 ms, eased, also under Calm: a gentle fade, not a 10 per cent tile step). */
 .screen2d__content--leaving {
   pointer-events: none;
-  animation: screen-leave 250ms linear both;
+  animation: screen-leave 500ms ease-in-out both;
 }
 
 @keyframes screen-leave {
@@ -581,7 +581,7 @@ body {
 }
 
 .screen2d.is-collapsing {
-  animation: crt-off 450ms both;
+  animation: crt-off 700ms both;
 }
 
 :root[data-calm='true'] .screen2d.is-warming,

@@ -1,4 +1,5 @@
 import {
+  Fragment,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -12,7 +13,7 @@ import { useFrameInput } from '@/hooks/useFrameInput';
 import { useDisplayStore } from '@/state/displayStore';
 import { useHauntStore } from '@/state/hauntStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
-import { COLLAPSE_MS, HAUNT_TEXT_REDRAW_HZ } from '@/state/timing';
+import { COLLAPSE_2D_MS, HAUNT_TEXT_REDRAW_HZ, SCREEN_FADE_MS } from '@/state/timing';
 import { performEmptyTap, performTap } from '@/ui/actions';
 import { bleedLook, trembleOffset } from '@/ui/teletext/effects';
 import { glyphMetrics, resetFontMetrics } from '@/ui/teletext/font';
@@ -22,7 +23,7 @@ import { findHit } from '@/ui/teletext/hit';
 import { readPalette } from '@/ui/teletext/palette';
 import { Haunt2D } from './Ghost2D';
 
-const CROSSFADE_MS = 250;
+const CROSSFADE_MS = SCREEN_FADE_MS;
 
 function TestCardCanvas({
   width,
@@ -130,7 +131,8 @@ export function Screen2D() {
   const rolling = useHauntStore((s) => s.roll.active);
   const [lastStatus, setLastStatus] = useState(status);
   const [collapsing, setCollapsing] = useState(false);
-  const [leavingFrame, setLeavingFrame] = useState<Frame | null>(null);
+  const [leaving, setLeaving] = useState<Array<{ key: number; frame: Frame }>>([]);
+  const leaveKey = useRef(0);
   const lastFrame = useRef<Frame | null>(null);
   const prevPowered = useRef(isPoweredStatus(status));
   const blocks = useRef<Array<HTMLDivElement | null>>([]);
@@ -165,7 +167,7 @@ export function Screen2D() {
     const powered = isPoweredStatus(status);
     let timer: ReturnType<typeof setTimeout> | undefined;
     if (prevPowered.current && !powered && !calm) {
-      timer = setTimeout(() => setCollapsing(false), COLLAPSE_MS);
+      timer = setTimeout(() => setCollapsing(false), COLLAPSE_2D_MS);
       setCollapsing(true);
     }
     prevPowered.current = powered;
@@ -207,9 +209,10 @@ export function Screen2D() {
   useEffect(() => {
     const prev = lastFrame.current;
     if (!prev || prev.id === frame.id) return;
-    setLeavingFrame(prev);
-    const t = setTimeout(() => setLeavingFrame(null), CROSSFADE_MS + 30);
-    return () => clearTimeout(t);
+    // Several fades can overlap (Replay: diary, black, first page); each layer fades on its own.
+    const key = ++leaveKey.current;
+    setLeaving((l) => [...l, { key, frame: prev }]);
+    setTimeout(() => setLeaving((l) => l.filter((x) => x.key !== key)), CROSSFADE_MS + 30);
   }, [frame.id]);
   useEffect(() => {
     lastFrame.current = frame;
@@ -291,7 +294,9 @@ export function Screen2D() {
       >
         {content(frame, 0)}
         {rolling && !calm && content(frame, 1)}
-        {leavingFrame && content(leavingFrame, null, true)}
+        {leaving.map((l) => (
+          <Fragment key={l.key}>{content(l.frame, null, true)}</Fragment>
+        ))}
         {rolling && !calm && <div className="screen2d__rollbar" ref={bar} />}
         {dims.w > 0 && <Haunt2D width={dims.w} height={dims.h} grid={grid} frame={frame} />}
       </div>

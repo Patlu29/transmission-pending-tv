@@ -2,7 +2,7 @@ import { facts, intro } from '@/facts';
 import { useHauntStore } from '@/state/hauntStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
 import { useDisplayStore } from '@/state/displayStore';
-import { COLLAPSE_MS } from '@/state/timing';
+import { COLLAPSE_MS, SCREEN_FADE_MS } from '@/state/timing';
 import { drawFrame } from './draw';
 import { toFxInput, fxTick } from './fxFromStore';
 import { resetFontMetrics } from './font';
@@ -38,7 +38,7 @@ let lastPowered: FrameInput | null = null;
 let fontsReady = false;
 
 /** A cut between screens (page, sub-page, diary view) cross-fades over this long (design-spec 7.1: no 10 per cent tile step). */
-const FADE_MS = 250;
+const FADE_MS = SCREEN_FADE_MS;
 let lastFrameId: string | null = null;
 let snapshot: HTMLCanvasElement | null = null;
 let fade: { start: number } | null = null;
@@ -125,7 +125,7 @@ function draw(force = false) {
     else {
       ctx.save();
       ctx.setTransform(1, 0, 0, 1, 0, 0);
-      ctx.globalAlpha = 1 - p;
+      ctx.globalAlpha = 1 - p * p * (3 - 2 * p); // smoothstep: no single 100 ms window carries more than its share
       ctx.drawImage(snapshot, 0, 0);
       ctx.restore();
       clearTimeout(fadeTimer);

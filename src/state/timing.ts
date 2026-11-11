@@ -16,6 +16,10 @@ export const CARD_HOLD_MS = 300;
 export const CALM_CARD_MS = 1500;
 /** CRT collapse on power-off (the scene and 2D screen play it; the rasteriser holds the last picture). */
 export const COLLAPSE_MS = 450;
+/** The 2D CSS collapse is slower (700 ms) so no 341 x 256 tile steps more than 0.05 per 100 ms. */
+export const COLLAPSE_2D_MS = 700;
+/** Screen-change cross-fade, eased (design-spec 7.1: a 0.10 to 0.12 cut stays under 0.05 per 100 ms). */
+export const SCREEN_FADE_MS = 500;
 /** Black frame on Replay (full motion only). */
 export const REPLAY_BLANK_MS = 200;
 /** Calm auto-advance (opt-in): a page stays for max(8 s, 25 ms per character). */
