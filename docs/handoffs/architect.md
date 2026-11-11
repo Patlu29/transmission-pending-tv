@@ -72,3 +72,37 @@ Chose the stack (Vite 8, React 19.3, R3F 9.8, drei 10.7, three 0.187, zustand 5.
 - qa-engineer: write `tests/unit/facts.test.ts`, recomputing each fact by the alternative routes in architecture §5.7 and checking `dist/facts.json`. Write E2E tests comparing every `[data-fact]` element with recomputed values in each `?mode=`. Own `playwright.config.ts` (placeholder) and run `npx playwright install` (browsers not installed yet).
 - devops-engineer: in CI use `fetch-depth: 0`, Node from `.nvmrc`, `npm ci`, and `CI=true` (strict facts). Deploy only from default-branch pushes, never from PR merge commits. Make sure the host serves the site with a trailing slash. Do not let the host build from a shallow clone.
 - performance-optimiser: budgets in architecture §6 (initial JS is 69 kB gzip today).
+
+---
+
+## v2 feasibility: live channels (2026-11-11)
+
+### Summary
+Feasibility study only, with no code or config changes: `docs/decisions/0009-live-channels-feasibility.md` (Proposed). It compares four signal sources: (A) a real satellite tuner on the user's network, (B) official broadcaster streams, (C) openly licensed archive channels, and (D) a hybrid. It covers rendering, flash safety, autoplay, store changes and fact pipeline impact. It recommends D, delivered in phases starting with C, with A as an opt-in local input and B excluded.
+
+### Files changed
+- docs/decisions/0009-live-channels-feasibility.md: new (Proposed)
+- docs/handoffs/architect.md: this section
+
+### Decisions (proposed, pending user answers)
+- Public site stays static. Archive channels are same-origin, licence-checked and flash-analysed at build time.
+- Real satellite (A) is possible only on the user's own network: dish, DVB-S2 tuner (SAT>IP or USB with Tvheadend), and a transcode/HLS relay with HTTPS and CORS. It is never re-streamed publicly (retransmission rights).
+- Video goes through a luminance pre-pass render target, which gives greyscale, mipmaps for `uGlowLod` and the ghost mask, a slew-rate flash limiter and an OSD composite. The pre-pass output becomes `uMap`, so the CRT shader barely changes.
+- The flash limiter gives a computed per-pixel bound, not a certification. In 2D, only pre-analysed content plays.
+- New `channelStore`. Channel 1 is the unchanged v1 story; the v1 stores keep their shapes.
+- `hls.js` (1.7.4) only if a live path is built, lazy-loaded, and never added to `STACK_PACKAGES`, so the v1 intro text does not change.
+
+### Assumptions
+- v1 is tagged before v2 work starts, and v2 lives on a branch.
+- GitHub Pages remains the host (HTTPS only, 1 GB site, no Git LFS serving from a branch).
+- The +05:30 commit timestamps suggest India, so DD Free Dish is the relevant free-to-air platform. The user must confirm.
+
+### Open questions (user)
+- The eight questions at the end of ADR 0009. The key one is whether a literal satellite feed is required, or whether real archive channels on the public site meet the intent.
+
+### Requests for other agents (only if ADR 0009 is accepted)
+- product-manager: v2 requirements must decide whether to amend NFR-7 (third-party requests), FR-X3 and NFR-13 (broadcaster marks), and the captions or description policy (WCAG 1.2.1, 1.2.2, 1.2.4).
+- tech lead: tag the QA-passed v1 commit; create the v2 branch; keep all v1 tests in v2 CI.
+- devops-engineer: plan for media storage (Git LFS with an Actions Pages deploy, or a first-party bucket) and range-request and caching headers.
+- ux-ui-designer: channel input model without the P100 digit clash; whether the haunt knob cue stays cosmetic; sign-off on the limiter's soft cuts.
+- technical-artist and scene-developer: no work until accepted. The pre-pass design is in ADR 0009, Rendering.

@@ -1,5 +1,12 @@
 # Handoff: product-manager
 
+## v2 planning (live channels, draft)
+- New file: docs/requirements/v2-live-channels.md. v1 requirement files were not touched.
+- Content: goals, fit with v1 (Occupant's story as channel 0), 10 listed conflicts with v1 requirements (C1 to C10), legal constraints (L1 to L7), V2-FR-1 to V2-FR-20, V2-NFR-1 to V2-NFR-7, stories V2-US-1 to V2-US-8, story map.
+- Blocking open questions: Q-V2-1 signal source, Q-V2-2 public site or local build, Q-V2-3 region, Q-V2-4 greyscale video.
+- Requests: architect, say whether a flash-reduction filter is feasible (V2-FR-12) and whether any source needs a backend (C1); devops-engineer, CI check for credentials and for channel-list fields (V2-NFR-4, V2-NFR-6).
+- Risk: rights. The team gives no legal advice; the user must confirm each source.
+
 ## Change 2026-11-10: ghost story
 - Scope: the intro is now a horror ghost story, "Haunted TV tells its build". The ghost narrates its own making; the real-facts pipeline (FR-9 to FR-14) and "as of commit" wording are unchanged.
 - Changed: FR-1 (power off with CRT collapse), FR-4 (Bedstead, VT323 fallback), FR-7 (now Must: 3D set desktop, screen-filling mobile), FR-8, FR-12 (adds tool, plugin, model), FR-17 (Calm mode), FR-19, NFR-1, US-1, US-4, US-9.
