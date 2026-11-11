@@ -241,6 +241,7 @@ export async function resolveGuide(input: ResolveInput): Promise<ResolveResult> 
         genre: src.genre,
         country: src.country,
         attribution: src.attribution,
+        stateMedia: src.stateMedia === true,
       };
       const pick = choose(f.usable, src.preferTitle);
       if (pick) {

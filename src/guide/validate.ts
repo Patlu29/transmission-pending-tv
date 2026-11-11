@@ -62,6 +62,9 @@ function parseLive(v: unknown): GuideLive | null | undefined {
 function parseChannel(v: unknown): GuideChannel | undefined {
   if (!isObj(v)) return undefined;
   const { number, name, channelId, languages, genre, country, attribution, state, stale } = v;
+  // Older guides predate stateMedia: missing means false; any other non-boolean is malformed.
+  const stateMedia = v.stateMedia === undefined ? false : v.stateMedia;
+  if (typeof stateMedia !== 'boolean') return;
   if (typeof number !== 'number' || !Number.isInteger(number) || number < 1 || number > 999) return;
   if (!isStr(name, 80) || typeof channelId !== 'string' || !CHANNEL_ID_RE.test(channelId)) return;
   if (!isStrArr(languages, LANG_RE) || !isStr(genre, 40)) return;
@@ -80,6 +83,7 @@ function parseChannel(v: unknown): GuideChannel | undefined {
     genre,
     country,
     attribution: { label: cleanTitle(attribution.label), url: attribution.url },
+    stateMedia,
     state: state as ChannelState,
     live,
     stale,
@@ -182,6 +186,8 @@ export function validateGuideSources(
         `${name}: confidence must be high or medium (low-confidence sources are excluded)`,
       );
     if (typeof c.enabled !== 'boolean') errors.push(`${name}: enabled must be true or false`);
+    if (c.stateMedia !== undefined && typeof c.stateMedia !== 'boolean')
+      errors.push(`${name}: stateMedia must be true or false when present`);
     if (c.preferTitle !== undefined) {
       try {
         new RegExp(String(c.preferTitle), 'i');

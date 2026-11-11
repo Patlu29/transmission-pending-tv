@@ -32,6 +32,8 @@ export interface GuideSource {
   /** Date (YYYY-MM-DD) the entry was last checked by a person. */
   checked: string;
   enabled: boolean;
+  /** True for state-controlled broadcasters; the guide shows a STATE MEDIA tag (design spec v2). Default false. */
+  stateMedia?: boolean;
   /** Optional regex (case-insensitive) preferred when a channel runs several live streams. */
   preferTitle?: string;
   /** Free-text curation note; not published. */
@@ -66,6 +68,8 @@ export interface GuideChannel {
   genre: string;
   country: string;
   attribution: { label: string; url: string };
+  /** Always present in output; false unless the source says true. */
+  stateMedia: boolean;
   state: ChannelState;
   live: GuideLive | null;
   /** True when `live` was kept from an earlier run because this run could not check it. */

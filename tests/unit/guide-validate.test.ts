@@ -48,6 +48,11 @@ describe('parseGuide', () => {
   ])('drops a channel with %s', (_label, over) => {
     expect(parseGuide(guide([channel(over)]))?.channels).toEqual([]);
   });
+  it('reads stateMedia: missing means false, true is kept, anything else drops the channel', () => {
+    expect(parseGuide(guide([channel()]))?.channels[0]?.stateMedia).toBe(false);
+    expect(parseGuide(guide([channel({ stateMedia: true })]))?.channels[0]?.stateMedia).toBe(true);
+    expect(parseGuide(guide([channel({ stateMedia: 'yes' })]))?.channels).toEqual([]);
+  });
   it('keeps the first of duplicate numbers and sorts by number', () => {
     const g = parseGuide(
       guide([

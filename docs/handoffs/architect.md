@@ -254,3 +254,12 @@ Verification:
   - ux-ui-designer: finalise `fill`, `align` and `vAlign` for `mountain-sky` in design spec v2 §5.
   - scene-developer: honour `vAlign` in `WatchPoseSolver`, and keep clouds, peaks and birds out of the camera-to-screen volume.
   - frontend-developer: write `privacy.html` with no inline style or script. Implement Q1: the once-per-visit flash warning before YouTube plays in Calm.
+
+### v2 Phase 2 addendum 2 (2026-11-11): `stateMedia`
+- New field **`stateMedia`**:
+  - `GuideSource.stateMedia?: boolean` in `src/content/guide-sources.json`; omitted means false.
+  - `GuideChannel.stateMedia: boolean` in `dist/guide.json`; **always present**.
+- `validateGuideSources` rejects a non-boolean value. `parseGuide` reads a missing value as false (so older published guides still parse) and drops a channel whose value is not a boolean. The resolver passes it through.
+- Data: only TRT World and CGTN have `"stateMedia": true`. That is the only edit made to `guide-sources.json`.
+- Tests: 4 new (103 of 103 pass).
+- **frontend-developer:** show the STATE MEDIA tag when `channel.stateMedia === true` on a `GuideChannel` from `parseGuide`/`guideStore`. Do not parse `note`: notes are curation text and are not published.

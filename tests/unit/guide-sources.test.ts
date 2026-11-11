@@ -43,6 +43,10 @@ describe('guide-sources.json (shipped)', () => {
       if (/^(DD |Sansad)/.test(String(c.name))) expect(c.permission).toBe('requested');
     }
   });
+  it('marks exactly TRT World and CGTN as state media', () => {
+    const marked = shipped.channels.filter((c) => c.stateMedia === true).map((c) => c.name);
+    expect(marked.sort()).toEqual(['CGTN', 'TRT World']);
+  });
   it('never uses channel 0 (the Occupant)', () => {
     expect(shipped.channels.every((c) => Number(c.number) >= 1)).toBe(true);
   });
@@ -61,6 +65,7 @@ describe('validateGuideSources', () => {
     ['credentials in a terms url', { terms: ['https://user:pw@example.com/terms'] }, /terms/],
     ['bad language', { languages: ['Hindi'] }, /languages/],
     ['bad regex', { preferTitle: '(' }, /preferTitle/],
+    ['a non-boolean stateMedia', { stateMedia: 'yes' }, /stateMedia/],
     ['future date', { checked: '2027-01-01' }, /future/],
   ])('rejects %s', (_label, over, message) => {
     const { errors } = validateGuideSources(doc([entry(over)]), { today });

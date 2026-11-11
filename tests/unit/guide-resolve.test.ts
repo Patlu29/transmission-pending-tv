@@ -247,6 +247,18 @@ describe('resolveGuide', () => {
     expect(r.guide.channels.map((c) => c.number)).toEqual([1]);
   });
 
+  it('passes stateMedia through to guide.json (false when the source omits it)', async () => {
+    const { api } = fakeApi({});
+    const r = await run({
+      api,
+      sources: sources(source(1, A, { stateMedia: true }), source(2, B)),
+    });
+    expect(r.guide.channels.map((c) => [c.number, c.stateMedia])).toEqual([
+      [1, true],
+      [2, false],
+    ]);
+  });
+
   it('produces output that passes the browser validator and contains no key-like data', async () => {
     const { api } = fakeApi({
       videos: [

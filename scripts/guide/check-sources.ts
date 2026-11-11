@@ -35,8 +35,9 @@ function main(): number {
     );
     return 1;
   }
-  const n = (json as { channels: unknown[] }).channels.length;
-  console.log(`[guide] ok: ${n} curated channel(s).`);
+  const channels = (json as { channels: Array<{ stateMedia?: boolean }> }).channels;
+  const state = channels.filter((c) => c.stateMedia === true).length;
+  console.log(`[guide] ok: ${channels.length} curated channel(s), ${state} marked state media.`);
   return 0;
 }
 

@@ -1043,6 +1043,7 @@
     {
       "number": 54,
       "name": "TRT World",
+      "stateMedia": true,
       "channelId": "UC7fWeaHhqgM4Ry-RMpM2YYw",
       "languages": ["en"],
       "genre": "news",
@@ -1063,6 +1064,7 @@
     {
       "number": 55,
       "name": "CGTN",
+      "stateMedia": true,
       "channelId": "UCgrNz-aDmcr2uuto8_DL2jg",
       "languages": ["en"],
       "genre": "news",
