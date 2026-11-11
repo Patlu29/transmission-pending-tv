@@ -1,8 +1,9 @@
 import { PerspectiveCamera } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
-import { MathUtils } from 'three';
+import { MathUtils, Vector3 } from 'three';
 import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
+import { publishSceneTest } from '../integration/testHook';
 import { TV_LAYOUT } from '../materials';
 import {
   DAMPING,
@@ -15,6 +16,10 @@ import {
   OFF_WATCH_ANGLE,
   OFF_WATCH_K,
   CREEP_MAX,
+  CREEP_SET_FRAC,
+  heightFraction,
+  SET_BOX,
+  SET_CENTRE,
   CREEP_RATE_UP,
   CREEP_RATE_DOWN,
   CREEP_SCREEN_FRAC,
@@ -55,7 +60,7 @@ export function SetCameraRig() {
   const size = useThree((s) => s.size);
   const invalidate = useThree((s) => s.invalidate);
 
-  const D = useRef(watchDistance(size.width, size.height, TV_LAYOUT.screen.width));
+  const D = useRef(watchDistance(size.width, size.height));
   const cur = useRef<Pose>({ ...IDLE });
   const goal = useRef<Pose>({ ...IDLE });
   const tween = useRef<Tween | null>(null);
@@ -63,10 +68,26 @@ export function SetCameraRig() {
   const creep = useRef(0); // rate-limited follower of hauntStore.creep
   const scene = useThree((s) => s.scene); // knob layer sets scene.userData.hoveringKnob
 
+  useEffect(() => {
+    publishSceneTest({
+      cameraPose: () => ({
+        position: camera.position.toArray(),
+        target: [...SET_CENTRE],
+        D: D.current,
+        distance: camera.position.distanceTo(new Vector3(...SET_CENTRE)),
+        distanceOverD: camera.position.distanceTo(new Vector3(...SET_CENTRE)) / D.current,
+        userK: cur.current.k,
+        creep: creep.current,
+        azimuthDeg: (cur.current.az * 180) / Math.PI,
+        elevationDeg: (cur.current.el * 180) / Math.PI,
+      }),
+    });
+  }, [camera]);
+
   // Recompute D on resize, debounced 150 ms, only while no tween runs.
   useEffect(() => {
     const id = setTimeout(() => {
-      D.current = watchDistance(size.width, size.height, TV_LAYOUT.screen.width);
+      D.current = watchDistance(size.width, size.height);
       invalidate();
     }, 150);
     return () => clearTimeout(id);
@@ -257,9 +278,19 @@ export function SetCameraRig() {
 
     // Camera creep (spec 16.6.4): multiplies the visitor's distance by 1 - creep x creepMax.
     const watchD = D.current;
-    const hScreenFrac =
-      TV_LAYOUT.screen.height / (2 * Math.tan((FOV_DEG * Math.PI) / 360) * watchD);
-    const creepMax = Math.max(0, Math.min(CREEP_MAX, 1 - hScreenFrac / CREEP_SCREEN_FRAC));
+    // Bounds: glass at most 0.86 vh (spec 16.6.4), and the whole set stays in the viewport.
+    const hScreenFrac = heightFraction(TV_LAYOUT.screen.height, watchD);
+    const hSetFrac = heightFraction(SET_BOX.height, watchD);
+    const wSetFrac = (heightFraction(SET_BOX.width, watchD) * size.height) / size.width;
+    const creepMax = Math.max(
+      0,
+      Math.min(
+        CREEP_MAX,
+        1 - hScreenFrac / CREEP_SCREEN_FRAC,
+        1 - hSetFrac / CREEP_SET_FRAC,
+        1 - wSetFrac / CREEP_SET_FRAC,
+      ),
+    );
     const wanted = readHaunt().creep;
     if (useDisplayStore.getState().reducedMotion) creep.current = 0; // Calm: gone within one frame
     const diff = wanted - creep.current;
@@ -268,8 +299,12 @@ export function SetCameraRig() {
     if (Math.abs(wanted - creep.current) > 1e-4) moving = true;
     const r = Math.max(LIMITS.kMin * watchD, c.k * watchD * (1 - creep.current * creepMax));
     const ce = Math.cos(c.el);
-    camera.position.set(r * Math.sin(c.az) * ce, r * Math.sin(c.el), r * Math.cos(c.az) * ce);
-    camera.lookAt(0, 0, 0);
+    camera.position.set(
+      SET_CENTRE[0] + r * Math.sin(c.az) * ce,
+      SET_CENTRE[1] + r * Math.sin(c.el),
+      SET_CENTRE[2] + r * Math.cos(c.az) * ce,
+    );
+    camera.lookAt(SET_CENTRE[0], SET_CENTRE[1], SET_CENTRE[2]);
 
     const off =
       Math.abs(c.az) >= OFF_WATCH_ANGLE ||

@@ -8,6 +8,7 @@
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
 import { createCrtScreenMaterial, rollPhase } from '../materials';
+import { publishSceneTest } from './testHook';
 import { screenState } from './screenState';
 import { readHaunt, useDisplayStore, useIntroStore } from './stores';
 import { useScreenTexture } from './useScreenTexture';
@@ -22,12 +23,7 @@ export function useCrtMaterial(aspect: number, curvature: number) {
     [aspect, curvature],
   );
   useEffect(() => {
-    // Test hook (dev and test builds only): lets QA read the live CRT uniforms.
-    if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
-      (window as unknown as { __SCENE_TEST__?: unknown }).__SCENE_TEST__ = {
-        crtUniforms: material.uniforms,
-      };
-    }
+    publishSceneTest({ crtUniforms: material.uniforms });
     return () => material.dispose();
   }, [material]);
   useEffect(() => {

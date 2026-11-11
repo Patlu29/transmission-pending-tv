@@ -1,5 +1,7 @@
 // Camera poses and limits from design-spec 4. Distances are multiples (k) of the
 // watch distance D, so they stay correct on every window size.
+import { TV_LAYOUT } from '../materials';
+
 const deg = (d: number) => (d * Math.PI) / 180;
 
 export interface Pose {
@@ -29,10 +31,41 @@ export const KEY_ZOOM = 0.05;
 export const OFF_WATCH_ANGLE = deg(2);
 export const OFF_WATCH_K = 0.05;
 
-/** D: camera distance at which the screen is min(0.56 vw, 0.82 vh) wide on screen. */
-export function watchDistance(vw: number, vh: number, screenWidthWorld: number): number {
-  const wScreenPx = Math.min(0.56 * vw, 0.82 * vh);
-  return (screenWidthWorld * vh) / (2 * Math.tan(deg(FOV_DEG) / 2) * wScreenPx);
+/**
+ * The whole set (cabinet including the knob panel and the feet), not just the glass.
+ * Tech-lead decision (QA BUG-1): "the set at about 56% of the viewport width" means this box.
+ * Model coordinates: origin at the screen centre, cabinet centre at x = originOffsetX.
+ */
+export const SET_BOX = {
+  width: TV_LAYOUT.cabinet.width,
+  height: TV_LAYOUT.cabinet.height / 2 - TV_LAYOUT.shelfY,
+  cx: TV_LAYOUT.originOffsetX,
+  cy: (TV_LAYOUT.cabinet.height / 2 + TV_LAYOUT.shelfY) / 2,
+};
+/** Camera look-at point at every pose: the centre of the set's front plane. */
+export const SET_CENTRE: readonly [number, number, number] = [SET_BOX.cx, SET_BOX.cy, 0];
+
+/** Pixels kept clear at top and bottom: the dock sits 24 px above the bottom edge and is 44 px tall. */
+export const DOCK_RESERVE_PX = 72;
+
+const tanHalf = () => Math.tan(deg(FOV_DEG) / 2);
+
+/** Projected fraction of the viewport height covered by `worldHeight` at distance `dist`. */
+export function heightFraction(worldHeight: number, dist: number): number {
+  return worldHeight / (2 * dist * tanHalf());
+}
+
+/**
+ * D: the Watch distance. The whole set is 0.56 of the viewport width, unless that makes it taller
+ * than min(0.82 vh, vh minus the dock reserve above and below), in which case height wins.
+ * The set stays centred, with the dock clear of it.
+ */
+export function watchDistance(vw: number, vh: number): number {
+  const wantW = 0.56 * vw;
+  const maxH = Math.min(0.82 * vh, vh - 2 * DOCK_RESERVE_PX);
+  const dW = (SET_BOX.width * vh) / (2 * tanHalf() * wantW);
+  const dH = (SET_BOX.height * vh) / (2 * tanHalf() * Math.max(1, maxH));
+  return Math.max(dW, dH);
 }
 
 /** cubic-bezier(0.45, 0, 0.2, 1), the --ease-camera token. */
@@ -56,6 +89,7 @@ export function easeCamera(t: number): number {
 
 // Camera creep (design-spec 16.6.4)
 export const CREEP_MAX = 0.22; // --haunt-creep-max
+export const CREEP_SET_FRAC = 0.98; // the whole set stays inside the viewport at maximum creep
 export const CREEP_SCREEN_FRAC = 0.86; // screen at most 0.86 of the viewport height
 export const CREEP_RATE_UP = 0.04; // per second at most
 export const CREEP_RATE_DOWN = 1.2; // easing back to zero (700 ms replay, 1.2 s skip)

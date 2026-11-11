@@ -3,6 +3,7 @@ import { Html } from '@react-three/drei';
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Box3, BackSide, Mesh, MeshBasicMaterial, Vector3, type Object3D } from 'three';
+import { publishSceneTest } from '../integration/testHook';
 import { easeCamera } from '../cameras/poses';
 import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
 
@@ -79,6 +80,18 @@ export function KnobLayer({ children }: { children: ReactNode }) {
   const baseZ = useRef<Partial<Record<KnobId, number>>>({});
   const hoveredRef = useRef<KnobId | null>(null);
   const [, setReady] = useState(0);
+
+  useEffect(() => {
+    // Degrees clockwise seen from the front (0 at rest).
+    const deg = (id: KnobId) => (-(nodes.current[id]?.rotation.z ?? 0) * 180) / Math.PI;
+    publishSceneTest({
+      knobAngles: () => ({
+        power: deg('power') - (-(baseZ.current.power ?? 0) * 180) / Math.PI,
+        channel: deg('channel') - (-(baseZ.current.channel ?? 0) * 180) / Math.PI,
+        volume: deg('volume') - (-(baseZ.current.volume ?? 0) * 180) / Math.PI,
+      }),
+    });
+  }, []);
 
   // Locate knob nodes, attach hull meshes and compute tag anchors.
   useEffect(() => {
