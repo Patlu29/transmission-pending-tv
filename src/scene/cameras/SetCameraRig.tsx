@@ -168,7 +168,7 @@ export function SetCameraRig() {
       if (!dragging && !scene.userData.hoveringKnob) dom.style.cursor = canOrbit() ? 'grab' : '';
     };
     const onWheel = (e: WheelEvent) => {
-      if (!canOrbit()) return;
+      if (!canOrbit() || scene.userData.hoveringKnob) return;
       e.preventDefault();
       goal.current.k *= Math.exp(e.deltaY * 0.001);
       clampPose(goal.current);

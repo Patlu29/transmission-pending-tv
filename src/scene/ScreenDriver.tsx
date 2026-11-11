@@ -81,12 +81,13 @@ export function ScreenDriver() {
     s.noiseHz = status === 'playing' || status === 'ended' ? 12 : 24;
     s.bar = status === 'ended' ? 0 : 1;
     // Mean luminance for the room light, from the technical-artist's model.
-    s.meanLuminance = estimateCrtMeanLuminance({
-      warmup: s.warmup,
-      collapse: s.collapse,
-      pictureMean: status === 'playing' || status === 'ended' ? 0.12 : 0.208,
-      brightness: s.brightness,
-    });
+    if (!s.liveOverride)
+      s.meanLuminance = estimateCrtMeanLuminance({
+        warmup: s.warmup,
+        collapse: s.collapse,
+        pictureMean: status === 'playing' || status === 'ended' ? 0.12 : 0.208,
+        brightness: s.brightness,
+      });
 
     if (moving || (status === 'playing' && !reduced)) invalidate();
   });

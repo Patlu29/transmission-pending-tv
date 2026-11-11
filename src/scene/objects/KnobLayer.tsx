@@ -4,6 +4,7 @@ import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Box3, BackSide, Mesh, MeshBasicMaterial, Vector3, type Object3D } from 'three';
 import { publishSceneTest } from '../integration/testHook';
+import { getIsLive, isLastDiaryPage, stepChannel, useIsLive } from '../environments/seam.ts';
 import { easeCamera } from '../cameras/poses';
 import { readHaunt, useDisplayStore, useHauntStore, useIntroStore } from '../integration/stores';
 
@@ -224,7 +225,8 @@ export function KnobLayer({ children }: { children: ReactNode }) {
 
   const motion = useDisplayStore((s) => s.motion);
   const status = useIntroStore((s) => s.status);
-  const channelLocked = status === 'playing' && motion === 'full';
+  const live = useIsLive();
+  const channelLocked = !live && status === 'playing' && motion === 'full';
   const tagText: Record<KnobId, string> = {
     power: 'Power',
     channel: channelLocked ? 'Channel (after the show)' : 'Channel',
@@ -236,6 +238,18 @@ export function KnobLayer({ children }: { children: ReactNode }) {
     if (id) e.stopPropagation();
     setHovered(id);
   };
+  const lastWheel = useRef(0);
+  const onWheel = (e: ThreeEvent<WheelEvent>) => {
+    if (idFromObject(e.object) !== 'channel') return;
+    const status = useIntroStore.getState().status;
+    if (!getIsLive() && status !== 'ended') return; // channel 0 keeps v1 behaviour until the diary
+    e.stopPropagation();
+    const now = performance.now();
+    if (now - lastWheel.current < 250) return; // one step per wheel burst
+    lastWheel.current = now;
+    if (e.deltaY > 0) stepChannel(1);
+    else if (e.deltaY < 0) stepChannel(-1);
+  };
   const onOut = () => setHovered(null);
   const onClick = (e: ThreeEvent<MouseEvent>) => {
     const id = idFromObject(e.object);
@@ -246,8 +260,15 @@ export function KnobLayer({ children }: { children: ReactNode }) {
     if (id === 'power') {
       if (intro.status !== 'loading') intro.power(); // same action as the Switch on key
     } else if (id === 'channel') {
-      const manual = intro.status === 'ended' || display.motion === 'reduced';
-      if (manual && intro.status !== 'off' && intro.status !== 'loading') intro.nextPage();
+      if (getIsLive()) {
+        // Live channel: click next, Shift-click previous (design-spec-v2 section 3).
+        stepChannel((e.nativeEvent as MouseEvent).shiftKey ? -1 : 1);
+      } else if (intro.status === 'ended' && isLastDiaryPage()) {
+        stepChannel(1); // the diary's last page hands over to channel 1
+      } else {
+        const manual = intro.status === 'ended' || display.motion === 'reduced';
+        if (manual && intro.status !== 'off' && intro.status !== 'loading') intro.nextPage();
+      }
     } else {
       display.toggleAudio();
     }
@@ -255,7 +276,13 @@ export function KnobLayer({ children }: { children: ReactNode }) {
 
   const anchor = hovered ? anchors.current[hovered] : undefined;
   return (
-    <group ref={root} onPointerOver={onOver} onPointerOut={onOut} onClick={onClick}>
+    <group
+      ref={root}
+      onPointerOver={onOver}
+      onPointerOut={onOut}
+      onClick={onClick}
+      onWheel={onWheel}
+    >
       {children}
       {hovered && anchor && (
         <Html

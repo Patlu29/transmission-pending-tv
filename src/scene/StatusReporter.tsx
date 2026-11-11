@@ -1,6 +1,7 @@
 import { useProgress } from '@react-three/drei';
 import { useThree } from '@react-three/fiber';
 import { Component, useEffect, type ReactNode } from 'react';
+import { useEnvironmentStore } from './environments/seam.ts';
 import { useDisplayStore } from './integration/stores';
 
 /** Reports webglLost (architecture 4.1). Preventing default lets the context be restored. */
@@ -22,7 +23,11 @@ export function ContextWatcher() {
 export function ProgressReporter() {
   const { active, progress } = useProgress();
   useEffect(() => {
-    if (active) useDisplayStore.getState().setLoadProgress(Math.min(0.99, progress / 100));
+    if (active) {
+      useDisplayStore.getState().setLoadProgress(Math.min(0.99, progress / 100));
+      const env = useEnvironmentStore.getState();
+      if (env.loading) env.setLoading(Math.min(0.99, progress / 100));
+    }
   }, [active, progress]);
   return null;
 }
@@ -53,4 +58,16 @@ export class ErrorBoundary extends Component<BoundaryProps, { failed: boolean }>
   render() {
     return this.state.failed ? null : this.props.children;
   }
+}
+
+/**
+ * Mounts when the room on screen has been built. Tells environmentStore it is ready once the room shown
+ * is the room chosen (the previous room stays up until then). Always fires, so `loading` never sticks.
+ */
+export function RoomReadyReporter({ shown }: { shown: string }) {
+  useEffect(() => {
+    const env = useEnvironmentStore.getState();
+    if (env.id === shown) env.setReady();
+  }, [shown]);
+  return null;
 }

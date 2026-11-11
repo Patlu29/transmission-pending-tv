@@ -1,21 +1,15 @@
 /**
- * STUB. Owner: scene-developer (scene) and technical-artist (materials, assets).
- * Observation deck; procedural sky and stars.
- * aspect, fill and align from design spec v2 §5 (keep in sync); widthM is a placeholder.
- * Contract: ../contract.ts. Render exactly one screen anchor; nothing between the watch-pose
- * camera and the screen; respect `calm`; never filter colour in a shader.
+ * Space deck facade (light; the scene is ./Scene.tsx). Owner: scene-developer (scene) and technical-artist
+ * (materials, assets). An orbital observation deck: a bulkhead with a wide flat panel, windows onto Earth and stars.
+ * Anchor values from design-spec-v2 section 5. Contract: ../contract.ts.
  */
-import type { EnvironmentModule, EnvironmentSceneProps } from '../contract.ts';
-
-function SpaceDeckScene(props: EnvironmentSceneProps) {
-  void props;
-  return null;
-}
+import type { EnvironmentModule } from '../contract.ts';
+import { lazyScene } from '../lazyScene.ts';
 
 const environment: EnvironmentModule = {
   id: 'space-deck',
-  Scene: SpaceDeckScene,
-  screen: { aspect: 16 / 9, widthM: 1, fill: 0.64, align: 'centre' },
+  Scene: lazyScene('space-deck'),
+  screen: { aspect: 16 / 9, widthM: 3, fill: 0.64, align: 'centre' },
 };
 
 export default environment;

@@ -1,16 +1,23 @@
 import { Canvas } from '@react-three/fiber';
-import { Suspense } from 'react';
+import { Suspense, useDeferredValue } from 'react';
 import { AdaptiveDpr } from './AdaptiveDpr';
-import { SetCameraRig } from './cameras/SetCameraRig';
 import { useDisplayStore, useIntroStore } from './integration/stores';
-import { SetLights } from './lights/SetLights';
-import { KnobLayer } from './objects/KnobLayer';
-import { Room } from './objects/Room';
-import { TvSet } from './objects/TvSet';
-import { GreyEnvironment } from './materials';
+import TvRoomScene from './environments/tv-room/Scene.tsx';
+import { EnvironmentHost } from './environments/EnvironmentHost.tsx';
+import {
+  useChannelNumber,
+  useColourActive,
+  useEnvironmentStore,
+  useIsLive,
+} from './environments/seam.ts';
 import { ScreenDriver } from './ScreenDriver';
-import { ScreenOnly } from './ScreenOnly';
-import { ContextWatcher, ErrorBoundary, ProgressReporter, ReadyReporter } from './StatusReporter';
+import {
+  ContextWatcher,
+  ErrorBoundary,
+  ProgressReporter,
+  ReadyReporter,
+  RoomReadyReporter,
+} from './StatusReporter';
 
 /**
  * The only <Canvas>. Default export so the app can `React.lazy(() => import('@/scene/Experience'))`.
@@ -21,18 +28,37 @@ export default function Experience() {
   const mode = useDisplayStore((s) => s.renderMode);
   const motion = useDisplayStore((s) => s.motion);
   const status = useIntroStore((s) => s.status);
+  const env = useEnvironmentStore((s) => s.id);
+  const colour = useColourActive() ? 'colour' : 'bw';
+  const channel = useChannelNumber();
+  const isLive = useIsLive();
+  // Keep showing the previous room until the new one is built (environmentStore.ready).
+  const shownEnv = useDeferredValue(env);
+  const pose = useEnvironmentStore((s) => s.pose);
 
   if (mode === '2d') return null;
+  const isTvRoom = shownEnv === 'tv-room';
+  const live = !isTvRoom || isLive;
 
   // "always" only while the picture animates (warm-up, or playing with full motion).
   // Camera tweens, the CRT collapse and the room-light low-pass request their own
   // frames while they move, so everything else stays on demand.
-  const animating = status === 'warming' || (status === 'playing' && motion === 'full');
+  // v2 rooms animate their surroundings continuously (frozen and on demand under Calm).
+  const animating =
+    status === 'warming' ||
+    (status === 'playing' && motion === 'full') ||
+    (live && motion === 'full');
 
   return (
     <div
       aria-hidden="true"
-      style={{ position: 'fixed', inset: 0, zIndex: 'var(--z-canvas, 0)', background: '#000' }}
+      data-env={shownEnv}
+      style={{
+        position: 'fixed',
+        inset: 0,
+        zIndex: 'var(--z-canvas, 0)',
+        background: '#000',
+      }}
     >
       <ErrorBoundary onError={() => useDisplayStore.getState().markWebglLost()}>
         <Canvas
@@ -49,23 +75,27 @@ export default function Experience() {
           <ProgressReporter />
           <ScreenDriver />
           <ErrorBoundary
-            onError={(e) => useDisplayStore.getState().setAssetFailed(e.message || 'asset failed')}
+            onError={(e) => {
+              useDisplayStore.getState().setAssetFailed(e.message || 'asset failed');
+              // `loading` has no safety timeout, so setReady must fire even when a room fails.
+              useEnvironmentStore.getState().setReady();
+            }}
           >
             <Suspense fallback={null}>
-              {mode === '3d-set' ? (
-                <>
-                  <SetCameraRig />
-                  <GreyEnvironment intensity={0.4} />
-                  <SetLights />
-                  <Room />
-                  <KnobLayer>
-                    <TvSet />
-                  </KnobLayer>
-                </>
+              {isTvRoom ? (
+                <TvRoomScene
+                  calm={motion === 'reduced'}
+                  pose={pose}
+                  colour={colour}
+                  channel={channel}
+                />
               ) : (
-                <ScreenOnly />
+                <>
+                  <EnvironmentHost id={shownEnv} />
+                </>
               )}
               <ReadyReporter />
+              <RoomReadyReporter shown={shownEnv} />
             </Suspense>
           </ErrorBoundary>
         </Canvas>
