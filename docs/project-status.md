@@ -1,6 +1,6 @@
 # Project status
 
-- **Current phase:** 6. QA
+- **Current phase:** 7. Delivery
 - **Repository:** https://github.com/Patlu29/transmission-pending-tv (public)
 - **Approvals given:**
   - Phase 1 scope approved (2026-11-10). Decisions: 3D TV set on desktop with screen-filling view on mobile; intro names Claude Code, the application-builder plugin, model and agent roles openly; audio optional and off by default; site name "Transmission Pending".
@@ -21,7 +21,7 @@
 - **Open questions:** none (hosting: GitHub Pages per ADR 0011)
 - **Build:** strict CI build, lint, typecheck and 27 unit tests pass (2026-11-10). Bundle: initial JS 96.8 kB gzip, scene chunk 283.7 kB gzip, fonts 60.5 kB.
 - **Performance decisions (tech lead):** first-view JS of 380.8 kB gzip accepted (over the 350 kB architecture target, well inside NFR-3's 5 MB); adaptive DPR step-down accepted. Real-device FPS is unmeasured (headless SwiftShader only).
-- **Bug count:** 6 open after QA round 0 (2 major: BUG-1 framing, BUG-2 Calm persistence; 4 minor). Fix round 1 in progress.
+- **Bug count:** QA done after two fix rounds (305/311 pass, 4 deliberate skips). 0 major open. 3 minor open: BUG-4 2D collapse step 0.070 and BUG-7 Replay-start step 0.0535 (both over the 0.05 design margin, under the 0.10 hard limit, 0 flashes); BUG-6 source maps in dist (devops, Phase 7). Not verified: 3D shader collapse, real-device FPS, Firefox.
 
 ## Phases
 | # | Phase | Status |
@@ -31,8 +31,8 @@
 | 3 | Design | Done |
 | 4 | Build | Done |
 | 5 | Performance | Done |
-| 6 | QA | In progress |
-| 7 | Delivery | Not started |
+| 6 | QA | Done |
+| 7 | Delivery | In progress |
 
 ## Build provenance
 | Item | Value |

@@ -1,6 +1,8 @@
 # Handoff: qa-engineer
 
 ## Summary
+FINAL (round 2, HEAD 3142423): 305 of 311 checks pass, 2 fail, 4 skipped. No major bugs open. Open minor items: BUG-4 2D collapse (0.070 per 100 ms), BUG-7 Replay-start step (0.0535) and BUG-6 (deferred to devops). Round 2 detail is at the end of this note and in `docs/qa-report.md` section 9.
+
 Round 1 re-test is at the end of this note and in `docs/qa-report.md` section 8 (301 of 311 checks pass; 6 fail, all the design-margin finding BUG-7 and the BUG-4 collapse; 4 skipped).
 
 Wrote the unit and end-to-end suites for every user story and the Phase 6 report in `docs/qa-report.md`. 288 of 297 checks pass (51 of 51 unit; 237 of 246 E2E across Chromium, WebKit, two Pixel 7 viewports and an iPhone 14, with 4 deliberate skips). The 5 failures are three real bugs, listed with owners below. Firefox is installed but cannot start on this host.
@@ -64,3 +66,21 @@ BUG-1, BUG-2, BUG-3 (hard limit) and BUG-5 are fixed and verified; BUG-4 is part
 - ux-ui-designer and frontend-developer: BUG-7 (minor), fade steps of 0.056 to 0.075 per 100 ms; and the collapse step (BUG-4, 0.066).
 - devops-engineer: BUG-6 (deferred, Phase 7).
 - tech lead: the 8 earlier unit failures were the stale-`dist/` check, reproduced and confirmed. Run `npm run build` before `npm test`, and again after committing this note (it is a fact source). Firefox still cannot start on this host.
+
+## Round 2 re-test (final, HEAD 3142423)
+
+### Summary
+BUG-7 is fixed for the story (diary and glass window 0.039 on Chromium and 0.046 on WebKit, was 0.063 and 0.075) except the Replay start, 0.0535 against 0.05 on Chromium. BUG-4's warm-up is fixed; the 2D collapse still steps 0.070 per 100 ms even at 700 ms, which points at the start overlay returning rather than the shrinking picture. Unit 51 of 51 (after `npm run build`); E2E 254 pass, 2 fail, 4 skip of 260.
+
+### Files changed
+- `docs/qa-report.md` (section 9 and one status tag), this note. No test changes: the existing checks enforce the 0.05 margin and now show where it is still missed.
+
+### Decisions
+- Eight WebKit timeouts during one long, stalled run were re-run alone and passed in 47 seconds, so they are counted as passes and flagged as an environment stall in the report.
+- The 3D collapse is reported as not analysed rather than guessed.
+
+### Open items
+- frontend-developer, minor: BUG-4 2D collapse 0.070 per 100 ms (probably the start overlay returning, fade it in after the collapse); BUG-7 Replay start 0.0535.
+- devops-engineer, minor, deferred: BUG-6.
+- technical-artist, not analysed: the 3D shader collapse needs a real GPU or a deterministic time hook.
+- tech lead: run `npm run build` before `npm test`, and again after committing this note. Firefox, real-device FPS and 4G timing are still unmeasured.

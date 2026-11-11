@@ -182,7 +182,7 @@ Severity: **major** breaks a Must acceptance criterion or an obvious visual defe
 - Fix options: cross-fade the cut over two or three steps, reduce the area of the inverse fact blocks on one screen, or split the diary page so fewer blocks vanish at once.
 - Evidence: `flash.spec.ts` "a page or screen cut changes a 341 x 256 tile by less than 10 per cent" (fails). The matching "ghost at maximum" test passes, which shows the ghost itself is not the cause.
 
-### BUG-4: the 2D warm-up and collapse exceed the design margin (minor) - PARTLY FIXED: warm-up fixed, collapse still over
+### BUG-4: the 2D warm-up and collapse exceed the design margin (minor) - PARTLY FIXED: warm-up fixed, 2D collapse still over (open after round 2)
 - Owner: **frontend-developer** (`.screen2d.is-warming` and `.is-collapsing` in `src/ui/ui.css`) with ux-ui-designer.
 - Steps: switch on, then off, in 2D with full motion; capture the screen in real time (DevTools screencast) and compare tiles per 100 ms.
 - Expected: large-area swings under 0.05 per 100 ms (design margin) and always under 0.10.
@@ -284,3 +284,44 @@ Before round 1 the total was 297 checks, 288 pass, 5 fail. All 6 failures are th
 ### The earlier "8 unit failures that went away on a re-run"
 
 Confirmed as the stale-build check. I reproduced it: with `dist/` built at an older commit and HEAD at `7111d4b`, `tests/unit/facts.test.ts` fails 8 of its 17 tests (build commit, commit count, diary commits, co-author count, revision and the whole-file comparison all differ), and after `npm run build` all 51 unit tests pass. A commit landing mid-run, or a handoff file added after the last build, causes exactly this. It is the test doing its job, not flakiness; run `npm run build` before `npm test`.
+
+## 9. Round 2 re-test (final)
+
+Build: HEAD `3142423` plus the uncommitted QA files. `npm run build` was run before the unit suite (51 of 51 pass). The full E2E suite ran on Chromium, WebKit, Pixel 7 portrait and landscape, and iPhone 14.
+
+### Final counts
+
+| Suite | Tests | Pass | Fail | Skipped |
+|---|---|---|---|---|
+| Unit (Vitest) | 51 | 51 | 0 | 0 |
+| E2E Chromium | 124 | 122 | 2 | 0 |
+| E2E WebKit | 112 | 108 | 0 | 4 |
+| E2E Pixel 7 portrait | 8 | 8 | 0 | 0 |
+| E2E Pixel 7 landscape | 8 | 8 | 0 | 0 |
+| E2E iPhone 14 portrait | 8 | 8 | 0 | 0 |
+| **Total** | **311** | **305** | **2** | **4** |
+
+(Round 1: 301 pass, 6 fail. First round: 288 of 297.) The 4 skips are unchanged (2 Chromium-only screencast tests and 2 Tab-order tests that macOS Safari cannot run). In the full WebKit run 8 unrelated tests timed out at 180 s during a long stall (the run took 1.1 hours against the usual 20 minutes, with the machine shared with another project). Re-running those tests alone took 47 seconds and all passed, so I count them as passes; the earlier WebKit runs had none of these timeouts either.
+
+### Final status of every bug
+
+| Bug | Final status | Evidence |
+|---|---|---|
+| BUG-1 3d-set framing | **Fixed** (round 1) | still passes: camera spec 14 of 14, framing edge strips, baseline |
+| BUG-2 Calm reload | **Fixed** (round 1) | still passes |
+| BUG-3 screen cut step | **Fixed** (round 1) | screen-cut steps 0.003 |
+| BUG-4 warm-up and collapse | **Warm-up fixed; 2D collapse still open** | warm-up largest step 0.041 (was 0.062). The 2D collapse is 0.070 per 100 ms (Chromium) with the new 700 ms length: no change from 0.066 to 0.070 before, so lengthening it did not help. Under the 0.10 limit, no flashes. The 3D collapse (450 ms, shader) was not frame-analysed: software WebGL cannot deliver 10 frames per second to sample |
+| BUG-5 clock | **Fixed** (round 1) | still passes |
+| BUG-6 source maps, `.gitkeep` | **Deferred** | devops-engineer, Phase 7 |
+| BUG-7 fade steps | **Fixed for the story; Replay start 0.0035 over the margin** | diary and glass window: 0.039 (Chromium), 0.046 (WebKit), was 0.063 and 0.075. Page changes (makers and staff) 0.012 to 0.018. Skip to the diary 0.028 and 0.012. Replay start: 0.0535 on Chromium (limit 0.05), 0.0265 on WebKit |
+
+### Still open
+
+| Id | Severity | Owner | What is left |
+|---|---|---|---|
+| BUG-4 (residual) | minor | **frontend-developer** (the 2D `crt-off` animation in `src/ui/ui.css`), with **ux-ui-designer** | 2D power-off collapse steps a 341 x 256 tile by 0.070 per 100 ms against the 0.05 design margin (hard limit 0.10 and the flash limit are met). Lengthening it to 700 ms made no measurable difference, so the step is probably the start overlay returning as the set goes off, not the shrinking picture: fade the overlay in after the collapse. Test: `flash.spec.ts` "the power-off collapse does not flash" (Chromium) |
+| BUG-7 (residual) | minor | **frontend-developer** | the Replay start (black frame, then the first page) steps a tile by 0.0535 on Chromium, 0.0035 over the margin; WebKit is 0.0265. Test: `flash.spec.ts` "page changes, Skip and Replay" (Chromium) |
+| BUG-6 | minor, deferred | **devops-engineer** | 6 MB of source maps and empty `.gitkeep` files in `dist/` |
+| 3D collapse | not analysed | **technical-artist** | the shader collapse (450 ms) could not be frame-analysed under software rendering; needs a real GPU or a deterministic shader time hook |
+
+No major bugs are open. Everything the headless environment cannot show is unchanged from section 6: real-device frame rate and 4G time, Firefox (cannot start on this host), human review of tone and originality, and hearing the audio.
