@@ -42,3 +42,7 @@
 | Plugin version | 2.0.0 |
 | Model | Claude Opus 5.5 |
 | Model ID | claude-opus-5-5 |
+
+## Diary corrections
+History is never rewritten (NFR-12), so mistakes are recorded here instead.
+- Commit 909df52 ("Record v2 architecture decisions…") also contains most of the BUG-1 camera-framing fix: `src/scene/cameras/poses.ts`, `SetCameraRig.tsx`, `KnobLayer.tsx` and `useCrtMaterial.ts`. The tech lead committed with `git commit -a` while the scene developer's work was still uncommitted. Commit b4ec64e completes the fix with the test hook and the handoff note. From now on the tech lead stages explicit paths only.
