@@ -36,6 +36,13 @@ let lastKey = '';
 let held: { input: FrameInput; until: number } | null = null;
 let lastPowered: FrameInput | null = null;
 let fontsReady = false;
+
+/** A cut between screens (page, sub-page, diary view) cross-fades over this long (design-spec 7.1: no 10 per cent tile step). */
+const FADE_MS = 250;
+let lastFrameId: string | null = null;
+let snapshot: HTMLCanvasElement | null = null;
+let fade: { start: number } | null = null;
+let fadeTimer: ReturnType<typeof setTimeout> | undefined;
 let holdTimer: ReturnType<typeof setTimeout> | undefined;
 
 /** Snapshot of the store state the frame model needs (also used for tap hit-testing). */
@@ -94,12 +101,37 @@ function draw(force = false) {
   if (held) input = held.input;
 
   const grid = display.grid;
-  const key = inputKey(input, grid.cols, grid.rows);
+  const now = performance.now();
+  const key = `${inputKey(input, grid.cols, grid.rows)}|${fade ? Math.floor((now - fade.start) / 33) : -1}`;
   if (!force && key === lastKey) return;
   lastKey = key;
 
   const frame = buildFrame(input, grid, { intro, facts });
+  if (lastFrameId !== null && frame.id !== lastFrameId) {
+    // The canvas still holds the previous screen: keep a copy to fade out over the new one.
+    if (!snapshot || snapshot.width !== canvas.width || snapshot.height !== canvas.height) {
+      snapshot = document.createElement('canvas');
+      snapshot.width = canvas.width;
+      snapshot.height = canvas.height;
+    }
+    snapshot.getContext('2d')?.drawImage(canvas, 0, 0);
+    fade = { start: now };
+  }
+  lastFrameId = frame.id;
   drawFrame(ctx, frame, grid, readPalette(), canvas.width / size.cssW);
+  if (fade && snapshot) {
+    const p = (now - fade.start) / FADE_MS;
+    if (p >= 1) fade = null;
+    else {
+      ctx.save();
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.globalAlpha = 1 - p;
+      ctx.drawImage(snapshot, 0, 0);
+      ctx.restore();
+      clearTimeout(fadeTimer);
+      fadeTimer = setTimeout(() => schedule(), 33);
+    }
+  }
   display.bumpScreenVersion();
 }
 
@@ -149,6 +181,7 @@ export function startTeletextScreen(): () => void {
     unsubs.forEach((u) => u());
     document.fonts?.removeEventListener('loadingdone', onFonts);
     clearTimeout(holdTimer);
+    clearTimeout(fadeTimer);
     fontsReady = false;
     if (raf) cancelAnimationFrame(raf);
     raf = 0;
@@ -169,6 +202,8 @@ export function setScreenSize(next: ScreenSize) {
     canvas = document.createElement('canvas');
     canvas.width = pixelW;
     canvas.height = pixelH;
+    lastFrameId = null;
+    fade = null;
     display.setScreenCanvas(canvas);
   }
   display.setGrid(grid);

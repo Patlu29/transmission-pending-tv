@@ -22,6 +22,8 @@ import { findHit } from '@/ui/teletext/hit';
 import { readPalette } from '@/ui/teletext/palette';
 import { Haunt2D } from './Ghost2D';
 
+const CROSSFADE_MS = 250;
+
 function TestCardCanvas({
   width,
   height,
@@ -128,6 +130,8 @@ export function Screen2D() {
   const rolling = useHauntStore((s) => s.roll.active);
   const [lastStatus, setLastStatus] = useState(status);
   const [collapsing, setCollapsing] = useState(false);
+  const [leavingFrame, setLeavingFrame] = useState<Frame | null>(null);
+  const lastFrame = useRef<Frame | null>(null);
   const prevPowered = useRef(isPoweredStatus(status));
   const blocks = useRef<Array<HTMLDivElement | null>>([]);
   const bar = useRef<HTMLDivElement>(null);
@@ -199,6 +203,18 @@ export function Screen2D() {
   const metrics = glyphMetrics(grid, readPalette().fontTeletext);
   void fontTick;
 
+  // A cut between screens cross-fades: the previous screen stays on top and fades out (design-spec 7.1).
+  useEffect(() => {
+    const prev = lastFrame.current;
+    if (!prev || prev.id === frame.id) return;
+    setLeavingFrame(prev);
+    const t = setTimeout(() => setLeavingFrame(null), CROSSFADE_MS + 30);
+    return () => clearTimeout(t);
+  }, [frame.id]);
+  useEffect(() => {
+    lastFrame.current = frame;
+  });
+
   const onClick = (e: MouseEvent<HTMLDivElement>) => {
     if (!isPoweredStatus(status)) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -209,48 +225,53 @@ export function Screen2D() {
     else performEmptyTap(x / rect.width);
   };
 
-  const bleed = frame.fx && frame.fx.kind === 'bleed' ? frame.fx : null;
-  const look = bleed ? bleedLook(bleed.elapsedMs, bleed.durMs) : null;
-  const content = (index: number) => (
-    <div className="screen2d__content" ref={(el) => void (blocks.current[index] = el)}>
-      {frame.mode === 'card' && frame.card && dims.w > 0 && (
-        <TestCardCanvas width={dims.w} height={dims.h} card={frame.card} />
-      )}
-      {frame.mode === 'page' && (
-        <div
-          className="screen2d__grid crt2d__glow"
-          style={{
-            left: grid.originX,
-            top: grid.originY,
-            fontSize: metrics.drawPx,
-            letterSpacing: metrics.letterSpacingPx,
-            lineHeight: `${grid.rowH}px`,
-          }}
-        >
-          {frame.runs.map((runs, r) => (
-            <div className="tt-row" key={r} style={{ height: grid.rowH }}>
-              <RowText runs={runs} row={r} frame={frame} grid={grid} />
-            </div>
-          ))}
-          {bleed &&
-            look &&
-            bleed.streaks.map((s) => (
-              <div
-                key={`${s.row}:${s.col}`}
-                className="screen2d__streak"
-                style={{
-                  left: (s.col + 0.5) * grid.cellW - grid.cellW * 0.125,
-                  top: s.row * grid.rowH,
-                  width: grid.cellW * 0.25,
-                  height: grid.rowH * look.length,
-                  opacity: look.alpha,
-                }}
-              />
+  const content = (f: Frame, index: number | null, leaving = false) => {
+    const bleed = f.fx && f.fx.kind === 'bleed' ? f.fx : null;
+    const look = bleed ? bleedLook(bleed.elapsedMs, bleed.durMs) : null;
+    return (
+      <div
+        className={`screen2d__content${leaving ? ' screen2d__content--leaving' : ''}`}
+        ref={index === null ? undefined : (el) => void (blocks.current[index] = el)}
+      >
+        {f.mode === 'card' && f.card && dims.w > 0 && (
+          <TestCardCanvas width={dims.w} height={dims.h} card={f.card} />
+        )}
+        {f.mode === 'page' && (
+          <div
+            className="screen2d__grid crt2d__glow"
+            style={{
+              left: grid.originX,
+              top: grid.originY,
+              fontSize: metrics.drawPx,
+              letterSpacing: metrics.letterSpacingPx,
+              lineHeight: `${grid.rowH}px`,
+            }}
+          >
+            {f.runs.map((runs, r) => (
+              <div className="tt-row" key={r} style={{ height: grid.rowH }}>
+                <RowText runs={runs} row={r} frame={f} grid={grid} />
+              </div>
             ))}
-        </div>
-      )}
-    </div>
-  );
+            {bleed &&
+              look &&
+              bleed.streaks.map((s) => (
+                <div
+                  key={`${s.row}:${s.col}`}
+                  className="screen2d__streak"
+                  style={{
+                    left: (s.col + 0.5) * grid.cellW - grid.cellW * 0.125,
+                    top: s.row * grid.rowH,
+                    width: grid.cellW * 0.25,
+                    height: grid.rowH * look.length,
+                    opacity: look.alpha,
+                  }}
+                />
+              ))}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   const animation = collapsing
     ? 'is-collapsing'
@@ -268,8 +289,9 @@ export function Screen2D() {
         onClick={onClick}
         data-screen="2d"
       >
-        {content(0)}
-        {rolling && !calm && content(1)}
+        {content(frame, 0)}
+        {rolling && !calm && content(frame, 1)}
+        {leavingFrame && content(leavingFrame, null, true)}
         {rolling && !calm && <div className="screen2d__rollbar" ref={bar} />}
         {dims.w > 0 && <Haunt2D width={dims.w} height={dims.h} grid={grid} frame={frame} />}
       </div>

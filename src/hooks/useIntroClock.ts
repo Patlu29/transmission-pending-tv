@@ -28,6 +28,9 @@ export {
   estimateIntroDurationMs,
 } from '@/state/timing';
 
+/** A frame gap longer than this is a hidden tab or a stall, not elapsed show time. */
+const STALL_GAP_MS = 1000;
+
 type Stage = 'reveal' | 'gap' | 'hold' | 'end';
 
 /**
@@ -148,7 +151,10 @@ export function startIntroClock(): () => void {
 
   const loop = (t: number) => {
     raf = 0;
-    const dt = Math.min(100, Math.max(0, t - last));
+    // Real elapsed time, so a slow device does not stretch the story. Only a gap over about a second
+    // (a hidden tab or a stall) counts as a pause.
+    const gap = t - last;
+    const dt = gap > STALL_GAP_MS ? 0 : Math.max(0, gap);
     last = t;
     tick(dt);
     ensure();

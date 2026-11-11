@@ -297,7 +297,8 @@ export function startHauntScheduler(): () => void {
 
   const loop = (t: number) => {
     raf = 0;
-    const dt = Math.min(100, Math.max(0, t - last));
+    const gap = t - last;
+    const dt = gap > 1000 ? 0 : Math.max(0, gap); // real time; a gap over 1 s is a hidden tab or stall
     last = t;
     tick(dt);
     ensure();

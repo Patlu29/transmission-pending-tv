@@ -99,6 +99,38 @@ function initialMode(): Pick<DisplayState, 'renderMode' | 'forcedMode' | 'fallba
   return { renderMode: choice.mode, forcedMode, fallbackReason: choice.reason };
 }
 
+/** Calm persists for the visit in sessionStorage (per tab, no cookie). Every access is guarded: storage may throw. */
+const CALM_KEY = 'transmission-pending:calm';
+
+function readStoredCalm(): boolean {
+  try {
+    return window.sessionStorage.getItem(CALM_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function storeCalm(value: boolean): void {
+  try {
+    if (value) window.sessionStorage.setItem(CALM_KEY, '1');
+    else window.sessionStorage.removeItem(CALM_KEY);
+  } catch {
+    /* storage unavailable: Calm still works for this page load */
+  }
+}
+
+/** The OS preference, read at creation so the first paint is already calm when it asks for it. */
+function readOsReducedMotion(): boolean {
+  try {
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  } catch {
+    return false;
+  }
+}
+
+const initialCalm = typeof window === 'undefined' ? false : readStoredCalm();
+const initialOs = typeof window === 'undefined' ? false : readOsReducedMotion();
+
 function reduced(os: boolean, calm: boolean) {
   const reducedMotion = os || calm;
   return { reducedMotion, motion: (reducedMotion ? 'reduced' : 'full') as Motion };
@@ -107,9 +139,9 @@ function reduced(os: boolean, calm: boolean) {
 export const useDisplayStore = create<DisplayState>()((set, get) => ({
   ...initialMode(),
 
-  osReducedMotion: false,
-  calmSwitch: false,
-  ...reduced(false, false),
+  osReducedMotion: initialOs,
+  calmSwitch: initialCalm,
+  ...reduced(initialOs, initialCalm),
 
   audio: 'off',
   loadProgress: 0,
@@ -131,10 +163,12 @@ export const useDisplayStore = create<DisplayState>()((set, get) => ({
     set((s) =>
       s.osReducedMotion === value ? s : { osReducedMotion: value, ...reduced(value, s.calmSwitch) },
     ),
-  setCalm: (value) =>
+  setCalm: (value) => {
+    storeCalm(value);
     set((s) =>
       s.calmSwitch === value ? s : { calmSwitch: value, ...reduced(s.osReducedMotion, value) },
-    ),
+    );
+  },
   toggleCalm: () => get().setCalm(!get().calmSwitch),
   toggleAudio: () => set((s) => ({ audio: s.audio === 'on' ? 'off' : 'on' })),
   setLoadProgress: (value) => set({ loadProgress: Math.min(1, Math.max(0, value)) }),

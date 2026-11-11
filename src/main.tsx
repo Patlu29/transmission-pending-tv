@@ -20,6 +20,9 @@ if (import.meta.env.DEV || import.meta.env.MODE === 'test') {
   };
 }
 
+// Apply Calm (stored choice or the OS preference) before the first paint.
+document.documentElement.dataset.calm = String(useDisplayStore.getState().reducedMotion);
+
 const root = document.getElementById('root');
 if (!root) throw new Error('#root element missing from index.html');
 

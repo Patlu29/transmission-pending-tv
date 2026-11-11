@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useDisplayStore } from '@/state/displayStore';
 import { isPoweredStatus, useIntroStore } from '@/state/introStore';
 
@@ -7,9 +8,24 @@ export function StartScreen() {
   const calm = useDisplayStore((s) => s.calmSwitch);
   const os = useDisplayStore((s) => s.osReducedMotion);
   const noteId = 'start-note';
-  if (isPoweredStatus(status)) return null;
+  const powered = isPoweredStatus(status);
+  const [gone, setGone] = useState(false);
+  // Fade out over 300 ms at power-on instead of cutting, then unmount.
+  useEffect(() => {
+    if (!powered) return;
+    const t = setTimeout(() => setGone(true), 320);
+    return () => {
+      clearTimeout(t);
+      setGone(false);
+    };
+  }, [powered]);
+  if (powered && gone) return null;
   return (
-    <section className="start" aria-label="Start">
+    <section
+      className={`start${powered ? ' start--leaving' : ''}`}
+      aria-label="Start"
+      inert={powered || undefined}
+    >
       <p className="start__tagline">A television with something to say.</p>
       <button
         type="button"

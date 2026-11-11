@@ -58,6 +58,8 @@ export type FrameFx =
     };
 
 export interface Frame {
+  /** Identity of the screen (page, sub-page, diary view). A change is a cut, which the screens cross-fade. */
+  id: string;
   mode: 'dark' | 'card' | 'page';
   cols: number;
   rows: number;
@@ -136,6 +138,7 @@ function fastext(frame: Frame, labels: Array<[string, DockKey | null]>) {
 
 function blank(grid: GridSpec, mode: Frame['mode'], card: Frame['card'] = null): Frame {
   return {
+    id: mode,
     mode,
     cols: grid.cols,
     rows: grid.rows,
@@ -165,6 +168,7 @@ function introFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
   const page = data.intro.pages[pf?.pageIndex ?? 0];
   if (!pf || !page) return frame;
 
+  frame.id = `intro:${pf.pageIndex}:${pf.start}`;
   header(frame, `INTRO ${pf.pageIndex + 1}/${data.intro.pages.length}`, data);
   titleRow(frame, input, pageTitle(page.id));
 
@@ -268,6 +272,10 @@ function diaryFrame(input: FrameInput, grid: GridSpec, data: FrameData): Frame {
   const entry = input.pageEntry;
   const tagBase = entry ? `P${entry.padEnd(3, '_')}` : `P${pageNumberOf(view)}`;
   const lastRow = grid.rows - 2;
+  frame.id =
+    view.kind === 'index'
+      ? `diary:index:${Math.min(view.sub, layout.subs.length - 1)}`
+      : `diary:commit:${view.index}`;
 
   if (view.kind === 'index') {
     const sub = Math.min(view.sub, layout.subs.length - 1);

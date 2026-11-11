@@ -181,3 +181,12 @@ Tech lead decision: 89.3 s left no headroom, so the reveal constants are retuned
 - `tests/unit/duration.test.ts`: the worst case must be 85 s or less; today's real generated facts must be at least 45 s (and at most 90 s).
 - `src/ui/teletext/playlist.ts` now caches per resolved-intro object, so tests that build modified intros do not share cached screens.
 - Open: reveal at 100 cps is quicker than the design-spec 6.3 table (60); ux-ui-designer should update the spec figures.
+
+---
+
+## QA round 1
+
+- **BUG-2 (Calm persists):** `displayStore` reads and writes `calmSwitch` in `sessionStorage` (key `transmission-pending:calm`, every access in try/catch, so a throwing storage still leaves Calm working for the page load). The stored value and the OS preference are read when the store is created, and `main.tsx` sets `data-calm` on `<html>` before the first render, so a Calm reload never shows motion. The OS reduced-motion default still applies ("on (system setting)", cannot be turned off). Checked: on, reload, still on; off, reload, off; storage denied, no errors.
+- **BUG-3 (screen cuts):** every frame has an `id` (intro screen, diary view, card, dark). When it changes, the canvas keeps a snapshot of the old screen and cross-fades it out over 250 ms (redraw at 30 Hz); the 2D screen keeps the old content on top and fades it out over 250 ms with CSS. This also applies under Calm (a gentle fade, never a cut). The clock is not affected.
+- **BUG-4 (2D warm-up and collapse):** `crt-on` now opens over about 1.5 s with an opacity ramp (eased); `crt-off` dims linearly while it collapses. Total durations are unchanged (2.2 s and 450 ms). The start text now fades out over 300 ms at power-on (it was a hard cut on the 2D screen and the largest first step). Please re-run the frame analysis; the tile step should be at or under 0.05 per 100 ms.
+- **BUG-5 (clock):** `useIntroClock` and the haunt scheduler use real elapsed time. Only a gap over 1 s (hidden tab or stall) counts as a pause. The duration test still passes (lint, typecheck, 51 tests, build all pass).
