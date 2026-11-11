@@ -297,3 +297,53 @@ Wrote `docs/decisions/0012-theme-2050.md` (Proposed): module fate, facts impact,
 
 ### Open questions
 - None for the user. The face choice (monospaced or proportional) and whether the Colour/B&W option survives belong to the designer.
+
+---
+
+## 2050 theme: Phase 3 (2026-11-11)
+
+### Summary
+ADR 0012 is Accepted, with the user's decisions recorded:
+- the name stays "Transmission Pending";
+- fonts are Space Grotesk, Atkinson Hyperlegible and Space Mono (all OFL; Space Mono keeps the rasteriser core);
+- no year in the story;
+- "Holo room" is the label for `tv-room`;
+- the display is a 16:9 pane with a centred 4:3 text card;
+- `glitch` is added;
+- Colour is on by default, with off meaning Monochrome;
+- there is a Solid panels option.
+
+Architecture §17 covers the theme. The T50-12 stale-wording check is built.
+
+Verification: in a clean clone of HEAD with only my files applied, build, lint, typecheck and test (164 of 164) pass, and `check:wording --dist` runs. In the shared tree, the build and typecheck currently fail on other agents' in-progress files (listed under Requests).
+
+### Files changed
+- docs/decisions/0012-theme-2050.md: Accepted; "Accepted decisions" table; the open questions closed
+- docs/architecture.md: reading-guide note; new §17 (what changes, the Holo room anchor, glass rules, CSP and `index.html`, stale-wording check, ownership)
+- index.html: preload `./fonts/space-mono-regular.woff2`; meta description no longer mentions a 1970s television
+- src/scene/environments/contract.ts: `ScreenAnchorSpec.inset` (optional, per-edge fraction); `classifyPlacement(..., { inset })`; `insetRect()`; aspect doc updated (16:9 everywhere)
+- src/scene/environments/registry.ts: `tv-room` label "Holo room"
+- scripts/check-stale-wording.ts, scripts/stale-wording.allow.json (new); package.json script `check:wording`
+- tests/unit/stale-wording.test.ts (new); tests/unit/environment-contract.test.ts (inset test)
+
+### Decisions
+- **CSP unchanged.** Fonts are same-origin; the grain tile is an inline SVG `data:` URL, which `img-src data:` allows; Vite rewrites `/fonts/...` CSS URLs to relative ones.
+- **`theme-color` held at `#000000`** (the target is `#05070d`): QA's `repo.test.ts` still asserts v1's grey theme colour, and I do not own that test. A one-line flip once QA retires the assertion.
+- **Holo room anchor:** the scene-developer had already set `aspect: 16/9`, `fill: 0.6`, `align: 'centre'` in `tv-room/index.tsx` while I worked, so I left their file alone. Only `inset: 0.015` is missing (request below).
+- **The stale-wording check scans user-facing strings only** (TypeScript parser over JSX text, UI attributes and sentence-like literals), plus copy files and the built pages, so code identifiers such as `src/ui/teletext/` and `useCrtMaterial` never trip it. Fact segments are exempt (truthful history, NFR-12). It is not part of `npm run build`, so the scheduled guide rebuild of an old tag is unaffected.
+
+### Requests for other agents
+- **frontend-developer:**
+  1. `src/ui/roomActions.ts` declares `toggleSolidPanels` twice (TS2323 and TS2393); this currently stops `npm run build`.
+  2. `src/state/colourActive.ts`'s new signature breaks `tests/unit/v2-layout-channels.test.ts` (it expects 1 argument, the test passes 3); update the test with QA, or keep a compatible export.
+  3. T50-12: `src/ui/components/rooms.ts:19` reads "A 1970s set in a dark room. The story lives here."; rewrite it for the Holo room.
+  4. Pass `inset: screen.inset ?? 0` to `classifyPlacement` in `src/ui/player/layout.ts`.
+  5. Switch the `main.tsx` imports to `tokens-2050.css` and `fonts-2050.css` when ready.
+- **scene-developer:** add `inset: 0.015` to `screen` in `src/scene/environments/tv-room/index.tsx`, and pass `inset: screen.inset ?? 0` in `EnvironmentCamera.tsx`'s `classifyPlacement` call.
+- **qa-engineer:**
+  1. Retire `repo.test.ts`'s VT323 test (the fonts are now Space Grotesk, Atkinson Hyperlegible and Space Mono; check `public/fonts/LICENCES.md` and the three OFL texts) and its grey `theme-color` assertion. Then ask the architect to set `theme-color` to `#05070d`.
+  2. Own `tests/unit/stale-wording.test.ts`.
+  3. The other retired tests are in ADR 0012 §3.
+- **ux-ui-designer:** `src/styles/tokens-2050.css` fails `prettier --check`; run `npx prettier --write src/styles/tokens-2050.css`.
+- **devops-engineer:** in CI on pushes to `v2` and `main`, run `npm run build && npm run check:wording -- --dist --strict`.
+- **product-manager:** if the permission email or a history note ("v1 was the 1970s release") lives in a file of its own, add the email to `extraFiles`, and the history note as a file-scoped allow entry, in `scripts/stale-wording.allow.json`.

@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   classifyPlacement,
+  insetRect,
   ENVIRONMENT_IDS,
   type ScreenCorners,
 } from '../../src/scene/environments/contract.ts';
@@ -51,6 +52,23 @@ describe('classifyPlacement', () => {
       kind: 'focus',
       reason: '2d',
     });
+  });
+  it('applies the anchor inset to every edge before the size and screen checks (Holo room 1.5 per cent)', () => {
+    expect(insetRect({ x: 0, y: 0, width: 1000, height: 500 }, 0.015)).toEqual({
+      x: 15,
+      y: 7.5,
+      width: 970,
+      height: 485,
+    });
+    const placed = classifyPlacement(quad(100, 100, 1000, 562.5), vp, { ...opts, inset: 0.015 });
+    expect(placed).toEqual({
+      kind: 'inline',
+      rect: { x: 115, y: 108.4375, width: 970, height: 545.625 },
+    });
+    // An inset can push a just-large-enough glass under 480 x 270 into focus mode.
+    expect(classifyPlacement(quad(0, 0, 490, 276), vp, { ...opts, inset: 0.015 }).kind).toBe(
+      'focus',
+    );
   });
   it('never shows the player in the browse pose', () => {
     expect(classifyPlacement(quad(100, 100, 960, 540), vp, { ...opts, pose: 'browse' })).toEqual({

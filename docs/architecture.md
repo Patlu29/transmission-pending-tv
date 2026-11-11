@@ -11,6 +11,7 @@ Owner: architect. Status: v1 approved (2026-11-10) and shipped as `v1.0`. v2 sec
   - section 8: privacy, a CSP is now enforced;
   - NFR-7: no third-party request before a channel is picked.
 - ADR 0009 and ADR 0010 are superseded and describe nothing that exists.
+- **2050 theme (v2 only, ADR 0012, accepted 2026-11-11):** section 17 replaces, for v2, the 1970s look of sections 4.4 and 4.5 (CRT, teletext styling, greyscale, test card, VT323). The engines in sections 4 and 5 are unchanged.
 
 ## 1. Summary
 
@@ -493,3 +494,79 @@ YOUTUBE_API_KEY=<secret> node scripts/guide/resolve.ts \
 | YouTube changes its embed rules (as with the 2025 referrer requirement) | Error mapping (ADR 0011 section 4); `guide.json` drops non-embeddable entries |
 | Third-party video can flash | Disclosure and the partial-conformance statement (ADR 0011 section 5) |
 | A meta CSP cannot set `frame-ancestors` | Accepted for a static site (ADR 0011 section 6) |
+
+
+---
+
+# v2: the 2050 "holographic glass" theme (ADR 0012)
+
+## 17. 2050 theme
+
+### 17.1 What changes and what does not
+
+| Area | v1 / v2 before the retheme | v2 with the 2050 theme | Unchanged? |
+|---|---|---|---|
+| Facts pipeline, strict CI, template rules, roles, phases, stack list | Sections 5 and 7 | Same | **Yes** |
+| Intro engine: clock, pagination, sub-pages, effects, haunt scheduler, cue grammar | Sections 4.1 and 4.4, frontend handoff | Same, plus one cue, `glitch` (chrome only) | Yes, plus one cue |
+| Light-field text rasteriser | `src/ui/teletext/` with VT323 | The same module and frame model; `draw.ts`, `palette.ts` and `font.ts` re-skinned for Space Mono; a 4:3 text card centred in the 16:9 pane | Core yes |
+| Screen material | CRT shader (`useCrtMaterial`) | Holo shader behind the same uniform contract (`useHoloMaterial`; ADR 0012 §1 table) | Contract yes |
+| Channel 0 device | `TvBody` (wood CRT), `KnobLayer` | `HoloDisplay` (pane and puck, procedural), `ControlRings` (same picking and `knobCue` contract) | Contracts yes |
+| Idle and loading picture | Test card | Original standby pattern (same call shape) | Call shape yes |
+| Modes | `3d-set`, `3d-screen`, `2d` | Same ids and detection; 2D uses the 2050 CSS | Yes |
+| Colour | Greyscale (FR-2), then a Colour/B&W canvas filter (§12.4) | Colour by default; the switch's off position is **Monochrome** (the same canvas grayscale filter), `data-colour="mono"` on `<html>` | Mechanism yes |
+| Tone mapping | `NoToneMapping` (`flat`) for greyscale | `NeutralToneMapping` recommended; section 4.5 is retired for v2 | No |
+| Chrome | Greyscale DOM | Holographic glass (tokens in `src/styles/tokens-2050.css`), with Solid panels | No |
+| Fonts | VT323, Barlow Condensed | Space Grotesk, Atkinson Hyperlegible, Space Mono (OFL 1.1, self-hosted) | No |
+| Rooms 1 to 8 | ADR 0011 scenes | Same scenes, 2050 chrome | Scenes yes |
+| YouTube rules | ADR 0011 | Same, extended to glass (17.3) | Yes, extended |
+
+### 17.2 Holo room anchor
+- `tv-room` keeps its id; its label is "Holo room".
+- The anchor is `{ aspect: 16/9, fill: 0.60, align: 'centre', inset: 0.015 }`, so the player rect is the glass inset by 1.5 per cent on each edge, with the ceramic border and edge light outside it.
+- `ScreenAnchorSpec.inset` is optional (default 0). Callers pass it to `classifyPlacement(..., { inset })`; `insetRect()` is exported from `contract.ts`.
+- The watch pose is face-on and centred, with the whole device within 95 per cent of the viewport width (design spec 2050 §3.2).
+
+### 17.3 Glass and the player
+- **Ancestors:** no ancestor of the player may have `filter`, **`backdrop-filter`**, `opacity` below 1, `mix-blend-mode`, `mask`, `clip-path` or a 3D transform.
+- **Overlap:** no frosted, tinted or glowing element (including `box-shadow`, `outline` and glow) may overlap the player rect. Within 24 px of it, only solid near-player plates are allowed (design spec 2050).
+- **Live blur:** only on small chrome (blur of 12 px or less, never nested). Large panels are tinted glass with grain and no live blur.
+- **Solid panels:** `data-glass="solid"` on `<html>` is set by the viewer's Solid panels option, by `prefers-reduced-transparency: reduce`, when `backdrop-filter` is unsupported, and when `AdaptiveDpr` steps down.
+- **Contrast:** text contrast must hold against the worst backdrop, by a minimum tint, not by the scene.
+
+### 17.4 Network, CSP and `index.html`
+- **CSP:** unchanged. Fonts are same-origin (`font-src 'self'`). The grain tile is an inline SVG `data:` URL, allowed by `img-src data:`. Vite rewrites the absolute `/fonts/...` URLs in CSS to relative ones, so ADR 0007 holds.
+- **`index.html`:**
+  - the font preload is `./fonts/space-mono-regular.woff2`;
+  - the meta description no longer mentions a 1970s television;
+  - `theme-color` should become `#05070d` (`--color-bg`). It is held at `#000000` until QA retires v1's greyscale `theme-color` assertion in `tests/unit/repo.test.ts` (ADR 0012 §3); the change is one line.
+  - The favicon path is unchanged (the ux-ui-designer redraws `public/favicon.svg`).
+
+### 17.5 Stale-wording check (T50-12)
+
+`npm run check:wording` (`scripts/check-stale-wording.ts`):
+
+| Flag | Effect |
+|---|---|
+| (none) | Source copy |
+| `--dist` | Also built HTML and `dist/intro.json` (after `npm run build`) |
+| `--strict` | Expired allow-list entries fail |
+
+**Terms:** 1970s or 70s, seventies, CRT, teletext, wood or wooden TV, television set, TV set.
+
+**Scanned:**
+- in full: `index.html`, `privacy.html`, `README.md`, `src/content/intro.tmpl` and `intro.cues` (comment lines skipped), `public/**/*.svg`, and any `extraFiles` listed in the allow file;
+- from `src/**/*.{ts,tsx}`, user-facing strings only, found with the TypeScript parser: JSX text, `aria-*`, `title`, `alt`, `placeholder` and `label` attributes, and string or template literals containing whitespace. Identifiers, import paths, class names and comments are not copy;
+- CSS: `content:` strings.
+
+**Exempt by rule:** fact segments and `dist/facts.json`. Commit subjects are the truthful build history, and NFR-12 forbids rewriting it.
+
+**Allow-list:** `scripts/stale-wording.allow.json`. Each entry has a `pattern` (a regex; a hit inside a matching span is allowed), a `reason`, optional `files` (path prefixes) and an optional `expires` date (a warning after it; an error with `--strict`). It ships with the retired token names `--crt-*` and `--font-teletext`, both expiring 2027-03-31. The history note ("v1 was the 1970s release") is added as a file-scoped entry once it exists.
+
+**Not in `npm run build`,** so the scheduled guide rebuild of an old tag is never affected. CI (devops-engineer) runs `npm run build && npm run check:wording -- --dist --strict` on pushes to `v2` and `main`.
+
+### 17.6 Ownership for the 2050 build
+As ADR 0012 §5, with these names now fixed:
+- `src/styles/tokens-2050.css` and `fonts-2050.css`: ux-ui-designer (the frontend-developer switches the imports in `main.tsx`);
+- `public/fonts/`: technical-artist;
+- `scripts/check-stale-wording.ts` and `scripts/stale-wording.allow.json`: architect (entries may be proposed by any agent with a reason);
+- `tests/unit/stale-wording.test.ts`: written by the architect, owned by the qa-engineer.

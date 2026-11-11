@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "allow": [
+    {
+      "pattern": "--crt-[a-z0-9-]+",
+      "reason": "Retired CSS token names kept for one release so v1-era code keeps resolving (design spec 2050 §1, ADR 0012). Not user-facing; remove in the cleanup.",
+      "expires": "2027-03-31"
+    },
+    {
+      "pattern": "--font-teletext\\b",
+      "reason": "Retired font token name, aliased to --font-screen (Space Mono), kept for one release (design spec 2050 §1). Not user-facing.",
+      "expires": "2027-03-31"
+    }
+  ],
+  "extraFiles": []
+}
