@@ -4,9 +4,8 @@ import { SetCameraRig } from '../../cameras/SetCameraRig';
 import { SET_BOX } from '../../cameras/poses';
 import { useDisplayStore } from '../../integration/stores';
 import { SetLights } from '../../lights/SetLights';
-import { GreyEnvironment } from '../../materials';
 import { ControlRings } from '../../objects/ControlRings';
-import { HoloRoom } from '../../objects/HoloRoom';
+import { HoloRoomHost } from '../../objects/HoloRoomHost';
 import { TvSet, TvSetLive } from '../../objects/TvSet';
 import { ScreenOnly } from '../../ScreenOnly';
 import type { EnvironmentSceneProps } from '../contract.ts';
@@ -45,10 +44,8 @@ function TvRoomScene({ channel }: EnvironmentSceneProps) {
   return (
     <>
       {live ? <EnvironmentCamera envId="tv-room" extent={SET_EXTENT} /> : <SetCameraRig />}
-      {/* PLACEHOLDER: the technical-artist's coloured environment replaces GreyEnvironment */}
-      <GreyEnvironment intensity={0.4} />
       <SetLights />
-      <HoloRoom live={live} />
+      <HoloRoomHost live={live} />
       <ControlRings>{live ? <LiveDisplay /> : <TvSet />}</ControlRings>
     </>
   );

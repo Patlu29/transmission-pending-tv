@@ -1,13 +1,14 @@
 /* eslint-disable react-hooks/immutability -- R3F materials are mutated imperatively by design */
-// INTEGRATION SEAM 4 of 4 (part): the CRT material for the screen.
+// INTEGRATION SEAM 4 of 4 (part): the holo material for the screen.
 //
-// Builds the technical-artist's CRT material and copies the shared `screenState`
+// Builds the technical-artist's holo material and copies the shared `screenState`
 // (screenState.ts) and the haunt store into its uniforms every frame. 3d-set passes it
-// to <TvBody> as the glass material (objects/TvSet.tsx); 3d-screen draws it on
+// to <HoloDisplay> as the glass material (objects/TvSet.tsx); 3d-screen draws it on
 // <ScreenSurface> (objects/ScreenSurface.tsx).
 import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
-import { createCrtScreenMaterial, rollPhase } from '../materials';
+import { createHoloScreenMaterial, rollPhase } from '../materials/holo';
+import { useSettingsStore } from '@/state/settingsStore';
 import { publishSceneTest } from './testHook';
 import { screenState } from './screenState';
 import { readHaunt, useDisplayStore, useIntroStore } from './stores';
@@ -15,15 +16,16 @@ import { useScreenTexture } from './useScreenTexture';
 
 const rollScratch = { active: false, startedAt: 0, dur: 0 };
 
-export function useHoloMaterial(aspect: number, curvature: number) {
+/** `edge`: 0 on the 3d-set pane (HoloDisplay has its own edge light), 1 on the 3d-screen sheet. */
+export function useHoloMaterial(aspect: number, edge: 0 | 1) {
   const map = useScreenTexture();
   const invalidate = useThree((s) => s.invalidate);
   const material = useMemo(
-    () => createCrtScreenMaterial(null, { uAspect: aspect, uCurvature: curvature }),
-    [aspect, curvature],
+    () => createHoloScreenMaterial(null, { uAspect: aspect, uEdge: edge }),
+    [aspect, edge],
   );
   useEffect(() => {
-    publishSceneTest({ crtUniforms: material.uniforms });
+    publishSceneTest({ crtUniforms: material.uniforms, holoUniforms: material.uniforms });
     return () => material.dispose();
   }, [material]);
   useEffect(() => {
@@ -41,7 +43,8 @@ export function useHoloMaterial(aspect: number, curvature: number) {
     set('uWarmup', screenState.warmup);
     set('uCollapse', screenState.collapse);
     set('uCalm', screenState.reduced ? 1 : 0);
-    set('uJitter', screenState.reduced ? 0 : 1);
+    // Monochrome (the Colour option off) greys the output and drops the colour fringe.
+    set('uMono', useSettingsStore.getState().colour === 'bw' ? 1 : 0);
     set('uBrightness', screenState.brightness);
     set('uNoiseHz', screenState.noiseHz);
     set('uBar', screenState.bar);

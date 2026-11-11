@@ -3,7 +3,7 @@
 // Written every frame by <ScreenDriver> (src/scene/ScreenDriver.tsx), read by the
 // screen material (copied into CRT uniforms in objects/ScreenSurface.tsx) and by
 // the room light. A plain object, not React state, so nothing re-renders per frame.
-import { COLLAPSE_SECONDS, WARMUP_SECONDS } from '../shaders/crt/createCrtMaterial';
+import { COLLAPSE_SECONDS, WARMUP_SECONDS } from '../materials/holo';
 
 export interface ScreenState {
   /** Screen has power (warming, playing or ended), or is still collapsing. */

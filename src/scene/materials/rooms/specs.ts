@@ -1,5 +1,4 @@
 /** Screen specs and palettes for the nine rooms. Owner: technical-artist. The scene-developer reads `*_SCREEN` for the contract. */
-import { TV_LAYOUT } from '../tv/layout.ts';
 import type { RoomScreenSpec } from './roomKit.ts';
 
 export const BEDROOM_SCREEN: RoomScreenSpec = {
@@ -154,22 +153,4 @@ export const MOUNTAIN_SKY_PALETTE = {
   aurora2: '#8a5ae0',
   frame: '#0a0a12',
   hairline: '#cfd8ff',
-} as const;
-
-export const TV_ROOM_SCREEN: RoomScreenSpec = {
-  aspect: 4 / 3,
-  widthM: TV_LAYOUT.screen.width,
-  fill: 0.55,
-  align: 'left',
-  vAlign: 'centre',
-};
-export const TV_ROOM_PALETTE = {
-  walnut: '#6b4a2f',
-  walnutDark: '#3a281a',
-  wallpaper: '#7d7336',
-  accentLine: '#b0561e',
-  shelf: '#2b2118',
-  lampShade: '#e8a54b',
-  lampGlow: '#ffcf80',
-  bezel: '#141414',
 } as const;

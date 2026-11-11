@@ -2,7 +2,7 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useEffect, useRef } from 'react';
 import { COLLAPSE_MS, screenState, WARMUP_MS } from './integration/screenState';
 import { useDisplayStore, useHauntStore, useIntroStore } from './integration/stores';
-import { estimateCrtMeanLuminance } from './materials';
+import { estimateHoloMeanLuminance } from './materials/holo';
 
 /**
  * Derives screenState (warm-up timeline, CRT collapse on power-off, brightness,
@@ -81,10 +81,10 @@ export function ScreenDriver() {
     s.noiseHz = status === 'playing' || status === 'ended' ? 12 : 24;
     s.bar = status === 'ended' ? 0 : 1;
     // Mean luminance for the room light, from the technical-artist's model.
-    s.meanLuminance = estimateCrtMeanLuminance({
+    s.meanLuminance = estimateHoloMeanLuminance({
       warmup: s.warmup,
       collapse: s.collapse,
-      pictureMean: status === 'playing' || status === 'ended' ? 0.12 : 0.208,
+      pictureMean: status === 'playing' || status === 'ended' ? 0.12 : 0.066,
       brightness: s.brightness,
     });
 

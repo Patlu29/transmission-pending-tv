@@ -10,7 +10,7 @@ const CEILING = 0.25; // spec 7.5: at most 25 per cent of max
 const CUTOFF_HZ = 2; // spec 7.5: one-pole low-pass at 2 Hz
 const AMBIENT = 0.35;
 const KEY = 0.9;
-const ENV = 0.4; // GreyEnvironment intensity in Experience
+const ENV = 0.5; // HoloEnvironment intensity
 const DIM_MAX = 0.65; // spec 16.6.3: room x (1 - dim x 0.65)
 
 /**

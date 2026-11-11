@@ -12,8 +12,6 @@ export {
 } from './roomParts.tsx';
 export { MountainSkyRoom } from './mountainSky/MountainSkyRoom.tsx';
 import { MountainSkyRoom as MountainSkyRoomImpl } from './mountainSky/MountainSkyRoom.tsx';
-export { TvRoomExtras } from './tvRoom/TvRoomExtras.tsx';
-import { TvRoomExtras as TvRoomExtrasImpl } from './tvRoom/TvRoomExtras.tsx';
 export { CinemaRoom } from './cinema/CinemaRoom.tsx';
 import { CinemaRoom as CinemaRoomImpl } from './cinema/CinemaRoom.tsx';
 export { DriveInRoom } from './driveIn/DriveInRoom.tsx';
@@ -31,7 +29,6 @@ import { SpaceDeckRoom as SpaceDeckRoomImpl } from './spaceDeck/SpaceDeckRoom.ts
 export * from './specs.ts';
 import {
   MOUNTAIN_SKY_SCREEN,
-  TV_ROOM_SCREEN,
   CINEMA_SCREEN,
   DRIVE_IN_SCREEN,
   OPEN_AIR_SCREEN,
@@ -42,7 +39,6 @@ import {
 } from './specs.ts';
 export const ROOMS = {
   'mountain-sky': { Room: MountainSkyRoomImpl, screen: MOUNTAIN_SKY_SCREEN },
-  'tv-room': { Room: TvRoomExtrasImpl, screen: TV_ROOM_SCREEN },
   cinema: { Room: CinemaRoomImpl, screen: CINEMA_SCREEN },
   'drive-in': { Room: DriveInRoomImpl, screen: DRIVE_IN_SCREEN },
   'open-air': { Room: OpenAirRoomImpl, screen: OPEN_AIR_SCREEN },

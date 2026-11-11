@@ -1,6 +1,6 @@
 // Camera poses and limits from design-spec 4. Distances are multiples (k) of the
 // watch distance D, so they stay correct on every window size.
-import { HOLO_LAYOUT } from '../objects/holoLayout';
+import { HOLO_LAYOUT } from '../materials/holo';
 
 const deg = (d: number) => (d * Math.PI) / 180;
 
@@ -37,10 +37,10 @@ export const OFF_WATCH_K = 0.05;
  * Model coordinates: origin at the glass centre.
  */
 export const SET_BOX = {
-  width: HOLO_LAYOUT.device.width,
-  height: HOLO_LAYOUT.device.height,
-  cx: HOLO_LAYOUT.device.cx,
-  cy: HOLO_LAYOUT.device.cy,
+  width: HOLO_LAYOUT.cabinet.width,
+  height: HOLO_LAYOUT.pane.height / 2 - HOLO_LAYOUT.shelfY,
+  cx: HOLO_LAYOUT.originOffsetX,
+  cy: (HOLO_LAYOUT.pane.height / 2 + HOLO_LAYOUT.shelfY) / 2,
 };
 /** Camera look-at point at every pose: the centre of the set's front plane. */
 export const SET_CENTRE: readonly [number, number, number] = [SET_BOX.cx, SET_BOX.cy, 0];

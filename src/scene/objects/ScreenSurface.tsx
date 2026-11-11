@@ -8,9 +8,9 @@ interface Props {
   height: number;
 }
 
-/** 3d-screen quad: flat, so the shader curves the picture harder (0.08). */
+/** 3d-screen quad: flat, with the shader's own 2 px edge light. */
 export function ScreenSurface({ width, height }: Props) {
-  const material = useHoloMaterial(width / height, 0.08);
+  const material = useHoloMaterial(width / height, 1);
   const geometry = useMemo(() => new PlaneGeometry(width, height, 1, 1), [width, height]);
   useEffect(() => () => geometry.dispose(), [geometry]);
   return <mesh name="screen" geometry={geometry} material={material} />;

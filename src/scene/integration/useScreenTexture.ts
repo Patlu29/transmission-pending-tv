@@ -2,11 +2,11 @@
 //
 // Real source: displayStore.screenCanvas, drawn by the frontend's teletext
 // rasteriser (ADR 0005), with displayStore.screenVersion incremented per redraw.
-// While neither exists this draws a PLACEHOLDER test-card-like canvas of its own.
+// While neither exists this draws a PLACEHOLDER calibration-field-like canvas of its own.
 import { useThree } from '@react-three/fiber';
 import { useEffect, useState } from 'react';
 import { CanvasTexture } from 'three';
-import { prepareScreenTexture } from '../shaders/crt/createCrtMaterial';
+import { prepareScreenTexture } from '../shaders/holo/createHoloMaterial';
 import { useDisplayStore, useIntroStore } from './stores';
 
 function drawPlaceholder(c: HTMLCanvasElement, label: string) {

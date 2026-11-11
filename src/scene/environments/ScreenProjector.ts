@@ -112,9 +112,11 @@ export function solveWatch(
   }
   let cy: number;
   if (options.phone) cy = (screen.vAlign === 'upper' ? 0.34 : 0.68) * vh;
+  else if (screen.vAlign === 'upper')
+    cy = 0.41 * vh; // pane high: the puck's top stays clear of the info row
   else if (ext && ext.minY !== undefined && ext.maxY !== undefined)
     cy = vh / 2 + ((ext.minY + ext.maxY) / 2) * ppm;
-  else cy = (screen.vAlign === 'upper' ? 0.41 : 0.5) * vh;
+  else cy = 0.5 * vh;
 
   // 4. Camera on the normal axis through T, T shifted in the plane so A lands at (cx, cy).
   const a = (cx - vw / 2) / ppm;

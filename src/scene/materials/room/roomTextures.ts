@@ -8,7 +8,7 @@ import {
   RepeatWrapping,
   SRGBColorSpace,
 } from 'three';
-import { drawOccupant } from '../ghost/drawOccupant.ts';
+import { drawOccupant } from '../holo/occupant2050.ts';
 
 function canvas(w: number, h: number): [HTMLCanvasElement, CanvasRenderingContext2D] {
   const c = document.createElement('canvas');

@@ -19,3 +19,10 @@ No texture files are added for the nine v2 rooms. Every room texture is drawn at
 shader (cloud puffs, Earth, rain and bokeh, parallax strips, the "CHAI" and "EXIT" signs, the wall paper and dust
 tiles). Original work, no photographs, no real mountain, no NASA or other imagery, no brand marks. The sign text is
 generic and set in Barlow Condensed (SIL OFL 1.1, see `public/fonts/LICENCES.md`).
+
+## 2050 retheme (added 2026-11-11)
+No new texture files. The calibration field (`src/scene/materials/standby/drawStandby.ts`), the Occupant figure
+(`src/scene/materials/holo/occupant2050.ts`) and the room textures are drawn at run time. Original work, no brand marks.
+`test-card-960x720.png` is the 1970s test card and is not used by the 2050 build (see the handoff's removal list);
+`noise-tile-64.png` is still used for the light-field grain in `holo2d.css`. Caption fonts: Space Grotesk and Space Mono
+(SIL OFL 1.1, see `public/fonts/LICENCES.md`).
