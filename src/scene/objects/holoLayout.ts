@@ -32,5 +32,5 @@ export const HOLO_LAYOUT = {
   rings: { channel: 0.12, volume: 0.07, tube: 0.006 },
 } as const;
 
-/** Width of the anchor and player rect: the glass inset on both sides. */
-export const HOLO_ANCHOR_WIDTH = PANE_W * (1 - 2 * 0.015);
+/** Width of the anchor: the whole glass (the player rect is inset by `playerInset` on each edge). */
+export const HOLO_ANCHOR_WIDTH = PANE_W;

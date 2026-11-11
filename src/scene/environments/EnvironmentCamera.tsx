@@ -7,6 +7,7 @@ import { publishSceneTest } from '../integration/testHook';
 import { getAnchor, subscribeAnchor } from './anchorRegistry.ts';
 import {
   classifyPlacement,
+  insetRect,
   type EnvironmentId,
   type PlayerPlacement,
   type Rect,
@@ -195,6 +196,7 @@ export function EnvironmentCamera({
       phone: phone(),
       userFocus: env.userFocus,
       mode2d: false,
+      inset: a.spec.inset,
     });
     publish(placement);
     // Report only a settled watch pose; browse and tweens report null (the player stays hidden).
@@ -204,12 +206,16 @@ export function EnvironmentCamera({
     } else if (corners) {
       const xs = corners.map((c) => c.x);
       const ys = corners.map((c) => c.y);
-      lastRect.current = {
-        x: Math.min(...xs),
-        y: Math.min(...ys),
-        width: Math.max(...xs) - Math.min(...xs),
-        height: Math.max(...ys) - Math.min(...ys),
-      };
+      // The player rect is the projected glass inset on every edge (spec.inset), also for the keep-out box.
+      lastRect.current = insetRect(
+        {
+          x: Math.min(...xs),
+          y: Math.min(...ys),
+          width: Math.max(...xs) - Math.min(...xs),
+          height: Math.max(...ys) - Math.min(...ys),
+        },
+        a.spec.inset ?? 0,
+      );
     } else lastRect.current = null;
 
     const r = lastRect.current;

@@ -11,9 +11,9 @@ import { lazyScene } from '../lazyScene.ts';
 const environment: EnvironmentModule = {
   id: 'tv-room',
   Scene: lazyScene('tv-room'),
-  // 16:9. widthM is the player rect: the 1.2 m glass inset by 1.5 per cent on each side (1.2 x 0.97 = 1.164);
-  // it equals HOLO_ANCHOR_WIDTH in objects/holoLayout.ts.
-  screen: { aspect: 16 / 9, widthM: 1.164, fill: 0.6, align: 'centre' },
+  // 16:9. The anchor is the whole 1.2 m glass (HOLO_LAYOUT.pane.width); the player rect is the glass inset by
+  // 1.5 per cent on every edge (the ceramic border and edge light lie outside it).
+  screen: { aspect: 16 / 9, widthM: 1.2, fill: 0.6, align: 'centre', inset: 0.015 },
   hostsChannel0: true,
 };
 
