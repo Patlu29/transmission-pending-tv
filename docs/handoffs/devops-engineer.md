@@ -32,3 +32,12 @@ Wrote the CI and GitHub Pages deploy workflows, fixed BUG-6 (no source maps or `
 - qa-engineer: regenerate visual baselines on Linux so the visual job can become blocking; consider adding the platform to `snapshotPathTemplate`.
 - performance-optimiser: Pages fixes `max-age=600` and gzip only; the "long-cache `assets/`" request cannot be met on this host.
 - tech-lead: commit the files, then follow the manual steps in docs/deployment.md.
+
+## v2 Phase 4d addendum (branch `v2`)
+- `.github/workflows/guide.yml` (new): cron every 30 minutes, `workflow_dispatch`, and `workflow_run` after a successful deploy. Never on pull requests. A `gate` job skips cleanly (notice) if `YOUTUBE_API_KEY` is unset; the build job skips with a notice if no `v*` tag exists. It checks out the latest `v*` tag with full history, runs a strict build, restores and saves `.guide-cache/` through `actions/cache/restore` and `save` (rolling key; saved with `always()`), runs `guide:resolve` with `--previous` as the live Pages URL, greps `dist/` for the key, then deploys in the shared `pages` group. Resolver exit 1 fails the job; degraded exit 0 deploys.
+- `.github/workflows/deploy.yml`: now also publishes a guide (resolved, or the fallback if no secret or the resolver fails) and checks `dist/guide.json` exists.
+- `.github/scripts/guide-fallback.mjs` (new): writes the all-off-air guide from enabled sources; output passes `parseGuide`.
+- `.github/workflows/ci.yml`: `guide:check -- --fail-stale` on pushes only.
+- `docs/deployment.md`: key creation steps, quota, pause and resume, 60-day rule, billing-lock note.
+- Risks: GitHub keeps one pending run per concurrency group, so a pending tag deploy can be replaced by a guide run (safe, same tag). Scheduled and `workflow_run` triggers run only from the default branch, so nothing runs until `v2` is merged to `main`. Not run on GitHub (billing lock); YAML parses with js-yaml, actionlint unavailable.
+- Open question: `deploy.yml` and `guide.yml` both need a `v*` tag for v2; the first v2 tag (for example `v2.0.0`) must exist before the schedule does anything (user).

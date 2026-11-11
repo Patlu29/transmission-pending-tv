@@ -7,6 +7,7 @@ Host: **GitHub Pages**, deployed with GitHub Actions (ADR 0002, ADR 0011). No ba
 | File | Triggers | What it does | Deploys? |
 |---|---|---|---|
 | `.github/workflows/ci.yml` | push to `main`, pull request to `main` | Job `checks`: `npm ci`, strict `npm run build`, lint, format check, typecheck, unit tests, clean-tree check, `dist/` check (no `.map`, no `.gitkeep`). Then `e2e` matrix: chromium, webkit, mobile (3 projects), plus informational `visual (chromium)` and `firefox` | Never |
+| `.github/workflows/guide.yml` | every 30 minutes (cron), manual run, and after a successful `Deploy to GitHub Pages` run. Never on pull requests | Skips with a notice if `YOUTUBE_API_KEY` is unset or no `v*` tag exists. Otherwise: checks out the latest `v*` tag (full clone), strict build, restores the quota ledger from `actions/cache`, runs `guide:resolve`, saves the ledger, checks `dist/` does not contain the key, deploys to Pages | Yes (the same site, with a fresh `guide.json`) |
 | `.github/workflows/deploy.yml` | pushed tag `v*`, or manual run (Actions tab, "Run workflow") | Full clone, strict build, lint, typecheck, unit tests, upload `dist/`, deploy to Pages, smoke test | Yes, only on those triggers |
 
 Committing the workflow files deploys nothing.
@@ -32,7 +33,7 @@ Committing the workflow files deploys nothing.
 | Name | Where | Used by | Needed now? |
 |---|---|---|---|
 | `GITHUB_TOKEN` | provided by Actions | all jobs, permissions set per workflow (`contents: read`; deploy adds `pages: write`, `id-token: write`) | automatic |
-| `YOUTUBE_API_KEY` | repo secret (v2) | future `guide.yml` (YouTube Data API v3) | **No, v2 only** |
+| `YOUTUBE_API_KEY` | repo secret | `guide.yml` and `deploy.yml` (YouTube Data API v3, resolver reads it from the environment only) | Needed for live channels. Without it the site deploys with an all-off-air guide |
 
 No other secrets or variables. `BASE_PATH` and `FACTS_STRICT` (see `.env.example`) are not set in CI: the base path stays `./` (ADR 0007) and `CI=true` already makes facts strict. Never use a `VITE_` variable for a secret.
 
@@ -87,8 +88,42 @@ Pages has no one-click rollback. Choose one:
 
 Never delete and re-push a tag to "redo" a release; use a new tag.
 
-## v2 notes (not built)
-- `guide.yml` (ADR 0011) will run on a 30-minute schedule, check out the latest `v*` tag with full history, build strict, write `dist/guide.json`, and deploy to Pages. It will use the same `pages` concurrency group and the same permissions as `deploy.yml`. Nothing in v1 blocks that.
-- It needs a repo secret **`YOUTUBE_API_KEY`** (Google Cloud, YouTube Data API v3, restricted to that API). Never on `pull_request` events, so forks never see it. Add a secret scan and a `dist/` key check there.
-- GitHub disables scheduled workflows after 60 days without repository activity on a public repo; re-enable by hand or push a commit. Put this in the runbook.
-- The guide is never committed (it would change `git.commitCount`).
+## Channel guide (v2)
+
+### How it fits together
+- `guide.yml` rebuilds the **latest `v*` tag** (so app files and v1 facts equal the release), resolves live streams, writes `dist/guide.json` and redeploys. The guide is never committed.
+- `deploy.yml` (a tag or manual deploy) also publishes a guide: resolved if the secret exists, otherwise (or if the resolver fails) the all-off-air fallback from `.github/scripts/guide-fallback.mjs`. The site always has a valid `guide.json`. A successful deploy triggers `guide.yml`, which refreshes it.
+- Resolver exit 1 (no key, invalid sources, bad arguments) fails the `guide.yml` job. Exit 0 with "degraded" in the log (API failure, quota cap, last-good entries kept) still deploys.
+- The quota ledger and last-good state live in `actions/cache` under `guide-ledger-<run id>` (rolling, restored by prefix). It is saved even if a later step fails. Cache entries can be evicted after 7 days unused or at the 10 GB repo limit; a lost ledger only means the daily spend count restarts, and the resolver's own cap (8,000 units) leaves headroom under Google's 10,000.
+- A key check (`grep -rIlF` over `dist/`) stops the deploy if the key appears. The resolver also refuses to write output containing it.
+- `guide:check --fail-stale` runs in `ci.yml` on pushes to `main` only (curation entries older than 90 days). PRs and the scheduled build only warn.
+- `guide.yml` shares the `pages` concurrency group with `deploy.yml`. GitHub keeps one pending run per group, so a waiting tag deploy can be replaced by a newer guide run. That is safe because the guide run deploys the latest tag.
+- Caveat: `workflow_run` and `schedule` triggers use the workflow file on the default branch, so `guide.yml` does nothing until it is merged to `main`.
+
+### Steps for the user: create the key (about 10 minutes, free)
+1. Go to https://console.cloud.google.com/ and sign in.
+2. Create a project (project selector, New project), for example `transmission-pending`. No billing account is required for the YouTube Data API free quota.
+3. APIs and Services, Library, search "YouTube Data API v3", Enable.
+4. APIs and Services, Credentials, Create credentials, API key. Copy it somewhere safe for the next step only.
+5. Edit the key: under **API restrictions** choose "Restrict key" and tick only **YouTube Data API v3**. Under **Application restrictions** choose **None**. Do not use an HTTP referrer restriction: the key is used server-side from GitHub Actions, which sends no referrer, so a referrer restriction would make every call fail. The API restriction is the protection.
+6. In GitHub: repo Settings, Secrets and variables, Actions, New repository secret. Name `YOUTUBE_API_KEY`, value the key. Not an environment secret, not a variable.
+7. Run **Actions, Refresh channel guide, Run workflow** to test (needs a `v*` tag to exist, and the workflow merged to `main`). Check the log for `[guide]` lines, then open the site and `.../guide.json`.
+8. If the key is ever exposed, delete it in Google Cloud, create a new one and update the secret.
+
+### Expected quota use
+- Default quota: 10,000 units a day, reset at midnight Pacific Time.
+- Per run: `videos.list` re-validation costs 1 unit per call of up to 50 IDs (about 2 for 53 channels, per ADR 0011). Rediscovering a dead entry costs 1 unit via `playlistItems.list`; the architect's estimate is under 100 units a day in normal running, and the resolver stops at 8,000.
+- 48 runs a day is about 100 or fewer units plus rediscoveries, well inside the quota. `search.list` (100 units) is not used.
+- GitHub Pages' soft limit is 10 builds an hour; 2 an hour from the schedule plus deploys is far below.
+- Actions minutes: public repos are free. Each run is about 2 to 3 minutes.
+
+### Pausing and resuming
+- **Pause:** Actions tab, Refresh channel guide, the "..." menu, **Disable workflow**. Or delete the secret (runs then skip with a notice). The site keeps the last deployed guide.
+- **Resume:** Enable workflow, or re-add the secret.
+- **60-day rule:** GitHub disables scheduled workflows in a public repo after 60 days with no repository activity (commits, not workflow runs). It emails the owner. Fix: Actions, Refresh channel guide, **Enable workflow**, or push any commit.
+
+### Account billing lock (current)
+GitHub Actions is currently blocked by the account billing lock, so **no workflow here will run** (CI, deploy or guide) until the lock is cleared in GitHub Settings, Billing and plans. Clear it before the steps in "Manual steps". Until then the site can only be deployed by another route.
+
+## v1 to v2 notes
+- The scheduled run is the reason Actions minutes and cache matter; both are within free limits for a public repo.

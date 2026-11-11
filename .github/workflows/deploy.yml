@@ -6,8 +6,9 @@
 #
 # Facts are strict (CI=true): full clone, clean tree. The tag commit itself is counted in the facts.
 #
-# Reserved for v2 (ADR 0011): a separate guide.yml will check out the latest v* tag on a schedule and deploy to
-# the same Pages environment. The shared concurrency group below makes the two serialise rather than collide.
+# v2 (ADR 0011): guide.yml refreshes dist/guide.json every 30 minutes from the latest v* tag and deploys to the
+# same Pages environment. The shared concurrency group below makes the two serialise rather than collide.
+# This workflow also publishes a guide.json (resolved, or the all-off-air fallback), so the site always has one.
 name: Deploy to GitHub Pages
 
 on:
@@ -68,10 +69,30 @@ jobs:
         run: npm run typecheck
       - name: Unit tests
         run: npm test
+      # The site must always have a guide.json. With the secret set, resolve it; on any failure, or with no secret,
+      # write the all-off-air fallback. The scheduled guide.yml refreshes it within 30 minutes.
+      - name: Guide (resolve, or all-off-air fallback)
+        env:
+          YOUTUBE_API_KEY: ${{ secrets.YOUTUBE_API_KEY }}
+        run: |
+          release="${GITHUB_REF_NAME}"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          repo="${GITHUB_REPOSITORY#*/}"
+          if [ -n "$YOUTUBE_API_KEY" ]; then
+            npm run guide:resolve -- --out dist/guide.json --release "$release" \
+              --previous "https://${owner}.github.io/${repo}/guide.json" || echo "::warning::guide resolver failed; using fallback"
+          else
+            echo "::notice::YOUTUBE_API_KEY not set; publishing the all-off-air guide."
+          fi
+          test -f dist/guide.json || node .github/scripts/guide-fallback.mjs "$release" dist/guide.json
+          if [ -n "$YOUTUBE_API_KEY" ] && grep -rIlF -- "$YOUTUBE_API_KEY" dist; then
+            echo "::error::dist/ contains the API key"; exit 1
+          fi
       - name: Check dist/ is clean
         run: |
           test -f dist/index.html
           test -f dist/facts.json
+          test -f dist/guide.json
           if find dist \( -name '*.map' -o -name '.gitkeep' \) | grep -q .; then
             echo "::error::dist/ contains source maps or .gitkeep files"
             exit 1
