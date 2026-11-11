@@ -163,6 +163,7 @@ function CloudSea({
           drift={r.speed * (quality === 'low' ? 0.5 : 1)}
           span={r.span}
           opacity={0.95}
+          keepMin={0.55}
           seed={k + 5}
           renderOrder={-20 + (rows.length - k)}
         />
@@ -186,8 +187,8 @@ function SeaFloor({ cam, S }: { cam: Vector3; S: number }) {
         3,
       ),
     );
-    const c1 = new Color(P.cloudShadow).lerp(new Color(P.horizon), 0.15);
-    const c2 = new Color(P.cloudShadow).multiplyScalar(0.55);
+    const c1 = new Color(P.cloudShadow).lerp(new Color(P.cloudTop), 0.4);
+    const c2 = new Color(P.cloudShadow).lerp(new Color(P.cloudTop), 0.18);
     g.setAttribute(
       'color',
       new Float32BufferAttribute(

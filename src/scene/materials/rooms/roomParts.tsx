@@ -53,6 +53,8 @@ export interface PuffLayerProps {
   opacity?: number;
   seed?: number;
   renderOrder?: number;
+  /** lowest keep-out fade (0..1): the cloud sea never fades fully, so a mis-set rect cannot cut it in half */
+  keepMin?: number;
   /** puffs are hidden entirely when calm (steam, motes) */
   hideInCalm?: boolean;
 }
@@ -92,6 +94,7 @@ uniform vec3 uFog;
 uniform float uFogAmount;
 uniform float uOpacity;
 uniform float uHideCalm;
+uniform float uKeepMin;
 varying vec2 vUv;
 varying float vSeed;
 varying float vLife;
@@ -104,7 +107,7 @@ void main() {
   float lit = smoothstep(-0.55, 0.65, p.y + (n - 0.5) * 0.7);
   vec3 col = mix(uShadow, uTop, lit);
   col = mix(col, uFog, uFogAmount);
-  float a = dens * uOpacity * keepFade() * vLife * (1.0 - uHideCalm * uCalm);
+  float a = dens * uOpacity * mix(uKeepMin, 1.0, keepFade()) * vLife * (1.0 - uHideCalm * uCalm);
   if (a < 0.003) discard;
   gl_FragColor = vec4(col, a);
 }
@@ -135,6 +138,7 @@ export function PuffLayer({
   seed = 1,
   renderOrder = 0,
   hideInCalm = false,
+  keepMin = 0,
 }: PuffLayerProps) {
   const geometry = useMemo(() => {
     const base = new PlaneGeometry(1, 1);
@@ -169,9 +173,23 @@ export function PuffLayer({
           uFogAmount: { value: fogAmount },
           uOpacity: { value: opacity },
           uHideCalm: { value: hideInCalm ? 1 : 0 },
+          uKeepMin: { value: keepMin },
         },
       }),
-    [uniforms, drift, span, riseSpeed, rise, top, shadow, fog, fogAmount, opacity, hideInCalm],
+    [
+      uniforms,
+      drift,
+      span,
+      riseSpeed,
+      rise,
+      top,
+      shadow,
+      fog,
+      fogAmount,
+      opacity,
+      hideInCalm,
+      keepMin,
+    ],
   );
   useEffect(() => () => geometry.dispose(), [geometry]);
   useEffect(() => () => material.dispose(), [material]);

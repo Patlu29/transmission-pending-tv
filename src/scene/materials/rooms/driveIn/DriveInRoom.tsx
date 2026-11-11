@@ -78,32 +78,61 @@ export function DriveInRoom(props: RoomProps & { dim?: number }) {
 
   // Interior: positioned in the camera's frame (group placed at the camera) so it sits where a driver sees it.
   const interior = useMemo<BoxSpec[]>(() => {
+    // Camera frame, one metre ahead (z = -1). The view is 0.573 m tall there, so y = (0.5 - f) * 0.573 for a screen
+    // height fraction f. The dashboard top is at f 0.845 and the wheel's top arc just above it, well under the rect.
     const L: BoxSpec[] = [];
-    const d = 0.9; // metres ahead of the camera, scaled with the view below
-    // A-pillars
+    const z = -1;
+    const y = (f: number): number => (0.5 - f) * 0.5734;
     for (const sx of [-1, 1]) {
+      L.push({ p: [sx * 0.445, 0.04, z], s: [0.075, 0.7, 0.02], c: '#08090c', rz: sx * 0.2 });
       L.push({
-        p: [sx * 0.43 * d, 0.05 * d, -d],
-        s: [0.12 * d, 0.62 * d, 0.02 * d],
-        c: '#0b0c0f',
-        rz: sx * 0.18,
+        p: [sx * 0.402, 0.04, z + 0.004],
+        s: [0.004, 0.7, 0.01],
+        c: '#2c313b',
+        rz: sx * 0.2,
       });
     }
-    // dashboard along the bottom, steering wheel arc, instrument hood
-    L.push({ p: [0, -0.29 * d, -d], s: [1.2 * d, 0.07 * d, 0.05 * d], c: P.dash });
-    L.push({ p: [0, -0.33 * d, -d], s: [1.2 * d, 0.06 * d, 0.05 * d], c: '#0f1115' });
-    for (let i = 0; i < 12; i += 1) {
-      const a = Math.PI * (0.12 + (i / 11) * 0.76);
+    L.push({ p: [0, y(0.845), z], s: [1.4, 0.006, 0.03], c: '#343a46' });
+    L.push({ p: [0, y(0.845) - 0.05, z], s: [1.4, 0.1, 0.03], c: '#14161a' });
+    L.push({ p: [0, y(0.845) + 0.008, z - 0.01], s: [0.62, 0.03, 0.03], c: '#0e1013' });
+    L.push({ p: [0, y(0.845) + 0.024, z - 0.01], s: [0.62, 0.004, 0.03], c: '#2a2f39' });
+    for (const sx of [-1, 1]) {
+      const gx = sx * 0.3;
+      const gy = y(0.845) - 0.03;
+      L.push({ p: [gx, gy, z + 0.01], s: [0.09, 0.09, 0.004], c: '#07080a' });
+      for (let i = 0; i < 12; i += 1) {
+        const a = (i / 12) * Math.PI * 2;
+        L.push({
+          p: [gx + Math.cos(a) * 0.038, gy + Math.sin(a) * 0.038, z + 0.014],
+          s: [0.006, 0.01, 0.004],
+          c: P.dial,
+          rz: a,
+        });
+      }
       L.push({
-        p: [Math.cos(a) * 0.17 * d, -0.46 * d + Math.sin(a) * 0.15 * d, -d + 0.01],
-        s: [0.032 * d, 0.03 * d, 0.02 * d],
-        c: '#0a0b0e',
-        rz: a + Math.PI / 2,
+        p: [gx + sx * 0.008, gy + 0.012, z + 0.016],
+        s: [0.003, 0.034, 0.003],
+        c: '#ffd9a0',
+        rz: sx * 0.9,
       });
     }
-    // amber dials
-    for (const x of [-0.055, 0.055])
-      L.push({ p: [x * d, -0.325 * d, -d + 0.03], s: [0.03 * d, 0.03 * d, 0.004 * d], c: P.dial });
+    const cy = y(0.845) - 0.13;
+    for (let i = 0; i < 40; i += 1) {
+      const a = (i / 40) * Math.PI * 2;
+      const wx = Math.cos(a) * 0.23;
+      const wy = cy + Math.sin(a) * 0.15;
+      if (wy < y(1.02)) continue;
+      L.push({ p: [wx, wy, z + 0.02], s: [0.045, 0.036, 0.02], c: '#0c0d10', rz: a + Math.PI / 2 });
+      if (Math.sin(a) > 0.25)
+        L.push({
+          p: [wx, wy + 0.012, z + 0.03],
+          s: [0.03, 0.006, 0.006],
+          c: '#3a404c',
+          rz: a + Math.PI / 2,
+        });
+    }
+    L.push({ p: [-0.11, cy + 0.07, z + 0.02], s: [0.2, 0.018, 0.016], c: '#0c0d10', rz: -0.5 });
+    L.push({ p: [0.11, cy + 0.07, z + 0.02], s: [0.2, 0.018, 0.016], c: '#0c0d10', rz: 0.5 });
     return L;
   }, []);
 
@@ -153,20 +182,23 @@ export function DriveInRoom(props: RoomProps & { dim?: number }) {
       <Boxes specs={far} flat />
       <group position={[0, camY, D]}>
         <Boxes specs={interior} flat renderOrder={8} />
+        {[-1, 1].map((sx) => (
+          <Glow
+            key={sx}
+            u={u}
+            position={[sx * 0.3, (0.5 - 0.845) * 0.5734 - 0.03, -0.97]}
+            size={[0.2, 0.2]}
+            colour={P.dial}
+            base={0.5}
+            fade={false}
+          />
+        ))}
         <Glow
           u={u}
-          position={[0, -0.34 * 0.9, -0.9 + 0.04]}
-          size={[0.5, 0.12]}
-          colour={P.dial}
-          base={0.45}
-          fade={false}
-        />
-        <Glow
-          u={u}
-          position={[0, -0.255 * 0.9, -0.9 + 0.01]}
-          size={[1.1, 0.12]}
-          colour="#dfe3ee"
-          base={0.25}
+          position={[0, (0.5 - 0.845) * 0.5734 - 0.02, -0.96]}
+          size={[1.3, 0.2]}
+          colour="#c7d0e0"
+          base={0.14}
           spill
           fade={false}
         />
