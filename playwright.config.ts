@@ -11,7 +11,19 @@
  * That is slow (about 2 to 20 FPS for 3D) so 3D specs avoid frame-rate or long-playback checks;
  * the long story playback is driven with Playwright's fake clock in 2D mode (see helpers).
  */
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { defineConfig, devices } from '@playwright/test';
+import { ROOT, recompute } from './tests/helpers/recompute.ts';
+
+// One snapshot of the independently recomputed facts per run, taken before the builds start, so that every worker
+// compares the pages with the same repository state even if another agent commits during a long run. The unit test
+// (tests/unit/facts.test.ts) does not use it: it always recomputes live, which is how it catches a stale dist/.
+if (!process.env.QA_RECOMPUTED_JSON) {
+  const file = `${ROOT}/test-results/recomputed.json`;
+  mkdirSync(`${ROOT}/test-results`, { recursive: true });
+  writeFileSync(file, JSON.stringify(recompute(true)));
+  process.env.QA_RECOMPUTED_JSON = file;
+}
 
 const TEST_PORT = 4390;
 const PROD_PORT = 4391;
@@ -25,6 +37,7 @@ const notChromium = ['**/mobile.spec.ts', '**/production.spec.ts', '**/visual.sp
 
 export default defineConfig({
   testDir: 'tests/e2e',
+  globalSetup: './tests/helpers/global-setup.ts',
   outputDir: 'test-results/artifacts',
   snapshotPathTemplate: '{testDir}/__screenshots__/{projectName}/{testFilePath}/{arg}{ext}',
   timeout: 180_000,
